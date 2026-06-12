@@ -1,0 +1,17 @@
+{
+    "name": "hp/backend",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "flaviemichel-laplateforme",
+            "email": "flavie.michel@laplateforme.io"
+        }
+    ],
+    "require": {
+        "altorouter/altorouter": "^2.0"
+    }
+}
