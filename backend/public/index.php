@@ -49,8 +49,7 @@ $router->map('GET', '/api/test', function () {
             'app_env' => $_ENV['APP_ENV'] ?? 'non-défini',
             'timestamp' => date('Y-m-d H:i:s')
         ]
-    ], JSON_UNESCAPED_UNICODE); // <-- LE PARAMÈTRE EST AJOUTÉ ICI
-
+    ], JSON_UNESCAPED_UNICODE);
 }, 'api_test_route');
 
 // -----------------------------------------------------------------------
