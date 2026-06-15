@@ -76,11 +76,7 @@ $router->map('GET', '/api/test-db', function () {
         echo json_encode([
             'status' => 500,
             'error' => 'Erreur de base de données : ' . $e->getMessage(),
-            // Ajout temporaire pour le débogage professionnel
-            'debug' => [
-                'host_lu_par_php' => $_ENV['DB_HOST'] ?? 'VIDE',
-                'port_lu_par_php' => $_ENV['DB_PORT'] ?? 'VIDE'
-            ]
+
         ], JSON_UNESCAPED_UNICODE);
     }
 }, 'api_test_db_route');
