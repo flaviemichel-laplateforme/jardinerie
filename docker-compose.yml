@@ -1,0 +1,81 @@
+name: jardinerie-ecommerce
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  db_root_password:
+    file: ./secrets/db_root_password.txt
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: jardinerie_api
+    restart: unless-stopped
+    # On connecte le fichier .env
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT}:80"
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - jardinerie_net
+    secrets:
+      - db_password
+    
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+  db:
+    image: mysql:8.0
+    container_name: jardinerie_db
+    restart: unless-stopped
+    
+    secrets:
+      - db_password
+      - db_root_password
+    environment:
+      
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/script-jardinerie.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - jardinerie_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: jardinerie_pma
+    restart: unless-stopped
+    
+    environment:
+      PMA_HOST: ${DB_HOST}
+    ports:
+      - "8080:80"
+    networks:
+      - jardinerie_net
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  jardinerie_net:
+    driver: bridge
+
+volumes:
+  db_data:
+    name: jardinerie_db_data
