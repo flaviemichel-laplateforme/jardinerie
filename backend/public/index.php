@@ -49,9 +49,40 @@ $router->map('GET', '/api/test', function () {
             'app_env' => $_ENV['APP_ENV'] ?? 'non-défini',
             'timestamp' => date('Y-m-d H:i:s')
         ]
-    ], JSON_UNESCAPED_UNICODE); // <-- LE PARAMÈTRE EST AJOUTÉ ICI
-
+    ], JSON_UNESCAPED_UNICODE);
 }, 'api_test_route');
+
+// -----------------------------------------------------------------------
+// Route de test pour la Base de Données (Issue #4)
+// -----------------------------------------------------------------------
+$router->map('GET', '/api/test-db', function () {
+    header('Content-Type: application/json; charset=utf-8');
+
+    try {
+        // On instancie la connexion PDO via votre Singleton
+        $db = \App\Core\Database::getConnection();
+
+        // On effectue une requête très simple pour vérifier la lecture
+        $stmt = $db->query("SELECT id, name FROM departments LIMIT 2");
+        $departments = $stmt->fetchAll();
+
+        echo json_encode([
+            'status' => 200,
+            'message' => 'Connexion MySQL réussie avec succès !',
+            'data' => $departments
+        ], JSON_UNESCAPED_UNICODE);
+    } catch (\Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status' => 500,
+            'error' => 'Erreur de base de données : ' . $e->getMessage(),
+
+        ], JSON_UNESCAPED_UNICODE);
+    }
+}, 'api_test_db_route');
+
+
+
 
 // -----------------------------------------------------------------------
 // 5. MATCHING & DISPATCHING (Exécution)
