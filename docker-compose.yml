@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
     # On connecte le fichier .env
     env_file:
-      - ./backend/.env
+      - .env
     ports:
       - "${API_PORT}:80"
     volumes:
@@ -34,8 +34,7 @@ services:
     image: mysql:8.0
     container_name: jardinerie_db
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
+    
     secrets:
       - db_password
       - db_root_password
@@ -49,7 +48,7 @@ services:
       - "${DB_PORT}:3306"
     volumes:
       - db_data:/var/lib/mysql
-      - ./database:/docker-entrypoint-initdb.d
+      - ./database/script-jardinerie.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - jardinerie_net
     healthcheck:
@@ -62,8 +61,7 @@ services:
     image: phpmyadmin/phpmyadmin
     container_name: jardinerie_pma
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
+    
     environment:
       PMA_HOST: ${DB_HOST}
     ports:
