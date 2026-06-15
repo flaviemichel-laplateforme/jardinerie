@@ -53,6 +53,42 @@ $router->map('GET', '/api/test', function () {
 }, 'api_test_route');
 
 // -----------------------------------------------------------------------
+// Route de test pour la Base de Données (Issue #4)
+// -----------------------------------------------------------------------
+$router->map('GET', '/api/test-db', function () {
+    header('Content-Type: application/json; charset=utf-8');
+
+    try {
+        // On instancie la connexion PDO via votre Singleton
+        $db = \App\Core\Database::getConnection();
+
+        // On effectue une requête très simple pour vérifier la lecture
+        $stmt = $db->query("SELECT id, name FROM departments LIMIT 2");
+        $departments = $stmt->fetchAll();
+
+        echo json_encode([
+            'status' => 200,
+            'message' => 'Connexion MySQL réussie avec succès !',
+            'data' => $departments
+        ], JSON_UNESCAPED_UNICODE);
+    } catch (\Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status' => 500,
+            'error' => 'Erreur de base de données : ' . $e->getMessage(),
+            // Ajout temporaire pour le débogage professionnel
+            'debug' => [
+                'host_lu_par_php' => $_ENV['DB_HOST'] ?? 'VIDE',
+                'port_lu_par_php' => $_ENV['DB_PORT'] ?? 'VIDE'
+            ]
+        ], JSON_UNESCAPED_UNICODE);
+    }
+}, 'api_test_db_route');
+
+
+
+
+// -----------------------------------------------------------------------
 // 5. MATCHING & DISPATCHING (Exécution)
 // -----------------------------------------------------------------------
 // On demande à AltoRouter si l'URL tapée par le client correspond à une route définie au-dessus.

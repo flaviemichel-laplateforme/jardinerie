@@ -29,7 +29,7 @@ class Database
                 }
                 $password = trim(file_get_contents($passwordFile));
 
-                $dsn = "mysql:host={$host}:port={$port}:dbname={$dbName};charset=utf8mb4";
+                $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
 
                 $options = [
                     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Lève des vraies erreurs PHP
