@@ -38,11 +38,14 @@ class ProductController
         }
 
         // 4. Gestion du succès
+        $products = $result['data'] ?? [];
+
         http_response_code(200); // 200 = OK
         echo json_encode([
             'status' => 200,
-            'results' => count($result['data']),
-            'data' => $result['data']
+            'results' => count($products),
+            'data' => $products
         ], JSON_UNESCAPED_UNICODE);
+        return;
     }
 }

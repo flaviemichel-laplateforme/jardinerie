@@ -19,11 +19,11 @@ class ProductService
     public function getCatalog(array $filters = []): array
     {
         try {
-            $products = $this->productModel->findWithFilters(!filters);
+            $products = $this->productModel->findWithFilters($filters);
 
             return [
                 'success' => true,
-                'data => $products'
+                'data' => $products
             ];
         } catch (Exception $e) {
             // 1. On loggue l'erreur technique "brute" pour le développeur (dans les logs du serveur)
