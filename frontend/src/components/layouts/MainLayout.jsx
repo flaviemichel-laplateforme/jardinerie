@@ -6,31 +6,33 @@ import Sidebar from './Sidebar';
 export default function MainLayout() {
   const location = useLocation();
   
-  // Logique simple pour déterminer si on affiche la sidebar
-  // (La sidebar s'affiche si l'URL commence par /admin ou /account)
+  // 1. Détection des espaces privés (Admin et Compte client)
   const isPrivateSpace = location.pathname.startsWith('/admin') || location.pathname.startsWith('/account');
   
-  // Mockup des données utilisateur (sera remplacé plus tard par votre vrai Token JWT)
-  const userRole = location.pathname.startsWith('/admin') ? 'admin' : 'client';
-  const userName = location.pathname.startsWith('/admin') ? 'Admin' : 'Flavie';
+  // 2. Détection spécifique de l'espace d'administration
+  const isAdminSpace = location.pathname.startsWith('/admin');
+  
+  // Données fictives pour le profil (en attendant le système d'authentification)
+  const userRole = isAdminSpace ? 'admin' : 'client';
+  const userName = isAdminSpace ? 'Admin' : 'Flavie';
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
-      {/* 1. L'en-tête, toujours présent */}
+      {/* L'en-tête reste présent pour la navigation globale */}
       <Header />
       
       <div className="flex flex-grow">
-        {/* 2. La barre latérale, présente uniquement dans les espaces privés */}
+        {/* La barre latérale s'affiche sur les espaces privés (Admin et Client) */}
         {isPrivateSpace && <Sidebar userRole={userRole} userName={userName} />}
         
-        {/* 3. Le contenu dynamique de la page (Le fameux Outlet !) */}
-        <main className="flex-grow p-8 bg-jardinerie-bg/20">
+        {/* Zone de contenu principal (Outlet) */}
+        <main className="flex-grow p-6 md:p-8 bg-jardinerie-bg/10">
           <Outlet />
         </main>
       </div>
 
-      {/* 4. Le pied de page, toujours présent */}
-      <Footer />
+      {/* 3. Condition moderne : Le footer s'affiche UNIQUEMENT si on n'est PAS dans l'administration */}
+      {!isAdminSpace && <Footer />}
     </div>
   );
 }
