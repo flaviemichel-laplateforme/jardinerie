@@ -4,20 +4,17 @@ namespace App\Models;
 
 use App\Core\Database;
 use PDO;
-use Exception;
 
-class DepartmentModel {
+class DepartmentModel
+{
     /**
-     * Récupère la liste de tous les rayons.
+     * Récupère la liste total des rayons
      */
-    public funtion findAll(): array {
-        try {
-            $db = Database::getConnection();
-            $stmt = $db->query("SELECT id, name FROM departments");
+    public function findAll(): array
+    {
+        $db = Database::getConnection();
+        $stmt = $db->query("SELECT id, name FROM departments");
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            throw new Exception("Erreur lors de la récupérations des rayons: " . $e->getMessage());
-        }
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
