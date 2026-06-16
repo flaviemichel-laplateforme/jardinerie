@@ -81,7 +81,7 @@ $router->map('GET', '/api/test-db', function () {
     }
 }, 'api_test_db_route');
 
-
+$router->map('GET', '/api/departments', 'DepartmentController#index', 'api_departments_list');
 
 
 // -----------------------------------------------------------------------
@@ -89,12 +89,32 @@ $router->map('GET', '/api/test-db', function () {
 // -----------------------------------------------------------------------
 // On demande à AltoRouter si l'URL tapée par le client correspond à une route définie au-dessus.
 $match = $router->match();
+$dispatched = false;
 
-if (is_array($match) && is_callable($match['target'])) {
+if (is_array($match)) {
 
-    // Si la route existe, on exécute la fonction associée en lui passant les paramètres éventuels de l'URL
-    call_user_func_array($match['target'], $match['params']);
-} else {
+    $target = $match['target'];
+
+    if (is_callable($target)) {
+        // Si la route existe et pointe vers une closure, on l'exécute directement.
+        call_user_func_array($target, $match['params']);
+        $dispatched = true;
+    }
+
+    // Support des cibles de type "Controller#method" (ex: DepartmentController#index)
+    if (!$dispatched && is_string($target) && strpos($target, '#') !== false) {
+        [$controllerName, $method] = explode('#', $target, 2);
+        $controllerClass = 'App\\Controllers\\' . $controllerName;
+
+        if (class_exists($controllerClass) && method_exists($controllerClass, $method)) {
+            $controller = new $controllerClass();
+            call_user_func_array([$controller, $method], $match['params']);
+            $dispatched = true;
+        }
+    }
+}
+
+if (!$dispatched) {
 
     // Si la route n'existe pas : Gestion propre de l'erreur 404 au format JSON
     header($_SERVER["SERVER_PROTOCOL"] . ' 404 Not Found');
