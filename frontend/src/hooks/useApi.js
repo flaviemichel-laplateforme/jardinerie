@@ -32,7 +32,7 @@ export function useApi() {
             setError(errorMessage);
 
             // Déclenchement automatique du toast d'erreur
-      if (showToast) {
+        if (showToast) {
         toast.error(errorMessage);
       }
             return { success: false, error: errorMessage };
