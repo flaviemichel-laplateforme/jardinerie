@@ -42,7 +42,7 @@ export default function ProductCard({ product }) {
 
         {/* Badge de Stock (Bas Gauche) */}
         <div className={`absolute bottom-3 left-3 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm ${
-          inStock ? 'bg-[#7DCEB2]' : 'bg-[#E63946]'
+          inStock ? 'bg-jardinerie-primary' : 'bg-[#E63946]'
         }`}>
           {inStock ? 'En stock' : 'Épuisé'}
         </div>
@@ -55,13 +55,13 @@ export default function ProductCard({ product }) {
         
         {/* Titres et description */}
         <div>
-          <h2 className="line-clamp-2 text-lg font-bold leading-tight text-[#2B3A67]">
+          <h2 className="line-clamp-2 text-lg font-bold leading-tight text-jardinerie-text">
             {product_name}
           </h2>
-          <p className="mt-1 text-sm font-medium text-[#2B3A67]/70">
+          <p className="mt-1 text-sm font-medium text-jardinerie-text/70">
             {subcategory_name}
           </p>
-          <p className="mt-2 text-xs text-[#2B3A67]/50">
+          <p className="mt-2 text-xs text-jardinerie-text/50">
             {packaging_options} conditionnement{packaging_options > 1 ? 's' : ''} possible{packaging_options > 1 ? 's' : ''}
           </p>
         </div>
@@ -69,10 +69,10 @@ export default function ProductCard({ product }) {
         {/* Prix et Bouton */}
         <div className="mt-6 flex flex-col gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#2B3A67]/60">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-jardinerie-text/60">
               À partir de
             </p>
-            <p className="text-2xl font-black text-[#2B3A67]">
+            <p className="text-2xl font-black text-jardinerie-text">
               {/* Remplacement du point par une virgule pour l'affichage français */}
               {parseFloat(price_tax_incl).toFixed(2).replace('.', ',')}€
             </p>
@@ -81,7 +81,7 @@ export default function ProductCard({ product }) {
           {/* Bouton d'action (Lien vers la page détail) */}
           <Link 
             to={`/vegetaux/${id}`}
-            className="self-start rounded-full border border-[#2B3A67]/30 bg-transparent px-8 py-2 text-xs font-bold text-[#2B3A67] transition-all hover:border-[#2B3A67] hover:bg-[#2B3A67] hover:text-white"
+            className="self-start rounded-full border border-jardinerie-primary bg-transparent px-8 py-2 text-xs font-bold text-jardinerie-text transition-all hover:border-white hover:bg-jardinerie-primary hover:text-jardinerie-light"
           >
             Voir le détail
           </Link>
