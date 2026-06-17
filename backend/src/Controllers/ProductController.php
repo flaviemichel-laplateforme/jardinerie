@@ -6,7 +6,6 @@ use App\Services\ProductService;
 
 class ProductController
 {
-
     public function __construct(
         private ProductService $productService = new ProductService()
     ) {}
@@ -18,13 +17,25 @@ class ProductController
     {
         header('Content-Type: application/json; charset=utf-8');
 
-        // 1. Extraction et nettoyage des filtres potentiels (ex: ?search=orchidée)
+        // 1. Extraction et nettoyage rigoureux des filtres
         $filters = [];
+
+        // Filtre de recherche textuelle
         if (isset($_GET['search']) && trim($_GET['search']) !== '') {
             $filters['search'] = htmlspecialchars(trim($_GET['search']));
         }
 
-        // 2. Appel au service
+        // Filtre par catégories (ex: "1,2,4")
+        if (isset($_GET['categories']) && trim($_GET['categories']) !== '') {
+            $filters['categories'] = htmlspecialchars(trim($_GET['categories']));
+        }
+
+        // Filtre par exposition (ex: "Sun,Partial Shade")
+        if (isset($_GET['expositions']) && trim($_GET['expositions']) !== '') {
+            $filters['expositions'] = htmlspecialchars(trim($_GET['expositions']));
+        }
+
+        // 2. Appel à la couche métier (Service)
         $result = $this->productService->getCatalog($filters);
 
         // 3. Gestion de l'échec (intercepté et géré par le Service)
@@ -34,7 +45,7 @@ class ProductController
                 'status' => 500,
                 'error' => $result['message']
             ], JSON_UNESCAPED_UNICODE);
-            return; // On stoppe l'exécution ici
+            return;
         }
 
         // 4. Gestion du succès
