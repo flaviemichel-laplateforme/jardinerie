@@ -1,43 +1,95 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import MainLayout from './components/layouts/MainLayout';
-import ProductCard from './components/catalog/ProductCard';
+import Catalog from './pages/public/Catalog';
 
-const mockProduct = {
-  id: 1,
-  product_name: 'Basilic grand vert',
-  subcategory_name: 'Plantes aromatiques',
-  price_tax_incl: 4.9,
-  main_image_url: 'https://via.placeholder.com/400x400?text=ProductCard',
-  stock_quantity: 12,
-  sun_exposure: 'sun',
-  packaging_options: 2,
-};
+// ==========================================
+// 1. PLACEHOLDERS (Composants temporaires)
+// ==========================================
 
-// Composants temporaires pour tester l'affichage
-const Home = () => <div className="p-4">
-  <h1>Page d'Accueil</h1>
-<p>Contenu public</p>
-<div className="mt-6 max-w-sm">
-  <ProductCard product={mockProduct} />
-</div>
-</div>;
-const AdminDashboard = () => <div className="p-4"><h1>Dashboard Admin</h1><p>Contenu privé</p></div>;
+// --- ZONE BLEUE : Public ---
+const Home = () => <div className="p-10 text-center">Accueil Jardinerie</div>;
+const ProductDetail = () => <div className="p-10 text-center">Fiche Produit (Détails)</div>;
+const Jardinage = () => <div className="p-10 text-center">Rayon Jardinage</div>;
+
+// --- ZONE ORANGE : Authentification & Espace Client ---
+const Login = () => <div className="p-10 text-center">Page de Connexion</div>;
+const Register = () => <div className="p-10 text-center">Page d'Inscription</div>;
+const CustomerDashboard = () => <div className="p-10 text-center">Mon Profil (Tableau de bord client)</div>;
+const CustomerOrders = () => <div className="p-10 text-center">Mes Commandes</div>;
+const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
+const CustomerSettings = () => <div className="p-10 text-center">Infos et Mot de passe</div>;
+
+// --- ZONE VERTE : Tunnel d'achat ---
+const Cart = () => <div className="p-10 text-center">Mon Panier</div>;
+const CheckoutDelivery = () => <div className="p-10 text-center">Étape 1 : Livraison</div>;
+const CheckoutPayment = () => <div className="p-10 text-center">Étape 2 : Paiement</div>;
+const CheckoutConfirmation = () => <div className="p-10 text-center">Confirmation de commande</div>;
+
+// --- ZONE GRISE : Administration ---
+const AdminDashboard = () => <div className="p-10 text-center">Dashboard et Alertes Stocks</div>;
+const AdminCatalog = () => <div className="p-10 text-center">Gestion du Catalogue</div>;
+const AdminOrders = () => <div className="p-10 text-center">Gestion des Commandes Clients</div>;
+
+
+// ==========================================
+// 2. CONFIGURATION DU ROUTEUR (SITEMAP)
+// ==========================================
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <MainLayout />, // Le Layout global (Header, Footer, Sidebar admin)
+    children: [
+      
+      // 🔵 ZONE PUBLIQUE
+      { index: true, element: <Home /> },
+      { path: 'vegetaux', element: <Catalog /> },
+      { path: 'vegetaux/:id', element: <ProductDetail /> }, // :id = URL dynamique pour la fiche produit
+      { path: 'jardinage', element: <Jardinage /> },
+      
+      // 🟠 AUTHENTIFICATION
+      { path: 'connexion', element: <Login /> },
+      { path: 'inscription', element: <Register /> },
+      
+      // 🟢 TUNNEL D'ACHAT
+      { path: 'panier', element: <Cart /> },
+      {
+        path: 'commande',
+        children: [
+          { path: 'livraison', element: <CheckoutDelivery /> },
+          { path: 'paiement', element: <CheckoutPayment /> },
+          { path: 'confirmation', element: <CheckoutConfirmation /> },
+        ]
+      },
+
+      // 🟠 ESPACE CLIENT
+      {
+        path: 'compte',
+        children: [
+          { index: true, element: <CustomerDashboard /> }, // Correspond à /compte
+          { path: 'commandes', element: <CustomerOrders /> }, // /compte/commandes
+          { path: 'tickets', element: <CustomerTickets /> },
+          { path: 'parametres', element: <CustomerSettings /> },
+        ]
+      },
+
+      // ⚪ ESPACE ADMINISTRATEUR
+      {
+        path: 'admin',
+        children: [
+          { index: true, element: <AdminDashboard /> }, // Correspond à /admin
+          { path: 'catalogue', element: <AdminCatalog /> }, // /admin/catalogue
+          { path: 'commandes', element: <AdminOrders /> },
+        ]
+      },
+    ],
+  },
+]);
+
+// ==========================================
+// 3. EXPORT DU COMPOSANT PRINCIPAL
+// ==========================================
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Toutes les routes encapsulées ici utiliseront le MainLayout (Header/Footer) */}
-        <Route path="/" element={<MainLayout />}>
-          
-          {/* Routes publiques */}
-          <Route index element={<Home />} />
-          
-          {/* Routes privées (La Sidebar s'affichera automatiquement selon la logique du layout) */}
-          <Route path="admin" element={<AdminDashboard />} />
-          
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
+  return <RouterProvider router={router} />;
 }
