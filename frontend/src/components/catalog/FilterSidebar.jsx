@@ -229,7 +229,7 @@ export default function FilterSidebar({ activeCategories = [], activeExpositions
               <label key={cat.id} className="group flex cursor-pointer items-center space-x-3">
                 <input 
                   type="checkbox" 
-                  className="form-checkbox h-4 w-4 rounded border-gray-300 text-jardinerie-primary focus:ring-jardinerie-primary"
+                  className="form-checkbox h-4 w-4 rounded border-gray-300 accent-jardinerie-primary focus:ring-jardinerie-primary/50 focus:ring-2"
                   checked={activeCategories.includes(cat.id)}
                   onChange={() => handleCheckboxChange('categories', cat.id)}
                 />
@@ -248,7 +248,7 @@ export default function FilterSidebar({ activeCategories = [], activeExpositions
               <label key={exp.id} className="group flex cursor-pointer items-center space-x-3">
                 <input 
                   type="checkbox" 
-                  className="form-checkbox h-4 w-4 rounded border-gray-300 text-jardinerie-primary focus:ring-jardinerie-primary"
+                  className="form-checkbox h-4 w-4 rounded border-gray-300 accent-jardinerie-primary focus:ring-jardinerie-primary/50 focus:ring-2"
                   checked={activeExpositions.includes(exp.id)}
                   onChange={() => handleCheckboxChange('expositions', exp.id)}
                 />
@@ -267,7 +267,7 @@ export default function FilterSidebar({ activeCategories = [], activeExpositions
               <label key={w.id} className="group flex cursor-pointer items-center space-x-3">
                 <input
                   type="checkbox"
-                  className="form-checkbox h-4 w-4 rounded border-gray-300 text-jardinerie-primary focus:ring-jardinerie-primary"
+                  className="form-checkbox h-4 w-4 rounded border-gray-300 accent-jardinerie-primary focus:ring-jardinerie-primary/50 focus:ring-2"
                   checked={(activeWater || []).includes(w.id)}
                   onChange={() => handleCheckboxChange('water', w.id)}
                 />
