@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-
+import toast from 'react-hot-toast';
 /**
  * Hook personnalisé moderne pour la gestion des requêtes HTTP
  * @return {object} { data, loading, error, request }
@@ -9,7 +9,7 @@ export function useApi() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const request = useCallback(async (url, option = {}) => {
+    const request = useCallback(async (url, option = {}, showToast = true) => {
         setLoading(true);
         setError(null);
 
@@ -30,7 +30,13 @@ export function useApi() {
 
             const errorMessage = err.message || "Une erreur est survenue.";
             setError(errorMessage);
+
+            // Déclenchement automatique du toast d'erreur
+      if (showToast) {
+        toast.error(errorMessage);
+      }
             return { success: false, error: errorMessage };
+
         } finally {
             setLoading(false);
         }

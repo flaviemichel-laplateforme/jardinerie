@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
@@ -18,6 +19,19 @@ export default function MainLayout() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          className:
+            'border border-jardinerie-primary bg-jardinerie-bg text-jardinerie-text shadow-lg',
+          success: {
+            iconTheme: { primary: '#027148', secondary: '#EDF0E2' },
+          },
+          error: {
+            iconTheme: { primary: '#E63946', secondary: '#EDF0E2' },
+          },
+        }}
+      />
       {/* L'en-tête reste présent pour la navigation globale */}
       <Header />
       
