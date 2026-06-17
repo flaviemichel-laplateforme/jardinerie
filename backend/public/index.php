@@ -82,7 +82,7 @@ $router->map('GET', '/api/test-db', function () {
 }, 'api_test_db_route');
 
 $router->map('GET', '/api/departments', 'DepartmentController#index', 'api_departments_list');
-
+$router->map('GET', '/api/products', 'ProductController#index', 'api_products_list');
 
 // -----------------------------------------------------------------------
 // 5. MATCHING & DISPATCHING (Exécution)
