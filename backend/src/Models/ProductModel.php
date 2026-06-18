@@ -74,6 +74,23 @@ class ProductModel
                 $conditions[] = "pl.sun_exposure IN (" . implode(',', $expPlaceholders) . ")";
             }
 
+            // Filtre par Critères (Dépolluante, etc.) avec optimisation EXISTS
+            if (!empty($filters['criteria'])) {
+                $critIds = explode(',', $filters['criteria']);
+                $critPlaceholders = [];
+                foreach ($critIds as $index => $id) {
+                    $paramName = 'crit' . $index;
+                    $critPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = (int) $id;
+                }
+                // La requête vérifie s'il existe au moins une ligne dans la table de liaison
+                // qui correspond à la plante actuelle ET aux critères demandés.
+                $conditions[] = "EXISTS (
+                    SELECT 1 FROM plant_criterion pc 
+                    WHERE pc.plant_id = pl.id 
+                    AND pc.criterion_id IN (" . implode(',', $critPlaceholders) . ")
+                )";
+            }
             // 5. Assemblage final de la requête si des conditions existent
             if (!empty($conditions)) {
                 $sql .= " AND " . implode(" AND ", $conditions);

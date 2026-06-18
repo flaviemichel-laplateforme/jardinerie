@@ -34,6 +34,10 @@ class ProductController
         if (isset($_GET['expositions']) && trim($_GET['expositions']) !== '') {
             $filters['expositions'] = htmlspecialchars(trim($_GET['expositions']));
         }
+        // Filtre par critères (ex: "id 2: Facile d'entretien, id 3 : Animaux-friendly (Non toxique) ")
+        if (isset($_GET['criteria']) && trim($_GET['criteria']) !== '') {
+            $filters['criteria'] = htmlspecialchars(trim($_GET['criteria']));
+        }
 
         // 2. Appel à la couche métier (Service)
         $result = $this->productService->getCatalog($filters);
