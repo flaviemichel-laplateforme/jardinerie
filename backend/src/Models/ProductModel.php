@@ -99,6 +99,21 @@ class ProductModel
                 $conditions[] = "pl.sun_exposure IN (" . implode(',', $expPlaceholders) . ")";
             }
 
+            // 4. Filtre par Besoin en eau 
+            if (!empty($filters['water'])) {
+                $waterReqs = explode(',', $filters['water']);
+                $expPlaceholders = [];
+
+                foreach ($waterReqs as $index => $water) {
+                    $paramName = 'water' . $index;
+                    $waterPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = $water;
+                }
+
+                $conditions[] = "pl.water_requirement IN (" . implode(',', $expPlaceholders) . ")";
+            }
+
+
             //Filtre par prix maximum
             if (isset($filters['price_max'])) {
                 $conditions[] = "p.price_tax_incl <= :price_max";
