@@ -26,7 +26,7 @@ class FilterController
 
         echo json_encode([
             'status' => 200,
-            'result' => $result["data"]
+            'data' => $result["data"]
         ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     }
 }
