@@ -99,6 +99,15 @@ class ProductModel
                 $conditions[] = "pl.sun_exposure IN (" . implode(',', $expPlaceholders) . ")";
             }
 
+            //Filtre par prix maximum
+            if (isset($filters['price_max'])) {
+                $conditions[] = "p.price_tax_incl <= :price_max";
+                $params['price_max'] = $filters['price_max'];
+            }
+
+
+
+
             // Filtre par Critères (Dépolluante, etc.) avec optimisation EXISTS
             if (!empty($filters['criteria'])) {
                 $critIds = explode(',', $filters['criteria']);

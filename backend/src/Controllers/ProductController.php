@@ -39,6 +39,14 @@ class ProductController
             $filters['criteria'] = htmlspecialchars(trim($_GET['criteria']));
         }
 
+        //Filtre par Prix maximum
+        // On utilise is_numeric pour s'assurer qu'on reçoit bien un chiffre)
+        if (isset($_GET['price_max']) && is_numeric($_GET['price_max'])) {
+            // On force le typage en nombre à virgule flottante (float) par sécurité
+            $filters['price_max'] = (float) $_GET['price_max'];
+        }
+
+
         // 2. Appel à la couche métier (Service)
         $result = $this->productService->getCatalog($filters);
 
