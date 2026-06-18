@@ -40,10 +40,35 @@ class ProductModel
             $conditions = [];
             $params = [];
 
-            // 2. Filtre textuel (Recherche sur le nom commercial, commun ou latin)
+            // 2. Filtre textuel multi-colonnes automatisé (Approche dynamique et évolutive)
             if (!empty($filters['search'])) {
-                $conditions[] = "(p.name LIKE :search OR pl.common_name LIKE :search OR pl.latin_name LIKE :search)";
-                $params['search'] = '%' . $filters['search'] . '%';
+                // Étape 1 : Définition de la liste des colonnes cibles pour la recherche
+                $columnsToSearch = [
+                    'p.name',              // Nom commercial
+                    'pl.common_name',      // Nom commun
+                    'pl.latin_name',       // Nom latin
+                    'p.description',       // Description du produit
+                    'pl.genus',            // Genre botanique
+                    'pl.species'           // Espèce botanique
+                ];
+
+                $subConditions = [];
+                $searchTerm = '%' . $filters['search'] . '%';
+
+                // Étape 2 : Génération automatique des marqueurs SQL et du binding PDO
+                foreach ($columnsToSearch as $index => $column) {
+                    $paramName = 'search_' . $index; // Génère : search_0, search_1, search_2...
+
+                    // Construit la clause SQL pour cette colonne : "p.name LIKE :search_0"
+                    $subConditions[] = "$column LIKE :$paramName";
+
+                    // Injecte la valeur dans le tableau de paramètres PDO
+                    $params[$paramName] = $searchTerm;
+                }
+
+                // Étape 3 : Assemblage des clauses avec un opérateur "OR" et ajout aux conditions principales
+                // Résultat généré : "(p.name LIKE :search_0 OR pl.common_name LIKE :search_1 OR ...)"
+                $conditions[] = "(" . implode(' OR ', $subConditions) . ")";
             }
 
             // 3. Filtre par Catégories (Création dynamique des paramètres PDO pour la clause IN)
