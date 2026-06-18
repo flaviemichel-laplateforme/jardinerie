@@ -34,9 +34,20 @@ class ProductController
         if (isset($_GET['expositions']) && trim($_GET['expositions']) !== '') {
             $filters['expositions'] = htmlspecialchars(trim($_GET['expositions']));
         }
+        // Filtre par exposition (ex: "Sun,Partial Shade")
+        if (isset($_GET['water']) && trim($_GET['water']) !== '') {
+            $filters['water'] = htmlspecialchars(trim($_GET['water']));
+        }
         // Filtre par critères (ex: "id 2: Facile d'entretien, id 3 : Animaux-friendly (Non toxique) ")
         if (isset($_GET['criteria']) && trim($_GET['criteria']) !== '') {
             $filters['criteria'] = htmlspecialchars(trim($_GET['criteria']));
+        }
+
+        //Filtre par Prix minimun
+        // On utilise is_numeric pour s'assurer qu'on reçoit bien un chiffre)
+        if (isset($_GET['price_min']) && is_numeric($_GET['price_min'])) {
+            // On force le typage en nombre à virgule flottante (float) par sécurité
+            $filters['price_min'] = (float) $_GET['price_min'];
         }
 
         //Filtre par Prix maximum
@@ -45,6 +56,8 @@ class ProductController
             // On force le typage en nombre à virgule flottante (float) par sécurité
             $filters['price_max'] = (float) $_GET['price_max'];
         }
+
+
 
 
         // 2. Appel à la couche métier (Service)

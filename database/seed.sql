@@ -1,9 +1,12 @@
 -- Sélection de la base de données
 USE `jardinerie_db`;
 
+-- AJOUT RECOMMANDÉ : Configuration du canal de communication en UTF-8 moderne
+SET NAMES 'utf8mb4';
+SET CHARACTER SET utf8mb4;
+
 -- Désactivation temporaire des contraintes pour permettre le vidage des tables
 SET FOREIGN_KEY_CHECKS = 0;
-
 -- 1. Vidage des tables (TRUNCATE) pour garantir un script idempotent
 TRUNCATE TABLE `invoices`;
 TRUNCATE TABLE `order_items`;
