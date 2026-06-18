@@ -99,11 +99,34 @@ export default function FilterSidebar({
     );
   }
 
-  // SÉCURITÉ 3 : Assignation robuste. Si l'API renvoie des données manquantes, on crée un tableau vide.
+ // 1. Définition de l'ordre logique souhaité pour l'affichage (UX)
+  const exposureOrder = ['Sun', 'Partial Shade', 'Shade'];
+  const waterOrder = ['Low', 'Medium', 'High'];
+
+  // 2. Assignation et tri dynamique basé sur l'index de nos tableaux de référence
   const options = {
     categories: apiFilters.categories || [],
-    expositions: apiFilters.expositions || [],
-    water: apiFilters.water || []
+    
+    expositions: (apiFilters.expositions || []).sort(
+      (a, b) => exposureOrder.indexOf(a.id) - exposureOrder.indexOf(b.id)
+    ),
+    
+    water: (apiFilters.water || []).sort(
+      (a, b) => waterOrder.indexOf(a.id) - waterOrder.indexOf(b.id)
+    ),
+  };
+
+  const translateLabel = (technicalValue) => {
+    const dictionary = {
+      'Sun': 'Plein Soleil',
+      'Partial Shade': 'Mi-ombre',
+      'Shade': 'Ombre',
+      'Low': 'Arrosage faible',
+      'Medium': 'Arrosage moyen',
+      'High': 'Arrosage élevé'
+    };
+    // Si on trouve la traduction on l'affiche, sinon on affiche la valeur brute par sécurité
+    return dictionary[technicalValue] || technicalValue; 
   };
 
   return (
@@ -155,7 +178,7 @@ export default function FilterSidebar({
                   checked={activeExpositions.includes(String(exp.id))}
                   onChange={() => handleCheckboxChange('expositions', exp.id)}
                 />
-                <span className="text-sm text-gray-600 transition-colors group-hover:text-jardinerie-primary">{exp.label}</span>
+                <span className="text-sm text-gray-600 transition-colors group-hover:text-jardinerie-primary">{translateLabel(exp.id)}</span>
               </label>
             ))}
           </div>
@@ -177,7 +200,7 @@ export default function FilterSidebar({
                   checked={activeWater.includes(String(w.id))}
                   onChange={() => handleCheckboxChange('water', w.id)}
                 />
-                <span className="text-sm text-gray-600 transition-colors group-hover:text-jardinerie-primary">{w.label}</span>
+                <span className="text-sm text-gray-600 transition-colors group-hover:text-jardinerie-primary">{translateLabel(w.id)}</span>
               </label>
             ))}
           </div>
@@ -215,7 +238,10 @@ export default function FilterSidebar({
             </div>
 
             <div className="relative mt-3 h-6">
+              {/* Piste grise en arrière-plan */}
               <div className="pointer-events-none absolute left-0 right-0 top-2 h-2 rounded-full bg-gray-200" />
+              
+              {/* Ligne verte de progression colorée */}
               <div
                 className="pointer-events-none absolute top-2 h-2 rounded-full bg-jardinerie-primary"
                 style={{
@@ -223,19 +249,32 @@ export default function FilterSidebar({
                   right: `${100 - ((priceMax - MIN) / (MAX - MIN)) * 100}%`,
                 }}
               />
+              
+              {/* Curseurs de sélection (Inputs de type Range) */}
               <input
-                type="range" min={MIN} max={MAX} value={priceMin}
+                type="range"
+                min={MIN}
+                max={MAX}
+                value={priceMin}
                 onChange={(e) => handleMinInput(e.target.value)}
                 onMouseUp={commitPriceChange}
                 onTouchEnd={commitPriceChange}
-                className="absolute left-0 right-0 top-0 h-6 w-full appearance-none bg-transparent"
+                // pointer-events-none ignore la piste / [&::-webkit...]-auto réactive uniquement le bouton
+                className="absolute left-0 right-0 top-0 h-6 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                // Permet au curseur min de repasser au-dessus s'il est poussé vers la droite
+                style={{ zIndex: priceMin > MAX * 0.5 ? 25 : 20 }}
               />
               <input
-                type="range" min={MIN} max={MAX} value={priceMax}
+                type="range"
+                min={MIN}
+                max={MAX}
+                value={priceMax}
                 onChange={(e) => handleMaxInput(e.target.value)}
                 onMouseUp={commitPriceChange}
                 onTouchEnd={commitPriceChange}
-                className="absolute left-0 right-0 top-0 h-6 w-full appearance-none bg-transparent"
+                className="absolute left-0 right-0 top-0 h-6 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                // Permet au curseur max de repasser au-dessus s'il est poussé vers la gauche
+                style={{ zIndex: priceMin > MAX * 0.5 ? 20 : 25 }}
               />
             </div>
 
