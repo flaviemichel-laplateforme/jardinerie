@@ -113,6 +113,11 @@ class ProductModel
                 $conditions[] = "pl.water_requirement IN (" . implode(',', $expPlaceholders) . ")";
             }
 
+            //Filtre par prix minimum
+            if (isset($filters['price_min'])) {
+                $conditions[] = "p.price_tax_incl >= :price_min";
+                $params['price_min'] = $filters['price_min'];
+            }
 
             //Filtre par prix maximum
             if (isset($filters['price_max'])) {
