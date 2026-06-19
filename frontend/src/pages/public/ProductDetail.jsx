@@ -233,14 +233,14 @@ export default function ProductDetail() {
         <div className="flex justify-center gap-12 mb-6 text-gray-700">
           {product.sun_exposure && (
             <div className="flex flex-col items-center">
-              <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Exposition</span>
-              <span className="font-medium text-lg">☀️ {translateLabel(product.sun_exposure)}</span>
+              <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Exposition ☀️</span>
+              <span className="font-medium text-lg"> {translateLabel(product.sun_exposure)}</span>
             </div>
           )}
           {product.water_requirement && (
             <div className="flex flex-col items-center">
-              <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Arrosage</span>
-              <span className="font-medium text-lg">💧 {translateLabel(product.water_requirement)}</span>
+              <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Arrosage💧</span>
+              <span className="font-medium text-lg"> {translateLabel(product.water_requirement)}</span>
             </div>
           )}
         </div>
