@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Core\Database;
 use PDO;
-use Exception;
+
 
 class ProductModel
 {
@@ -155,8 +155,8 @@ class ProductModel
             $stmt->execute($params);
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            throw new Exception("Erreur lors de la récupération du catalogue : " . $e->getMessage());
+        } catch (\Exception $e) {
+            throw new \Exception("Erreur lors de la récupération du catalogue : " . $e->getMessage());
         }
     }
 
@@ -196,5 +196,21 @@ class ProductModel
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $product ?: null;
+    }
+
+    /**
+     * Fonction de récupération du stock pour définir un status  en stock , stock faible, indisponible(épuisé)
+     */
+    public function getStockQuantity(int $id): ?int
+    {
+        $db = Database::getConnection();
+        $sql = "SELECT stock_quantity FROM products WHERE id = :id AND is_active = 1";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+
+        $result = $stmt->fetchColumn();
+
+        return $result !== false ? (int) $result : null;
     }
 }

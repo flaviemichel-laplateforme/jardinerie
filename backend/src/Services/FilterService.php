@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\FilterModel;
-use Exception;
+
 
 class FilterService
 {
@@ -20,7 +20,7 @@ class FilterService
                 'success' => true,
                 'data' => $filtersData
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("Erreur FilterService : " . $e->getMessage());
             return [
                 'success' => false,
