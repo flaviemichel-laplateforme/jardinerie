@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useApi } from '../../hooks/useApi'; // Vérifiez bien ce chemin d'import selon votre arborescence
+import { useApi } from '../../hooks/useApi';
+import StockBadge from '../../components/ui/StockBadge'; // 1. IMPORT DU BADGE
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
 
@@ -13,14 +14,39 @@ export default function ProductDetail() {
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [showFullBotanical, setShowFullBotanical] = useState(false);
+  const [realTimeStock, setRealTimeStock] = useState(null); // 2. ÉTAT POUR LE TEMPS RÉEL
 
-  // --- REQUÊTE API (La pièce manquante qui causait l'écran blanc) ---
+  // --- REQUÊTE API PRINCIPALE ---
   useEffect(() => {
     const controller = new AbortController();
     const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/products/${id}`;
     request(url, { signal: controller.signal }, true);
     return () => controller.abort();
   }, [id, request]);
+
+  // --- REQUÊTE API SECONDAIRE (TEMPS RÉEL) ---
+  useEffect(() => {
+    const controller = new AbortController();
+    
+    const fetchAvailability = async () => {
+      try {
+        const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/products/${id}/availability`;
+        const response = await fetch(url, { signal: controller.signal });
+        const result = await response.json();
+        
+        if (result.success) {
+          setRealTimeStock(result.data);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error("Impossible de vérifier le stock en temps réel", err);
+        }
+      }
+    };
+
+    fetchAvailability();
+    return () => controller.abort();
+  }, [id]);
 
   // --- CORRECTION DU CASCADING RENDER ---
   const [currentId, setCurrentId] = useState(id);
@@ -30,7 +56,14 @@ export default function ProductDetail() {
     setSelectedThumbnail(null);
     setQuantity(1);
     setShowFullBotanical(false);
+    setRealTimeStock(null); // Réinitialisation du stock au changement de page
   }
+
+  // --- PRÉPARATION DES DONNÉES (Derived State) ---
+  
+  // 3. LOGIQUE DE SÉCURITÉ : Utilise le stock temps réel s'il existe, sinon le stock par défaut
+  const currentStockQty = realTimeStock ? realTimeStock.stock_quantity : (product?.stock_quantity || 0);
+  const currentStockStatus = realTimeStock ? realTimeStock.status : null;
 
   // --- FONCTIONS UTILITAIRES ---
   const getImageUrl = (imagePath) => {
@@ -49,7 +82,7 @@ export default function ProductDetail() {
     setQuantity((prev) => {
       const next = prev + delta;
       if (next < 1) return 1;
-      if (product && next > product.stock_quantity) return product.stock_quantity;
+      if (next > currentStockQty) return currentStockQty; // Bloque selon le vrai stock
       return next;
     });
   };
@@ -77,7 +110,7 @@ export default function ProductDetail() {
     );
   }
 
-  // --- PRÉPARATION DES DONNÉES (Derived State) ---
+  // Suite préparation données image
   const galleryImages = [product.main_image_url, product.secondary_image_url]
     .filter(Boolean)
     .map(path => getImageUrl(path));
@@ -139,9 +172,17 @@ export default function ProductDetail() {
         {/* Colonne Droite : Infos & Achat */}
         <div className="flex flex-col">
           <div className="border border-gray-200 rounded-lg p-6 mb-6 bg-white">
-            <h1 className="text-3xl font-bold text-jardinerie-text mb-2">
-              {product.product_name}
-            </h1>
+            
+            {/* 4. AFFICHAGE DU BADGE */}
+            <div className="flex justify-between items-start mb-2 gap-4">
+              <h1 className="text-3xl font-bold text-jardinerie-text">
+                {product.product_name}
+              </h1>
+              <div className="mt-2 shrink-0">
+                <StockBadge quantity={currentStockQty} statusOverride={currentStockStatus} />
+              </div>
+            </div>
+
             <p className="text-sm text-gray-500 font-mono">
               Réf : {productRef}
             </p>
@@ -153,23 +194,32 @@ export default function ProductDetail() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-4 w-full">
-              {/* Quantité */}
+              
+              {/* Quantité : Désactivée si épuisé ou limite atteinte */}
               <div className="flex items-center border border-gray-300 rounded-md bg-white">
-                <button onClick={() => handleQtyChange(-1)} className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50" disabled={quantity <= 1}>-</button>
+                <button 
+                  onClick={() => handleQtyChange(-1)} 
+                  className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50" 
+                  disabled={quantity <= 1 || currentStockQty <= 0}
+                >-</button>
                 <span className="px-4 py-3 min-w-[3rem] text-center font-medium border-x border-gray-300">{quantity}</span>
-                <button onClick={() => handleQtyChange(1)} className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50" disabled={quantity >= product.stock_quantity}>+</button>
+                <button 
+                  onClick={() => handleQtyChange(1)} 
+                  className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50" 
+                  disabled={quantity >= currentStockQty || currentStockQty <= 0}
+                >+</button>
               </div>
 
-              {/* Bouton Panier */}
+              {/* Bouton Panier : Désactivé si stock à 0 */}
               <button 
                 className={`flex-1 min-w-[200px] py-3.5 rounded-md font-bold text-lg transition-colors ${
-                  product.stock_quantity > 0 
+                  currentStockQty > 0 
                     ? 'bg-jardinerie-primary text-white hover:bg-green-700' 
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
-                disabled={product.stock_quantity <= 0}
+                disabled={currentStockQty <= 0}
               >
-                {product.stock_quantity > 0 ? 'Ajouter au panier' : 'Rupture de stock'}
+                {currentStockQty > 0 ? 'Ajouter au panier' : 'Rupture de stock'}
               </button>
             </div>
           </div>

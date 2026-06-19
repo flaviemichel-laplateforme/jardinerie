@@ -8,7 +8,7 @@ export default function StockBadge({ quantity, statusOverride }) {
     colorClass = 'bg-red-100 text-red-700 border-red-200';
   } else if (statusOverride === 'stock faible' || (quantity > 0 && quantity <= 5)) {
     text = 'Stock faible';
-    colorClass = 'bg-orange-100 text-orange-800 border-orange-200';
+    colorClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
   }
 
   return (
