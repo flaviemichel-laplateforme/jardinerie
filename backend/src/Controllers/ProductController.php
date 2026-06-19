@@ -113,4 +113,20 @@ class ProductController
             'data' => $result['data']
         ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     }
+
+    /**
+     * Endpoint : GET /api/products/{id}
+     */
+    public function checkAvailability(int $id): void
+    {
+        header('Content-type: application/json; charset=utf-8');
+
+        $response = $this->productService->checkAvailability($id);
+
+        http_response_code($response['code']);
+
+        unset($response['code']);
+
+        echo json_encode($response);
+    }
 }

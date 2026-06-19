@@ -3,8 +3,7 @@
 namespace App\Services;
 
 use App\Models\ProductModel;
-use PDOException;
-use Exception;
+
 
 class ProductService
 {
@@ -27,7 +26,7 @@ class ProductService
                 'success' => true,
                 'data' => $products
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // 1. On loggue l'erreur technique "brute" pour le développeur (dans les logs du serveur)
             error_log("Erreur critique dans ProductService : " . $e->getMessage());
 
@@ -64,7 +63,7 @@ class ProductService
                 'code' => 200,
                 'data' => $product
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // 4. Crash technique
             error_log("Erreur critique dans ProductService (getProductDetails) pour l'ID {$id} : " . $e->getMessage());
 
@@ -72,6 +71,50 @@ class ProductService
                 'success' => false,
                 'code' => 500,
                 'message' => "Impossible de récupérer les informations du produit pour le moment."
+            ];
+        }
+    }
+
+    /**
+     * Function qui vérifie la disponibilité et calcule le statut du stock
+     */
+    public function checkAvailability(int $id): array
+    {
+        try {
+            $stock = $this->productModel->getStockQuantity($id);
+
+            // Si la méthode Model a renvoyé null (produit inexistant ou inactif)
+            if ($stock === null) {
+
+                return [
+                    'success' => false,
+                    'code' => 404,
+                    'error' => "Produit introuvable."
+                ];
+            }
+
+            $status = 'En stock';
+
+            if ($stock <= 0) {
+                $status = 'Indisponible';
+            } elseif ($stock <= 5) {
+                $status = 'Stock faible';
+            }
+
+            return [
+                'success' => true,
+                'code' => 200,
+                'data' => [
+                    'product_id' => $id,
+                    'stock_quantity' => $stock,
+                    'status' => $status
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'code' => 500,
+                'error' => "Erreur lors de la vérification des stocks."
             ];
         }
     }

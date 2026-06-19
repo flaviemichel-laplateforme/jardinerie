@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\DepartmentModel;
-use Exception;
+
 
 class DepartmentService
 {
@@ -15,8 +15,8 @@ class DepartmentService
     {
         try {
             return $this->departmentModel->findAll();
-        } catch (Exception $e) {
-            throw new Exception("Erreur lors de la récupération des rayons: " . $e->getMessage());
+        } catch (\Exception $e) {
+            throw new \Exception("Erreur lors de la récupération des rayons: " . $e->getMessage());
         }
     }
 }
