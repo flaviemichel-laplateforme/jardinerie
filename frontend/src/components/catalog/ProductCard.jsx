@@ -80,7 +80,7 @@ export default function ProductCard({ product }) {
 
           {/* Bouton d'action (Lien vers la page détail) */}
           <Link 
-            to={`/vegetaux/${id}`}
+            to={`/produit/${id}`}
             className="self-start rounded-full border border-jardinerie-primary bg-transparent px-8 py-2 text-xs font-bold text-jardinerie-text transition-all hover:border-white hover:bg-jardinerie-primary hover:text-jardinerie-light"
           >
             Voir le détail

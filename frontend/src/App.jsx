@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import MainLayout from './components/layouts/MainLayout';
 import Catalog from './pages/public/Catalog';
+import ProductDetail from './pages/public/ProductDetail';
 
 // ==========================================
 // 1. PLACEHOLDERS (Composants temporaires)
@@ -8,7 +9,6 @@ import Catalog from './pages/public/Catalog';
 
 // --- ZONE BLEUE : Public ---
 const Home = () => <div className="p-10 text-center">Accueil Jardinerie</div>;
-const ProductDetail = () => <div className="p-10 text-center">Fiche Produit (Détails)</div>;
 const Jardinage = () => <div className="p-10 text-center">Rayon Jardinage</div>;
 
 // --- ZONE ORANGE : Authentification & Espace Client ---
@@ -44,7 +44,7 @@ const router = createBrowserRouter([
       // 🔵 ZONE PUBLIQUE
       { index: true, element: <Home /> },
       { path: 'vegetaux', element: <Catalog /> },
-      { path: 'vegetaux/:id', element: <ProductDetail /> }, // :id = URL dynamique pour la fiche produit
+      { path: 'produit/:id', element: <ProductDetail /> }, // :id = URL dynamique pour la fiche produit
       { path: 'jardinage', element: <Jardinage /> },
       
       // 🟠 AUTHENTIFICATION
