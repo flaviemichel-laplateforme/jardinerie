@@ -84,4 +84,33 @@ class ProductController
         ], JSON_UNESCAPED_UNICODE);
         return;
     }
+
+    /**
+     * Endpoint : GET /api/products/{id}
+     */
+    public function show(int $id): void
+    {
+        header('content-type: application/json; charset utf-8');
+
+        // On appelle le service
+        $result = $this->productService->getProductDetails($id);
+
+        //On applique le code HTTP décidé par le service
+        $code = $result['code'] ?? 500;
+        http_response_code($code);
+
+        // On formate la réponse JSON selon le statut
+        if (!$result['success']) {
+            echo json_encode([
+                'status' => $code,
+                'error' => $result['message']
+            ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+            return;
+        }
+
+        echo json_encode([
+            'status' => $code,
+            'data' => $result['data']
+        ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    }
 }

@@ -125,9 +125,6 @@ class ProductModel
                 $params['price_max'] = $filters['price_max'];
             }
 
-
-
-
             // Filtre par Critères (Dépolluante, etc.) avec optimisation EXISTS
             if (!empty($filters['criteria'])) {
                 $critIds = explode(',', $filters['criteria']);
@@ -161,5 +158,43 @@ class ProductModel
         } catch (Exception $e) {
             throw new Exception("Erreur lors de la récupération du catalogue : " . $e->getMessage());
         }
+    }
+
+    /**
+     * Récupère un produit spécifique par son ID avec ses détails botaniques.
+     */
+    public function findById(int $id): ?array
+    {
+        $db = Database::getConnection();
+
+        // Jointure ciblée pour récupérer la fiche complète (Produit + Botanique + Catégorie)
+        $sql = "SELECT
+                    p.id,
+                    p.name AS product_name,
+                    p.description,
+                    p.price_tax_incl,
+                    p.stock_quantity,
+                    p.main_image_url,
+                    pl.id AS plant_id,
+                    pl.common_name,
+                    pl.latin_name,
+                    pl.genus,
+                    pl.species,
+                    pl.sun_exposure,
+                    pl.water_requirement,
+                    c.name AS category_name,
+                    s.name AS subcategory_name
+                FROM products p
+                LEFT JOIN plants pl ON p.id = pl.product_id
+                LEFT JOIN subcategories s ON p.subcategory_id = s.id
+                LEFT JOIN categories c ON s.category_id = c.id
+                WHERE p.id = :id AND p.is_active = 1";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $product ?: null;
     }
 }
