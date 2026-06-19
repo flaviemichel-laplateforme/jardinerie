@@ -4,8 +4,10 @@ import SearchBar from './SearchBar';
 import logoImage from '../../../assets/img/Logo.png';
 import jardinierIcon from '../../../assets/img/icone-jardinier.svg';
 import panierIcon from '../../../assets/img/icone-panier.svg';
+import { useCart } from '../../../contexts/CartContext';
 
 export default function Header() {
+  const { cartCount } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -32,12 +34,16 @@ export default function Header() {
             <img src={jardinierIcon} alt="" aria-hidden="true" className="h-11 w-11 object-contain" />
           </Link>
 
-          {/* Icône Panier (Panier fleuri) */}
+          {/* Icône Panier DYNAMIQUE */}
           <Link to="/cart" className="hover:opacity-80 transition-opacity relative flex flex-col items-center">
             <img src={panierIcon} alt="" aria-hidden="true" className="h-12 w-12 object-contain" />
-            <span className="absolute -top-1 -right-2 bg-jardinerie-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-jardinerie-bg">
-              0
-            </span>
+            
+            {/* Rendu conditionnel : La pastille n'existe dans le DOM que si le panier contient au moins 1 article */}
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-2 bg-jardinerie-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-jardinerie-bg">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
           </Link>
 
         </div>
