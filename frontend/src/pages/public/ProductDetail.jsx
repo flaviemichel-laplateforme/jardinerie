@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
-import StockBadge from '../../components/ui/StockBadge'; // 1. IMPORT DU BADGE
+import StockBadge from '../../components/ui/StockBadge';
+import { useCart } from '../../contexts/CartContext';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
 
@@ -16,6 +17,7 @@ export default function ProductDetail() {
   const [showFullBotanical, setShowFullBotanical] = useState(false);
   const [realTimeStock, setRealTimeStock] = useState(null); // 2. ÉTAT POUR LE TEMPS RÉEL
 
+  const { addToCart } = useCart();
   // --- REQUÊTE API PRINCIPALE ---
   useEffect(() => {
     const controller = new AbortController();
@@ -212,6 +214,11 @@ export default function ProductDetail() {
 
               {/* Bouton Panier : Désactivé si stock à 0 */}
               <button 
+              
+                onClick={() => {
+                  addToCart(product, quantity);
+                  alert(`${quantity} ${product.product_name} ajouté(s) au panier !`);
+                }}
                 className={`flex-1 min-w-[200px] py-3.5 rounded-md font-bold text-lg transition-colors ${
                   currentStockQty > 0 
                     ? 'bg-jardinerie-primary text-white hover:bg-green-700' 
