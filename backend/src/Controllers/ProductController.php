@@ -85,6 +85,9 @@ class ProductController
         return;
     }
 
+    /**
+     * Endpoint : GET /api/products/{id}
+     */
     public function show(int $id): void
     {
         header('content-type: application/json; charset utf-8');
@@ -101,13 +104,13 @@ class ProductController
             echo json_encode([
                 'status' => $code,
                 'error' => $result['message']
-            ], JSON_UNESCAPED_UNICODE);
+            ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
             return;
         }
 
         echo json_encode([
             'status' => $code,
             'data' => $result['data']
-        ], JSON_UNESCAPED_UNICODE);
+        ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     }
 }
