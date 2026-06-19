@@ -1,21 +1,18 @@
 import { Link } from 'react-router-dom';
+import StockBadge from '../ui/StockBadge';
 
 export default function ProductCard({ product }) {
-  // Déstructuration sécurisée avec des valeurs par défaut pour éviter les crashs
-  // si certaines données ne sont pas encore gérées par l'API PHP.
+  // Déstructuration sécurisée avec des valeurs par défaut
   const {
     id,
     product_name,
-    subcategory_name, // Joue le rôle du "Nom commun"
+    subcategory_name, 
     price_tax_incl,
     main_image_url,
     stock_quantity = 0,
-    // Simulations des futures données de votre table `plants`
     sun_exposure = 'sun', 
     packaging_options = 2 
   } = product;
-
-  const inStock = stock_quantity > 0;
 
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-[20px] bg-jardinerie-bg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
@@ -40,11 +37,9 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        {/* Badge de Stock (Bas Gauche) */}
-        <div className={`absolute bottom-3 left-3 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm ${
-          inStock ? 'bg-jardinerie-primary' : 'bg-[#E63946]'
-        }`}>
-          {inStock ? 'En stock' : 'Épuisé'}
+        {/* Badge de Stock Dynamique (Bas Gauche) */}
+        <div className="absolute bottom-3 left-3 shadow-sm">
+          <StockBadge quantity={stock_quantity} />
         </div>
       </div>
 
@@ -73,7 +68,6 @@ export default function ProductCard({ product }) {
               À partir de
             </p>
             <p className="text-2xl font-black text-jardinerie-text">
-              {/* Remplacement du point par une virgule pour l'affichage français */}
               {parseFloat(price_tax_incl).toFixed(2).replace('.', ',')}€
             </p>
           </div>
