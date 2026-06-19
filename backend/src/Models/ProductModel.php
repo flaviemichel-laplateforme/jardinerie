@@ -125,9 +125,6 @@ class ProductModel
                 $params['price_max'] = $filters['price_max'];
             }
 
-
-
-
             // Filtre par Critères (Dépolluante, etc.) avec optimisation EXISTS
             if (!empty($filters['criteria'])) {
                 $critIds = explode(',', $filters['criteria']);
@@ -161,5 +158,23 @@ class ProductModel
         } catch (Exception $e) {
             throw new Exception("Erreur lors de la récupération du catalogue : " . $e->getMessage());
         }
+    }
+
+    /**
+     * Récupère un produit spécifique par son ID avec ses détails botaniques.
+     */
+    public function findById(int $id): ?array
+    {
+        $db = Database::getConnection();
+
+        // 1. Requête SQL moderne avec INNER JOIN pour l'arborescence
+        // et LEFT JOIN pour inclure les données botaniques sans exclure les outils
+        $sql = "SELECT * products WHERE id = :id AND is_active = 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $product ?: null;
     }
 }
