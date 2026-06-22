@@ -1,11 +1,26 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
-// Importez votre contexte d'authentification (à adapter selon le nom de votre fichier)
-// import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Trash2, CreditCard, ShieldCheck, Smartphone } from 'lucide-react';
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
+
+  // Récupération des outils de navigation et d'authentification ---
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth(); 
+
+  // La fonction intelligente du bouton ---
+  const handleCheckout = () => {
+    if (isAuthenticated) {
+      // S'il a son "badge" (true), on l'envoie à l'étape 2
+      navigate('/commande/livraison');
+    } else {
+      // S'il n'est pas connecté (false), on l'envoie vers la connexion
+      // Et on glisse un petit post-it dans l'URL pour lui dire où revenir après !
+      navigate('/connexion', { state: { from: '/commande/livraison' } });
+    }
+  };
 
   const totalTTC = cartTotal;
   
@@ -145,12 +160,12 @@ export default function Cart() {
               <span className="text-2xl font-black text-jardinerie-primary">{finalTotal.toFixed(2).replace('.', ',')} €</span>
             </div>
 
-            <Link 
-              to="/commande/livraison"
+            <button 
+              onClick={handleCheckout}
               className="block w-full text-center bg-transparent border border-jardinerie-text rounded-md py-3 text-sm font-bold text-jardinerie-text uppercase tracking-wider hover:bg-jardinerie-primary hover:text-white hover:border-jardinerie-primary transition-all mb-6"
             >
               Valider
-            </Link>
+            </button>
 
             {/* 3. Badges de réassurance avec Lucide */}
             <div className="flex flex-col items-center">
