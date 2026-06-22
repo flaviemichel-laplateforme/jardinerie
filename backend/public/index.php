@@ -91,6 +91,7 @@ $router->map('GET', '/api/products', 'ProductController#index', 'api_products_li
 $router->map('GET', '/api/products/[i:id]', 'ProductController#show', 'api_product_show');
 $router->map('GET', '/api/products/[i:id]/availability', 'ProductController#checkAvailability', 'api_product_availability');
 $router->map('GET', '/api/filters', 'FilterController#index', 'api_filters_list');
+$router->map('POST', '/api/auth/register', 'AuthController');
 // -----------------------------------------------------------------------
 // 5. MATCHING & DISPATCHING (Exécution)
 // -----------------------------------------------------------------------
