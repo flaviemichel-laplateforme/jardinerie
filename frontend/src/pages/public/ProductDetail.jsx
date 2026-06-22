@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import StockBadge from '../../components/ui/StockBadge';
 import { useCart } from '../../contexts/CartContext';
+import toast, { Toaster } from 'react-hot-toast';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
 
@@ -217,7 +218,7 @@ export default function ProductDetail() {
               
                 onClick={() => {
                   addToCart(product, quantity);
-                  alert(`${quantity} ${product.product_name} ajouté(s) au panier !`);
+                  toast.success(`${quantity} ${product.product_name} ajouté(s) au panier !`);
                 }}
                 className={`flex-1 min-w-[200px] py-3.5 rounded-md font-bold text-lg transition-colors ${
                   currentStockQty > 0 
