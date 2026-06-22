@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import MainLayout from './components/layouts/MainLayout';
 import Catalog from './pages/public/Catalog';
 import ProductDetail from './pages/public/ProductDetail';
@@ -91,5 +92,23 @@ const router = createBrowserRouter([
 // ==========================================
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      
+      {/* Configuration globale du Toaster */}
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          duration: 4000, // Le toast restera visible 4 secondes
+          style: {
+            background: '#ffffff',
+            color: '#333333',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            borderRadius: '12px',
+          },
+        }} 
+      />
+    </>
+  );
 }
