@@ -1,5 +1,22 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+
+// CONFIGURATION CORS (Support des Cookies)
+$allowedOrigins = [
+    'http://localhost:5173', // Votre front-end React en développement
+    'https://www.votre-jardinerie.fr' // Votre futur front-end en production
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// Si l'origine de la requête fait partie de nos origines autorisées, on l'affiche explicitement
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+} else {
+    // Fallback de sécurité
+    header("Access-Control-Allow-Origin: http://localhost:5173");
+}
+
+header("Access-Control-Allow-Credentials: true"); // INDISPENSABLE pour les cookies HttpOnly
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
@@ -91,7 +108,7 @@ $router->map('GET', '/api/products', 'ProductController#index', 'api_products_li
 $router->map('GET', '/api/products/[i:id]', 'ProductController#show', 'api_product_show');
 $router->map('GET', '/api/products/[i:id]/availability', 'ProductController#checkAvailability', 'api_product_availability');
 $router->map('GET', '/api/filters', 'FilterController#index', 'api_filters_list');
-$router->map('POST', '/api/auth/register', 'AuthController');
+$router->map('POST', '/api/auth/register', 'AuthController#register', 'api_auth_register');
 // -----------------------------------------------------------------------
 // 5. MATCHING & DISPATCHING (Exécution)
 // -----------------------------------------------------------------------

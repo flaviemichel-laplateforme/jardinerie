@@ -35,7 +35,7 @@ class UserModel
         $db = Database::getConnection();
 
         $sql = "INSERT INTO users (first_name, last_name, email, password, role)
-                VALUES (:first_name, :last_name, :email, :password, 'customer'";
+                VALUES (:first_name, :last_name, :email, :password, 'customer')";
         $stmt = $db->prepare($sql);
         $stmt->execute([
             ':first_name' => $firstName,
