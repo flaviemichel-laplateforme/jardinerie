@@ -29,13 +29,15 @@ class ProductModel
                         c.id AS category_id,
                         c.name AS category_name,
                         d.name AS department_name,
-                        pl.sun_exposure
+                        pl.sun_exposure,
+                        t.rate AS tax_rate
                     FROM products p
                     INNER JOIN subcategories s ON p.subcategory_id = s.id
                     INNER JOIN categories c ON s.category_id = c.id
                     INNER JOIN departments d ON c.department_id = d.id
                     LEFT JOIN plants pl ON p.id = pl.product_id
-                    WHERE p.is_active = 1";
+                    LEFT JOIN taxes t ON p.tax_id = t.id
+                    WHERE p.id = :product_id AND p.is_active = 1";
 
             $conditions = [];
             $params = [];

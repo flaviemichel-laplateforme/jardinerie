@@ -42,7 +42,8 @@ export function CartProvider({ children }) {
       return [...prevItems, { 
         id: product.id, 
         name: product.product_name, 
-        price: parseFloat(product.price_tax_incl), 
+        price: parseFloat(product.price_tax_incl),
+        tax_rate: parseFloat(product.rate || product.tax_rate || 20),
         image: product.main_image_url,
         stock_max: product.stock_quantity,
         quantity: quantity 

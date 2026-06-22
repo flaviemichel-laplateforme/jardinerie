@@ -30,12 +30,12 @@ export default function Header() {
         <div className="flex items-center space-x-20 mr-20">
           
           {/* Icône Jardinier (Profil) */}
-          <Link to="/login" className="hover:opacity-80 transition-opacity flex flex-col items-center">
+          <Link to="/connexion" className="hover:opacity-80 transition-opacity flex flex-col items-center">
             <img src={jardinierIcon} alt="" aria-hidden="true" className="h-11 w-11 object-contain" />
           </Link>
 
           {/* Icône Panier DYNAMIQUE */}
-          <Link to="/cart" className="hover:opacity-80 transition-opacity relative flex flex-col items-center">
+          <Link to="/panier" className="hover:opacity-80 transition-opacity relative flex flex-col items-center">
             <img src={panierIcon} alt="" aria-hidden="true" className="h-12 w-12 object-contain" />
             
             {/* Rendu conditionnel : La pastille n'existe dans le DOM que si le panier contient au moins 1 article */}

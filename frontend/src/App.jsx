@@ -3,6 +3,8 @@ import { Toaster } from 'react-hot-toast';
 import MainLayout from './components/layouts/MainLayout';
 import Catalog from './pages/public/Catalog';
 import ProductDetail from './pages/public/ProductDetail';
+import Cart from './pages/public/Cart';
+
 
 // ==========================================
 // 1. PLACEHOLDERS (Composants temporaires)
@@ -21,7 +23,7 @@ const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV
 const CustomerSettings = () => <div className="p-10 text-center">Infos et Mot de passe</div>;
 
 // --- ZONE VERTE : Tunnel d'achat ---
-const Cart = () => <div className="p-10 text-center">Mon Panier</div>;
+
 const CheckoutDelivery = () => <div className="p-10 text-center">Étape 1 : Livraison</div>;
 const CheckoutPayment = () => <div className="p-10 text-center">Étape 2 : Paiement</div>;
 const CheckoutConfirmation = () => <div className="p-10 text-center">Confirmation de commande</div>;
