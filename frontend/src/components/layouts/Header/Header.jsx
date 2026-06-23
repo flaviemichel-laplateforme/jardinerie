@@ -1,14 +1,27 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import logoImage from '../../../assets/img/Logo.png';
 import jardinierIcon from '../../../assets/img/icone-jardinier.svg';
 import panierIcon from '../../../assets/img/icone-panier.svg';
 import { useCart } from '../../../contexts/CartContext';
+// IMPORT CRUCIAL : Notre contexte d'authentification
+import { useAuth } from '../../../contexts/AuthContext'; 
 
 export default function Header() {
   const { cartCount } = useCart();
+  const { isAuthenticated, user, logout } = useAuth(); // Récupération des données utilisateur
+  const navigate = useNavigate();
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // Pour le petit menu profil
+
+  // Gère la déconnexion
+  const handleLogout = async () => {
+    await logout();
+    setIsProfileMenuOpen(false); // Ferme le menu
+    navigate('/'); // Redirige vers l'accueil
+  };
 
   return (
     <header className="w-full shadow-md font-sans">
@@ -26,21 +39,69 @@ export default function Header() {
 
         <SearchBar />
 
-        {/* Icônes utilisateur & panier */}
-        <div className="flex items-center space-x-20 mr-20">
+        {/* ========================================== */}
+        {/* Icônes utilisateur & panier                */}
+        {/* ========================================== */}
+        <div className="flex items-center space-x-12 mr-10 relative">
           
-          {/* Icône Jardinier (Profil) */}
-          <Link to="/connexion" className="hover:opacity-80 transition-opacity flex flex-col items-center">
-            <img src={jardinierIcon} alt="" aria-hidden="true" className="h-11 w-11 object-contain" />
-          </Link>
-
-          {/* Icône Panier DYNAMIQUE */}
-          <Link to="/panier" className="hover:opacity-80 transition-opacity relative flex flex-col items-center">
-            <img src={panierIcon} alt="" aria-hidden="true" className="h-12 w-12 object-contain" />
+          {/* LOGIQUE D'AUTHENTIFICATION ICI */}
+          {isAuthenticated ? (
             
-            {/* Rendu conditionnel : La pastille n'existe dans le DOM que si le panier contient au moins 1 article */}
+            // --- UTILISATEUR CONNECTÉ ---
+            <div className="relative">
+              <button 
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                {/* On garde votre icône jardinier */}
+                <img src={jardinierIcon} alt="Profil" className="h-10 w-10 object-contain" />
+                <span className="text-sm font-bold text-jardinerie-text hidden md:block">
+                  {user?.first_name}
+                </span>
+              </button>
+
+              {/* Menu déroulant du profil */}
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-3 w-48 rounded-xl bg-white p-2 shadow-xl border border-gray-100 z-50">
+                  <div className="px-4 py-2 border-b border-gray-100 mb-2">
+                    <p className="text-sm font-bold text-jardinerie-text">{user?.first_name} {user?.last_name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  </div>
+                  
+                  <Link 
+                    to="/mon-compte" 
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="block rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-jardinerie-bg hover:text-jardinerie-primary"
+                  >
+                    Mon tableau de bord
+                  </Link>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="mt-1 w-full text-left rounded-lg px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50"
+                  >
+                    Déconnexion
+                  </button>
+                </div>
+              )}
+            </div>
+
+          ) : (
+            
+            // --- UTILISATEUR DÉCONNECTÉ ---
+            <Link to="/connexion" className="flex flex-col items-center hover:opacity-80 transition-opacity">
+              <img src={jardinierIcon} alt="Se connecter" className="h-10 w-10 object-contain mb-1" />
+              <span className="text-xs font-medium text-jardinerie-text">Connexion</span>
+            </Link>
+
+          )}
+
+          {/* Icône Panier DYNAMIQUE  */}
+          <Link to="/panier" className="hover:opacity-80 transition-opacity relative flex flex-col items-center">
+            <img src={panierIcon} alt="Panier" className="h-11 w-11 object-contain" />
+            
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-2 bg-jardinerie-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-jardinerie-bg">
+              <span className="absolute -top-1 -right-2 bg-jardinerie-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-jardinerie-bg shadow-sm">
                 {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
@@ -49,7 +110,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Barre de navigation */}
+      {/* Barre de navigation  */}
       <nav className="bg-jardinerie-primary text-jardinerie-light px-6 py-3">
         <ul className="flex items-center space-x-12 text-sm font-medium uppercase tracking-wider">
           <li>
@@ -71,44 +132,18 @@ export default function Header() {
         </ul>
       </nav>
 
-      <div
-        className={`fixed inset-0 z-50 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        aria-hidden={!isMenuOpen}
-      >
-        <button
-          type="button"
-          className="absolute inset-0 bg-black/40"
-          onClick={() => setIsMenuOpen(false)}
-          aria-label="Fermer le menu"
-        />
-
-        <aside
-          className={`relative z-10 h-full w-72 max-w-[85vw] bg-white shadow-2xl transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        >
+      {/* Menu burger latéral  */}
+      <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} aria-hidden={!isMenuOpen}>
+        <button type="button" className="absolute inset-0 bg-black/40" onClick={() => setIsMenuOpen(false)} aria-label="Fermer le menu" />
+        <aside className={`relative z-10 h-full w-72 max-w-[85vw] bg-white shadow-2xl transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex items-center justify-between border-b border-jardinerie-primary/20 px-5 py-4">
             <span className="text-sm font-semibold uppercase tracking-wider text-jardinerie-primary">Menu</span>
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen(false)}
-              className="text-2xl leading-none text-jardinerie-primary hover:opacity-70"
-              aria-label="Fermer le menu"
-            >
-              ×
-            </button>
+            <button type="button" onClick={() => setIsMenuOpen(false)} className="text-2xl leading-none text-jardinerie-primary hover:opacity-70" aria-label="Fermer le menu">×</button>
           </div>
-
           <nav className="px-5 py-6">
             <ul className="space-y-4 text-jardinerie-text">
-              <li>
-                <Link to="/vegetaux" onClick={() => setIsMenuOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-jardinerie-bg">
-                  Nos végétaux
-                </Link>
-              </li>
-              <li>
-                <Link to="/jardinage" onClick={() => setIsMenuOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-jardinerie-bg">
-                  Jardinage
-                </Link>
-              </li>
+              <li><Link to="/vegetaux" onClick={() => setIsMenuOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-jardinerie-bg">Nos végétaux</Link></li>
+              <li><Link to="/jardinage" onClick={() => setIsMenuOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-jardinerie-bg">Jardinage</Link></li>
             </ul>
           </nav>
         </aside>
