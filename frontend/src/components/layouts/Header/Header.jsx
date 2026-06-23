@@ -20,7 +20,7 @@ export default function Header() {
           <img
             src={logoImage}
             alt="La Jardinerie"
-            className="h-24 w-24 rounded-full border border-jardinerie-primary bg-white object-cover shadow-sm scale-110"
+            className="h-24 w-70 rounded-full border border-jardinerie-primary bg-white object-cover shadow-sm scale-110"
           />
         </Link>
 

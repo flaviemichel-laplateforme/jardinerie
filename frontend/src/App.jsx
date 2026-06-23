@@ -4,6 +4,7 @@ import MainLayout from './components/layouts/MainLayout';
 import Catalog from './pages/public/Catalog';
 import ProductDetail from './pages/public/ProductDetail';
 import Cart from './pages/public/Cart';
+import Register from './pages/public/Register';
 
 
 // ==========================================
@@ -16,7 +17,7 @@ const Jardinage = () => <div className="p-10 text-center">Rayon Jardinage</div>;
 
 // --- ZONE ORANGE : Authentification & Espace Client ---
 const Login = () => <div className="p-10 text-center">Page de Connexion</div>;
-const Register = () => <div className="p-10 text-center">Page d'Inscription</div>;
+
 const CustomerDashboard = () => <div className="p-10 text-center">Mon Profil (Tableau de bord client)</div>;
 const CustomerOrders = () => <div className="p-10 text-center">Mes Commandes</div>;
 const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;

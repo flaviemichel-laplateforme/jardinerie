@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\UserModel;
-use Exception;
 
 class AuthService
 {
@@ -52,7 +51,7 @@ class AuthService
                     ]
                 ]
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'success' => false,
                 'code' => 500,
