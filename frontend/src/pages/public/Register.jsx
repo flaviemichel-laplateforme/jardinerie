@@ -53,7 +53,9 @@ export default function Register() {
 
     if (response.success) {
       toast.success("Bienvenue ! Votre compte a été créé.");
-      navigate('/connexion');
+      login(response.data.user); 
+      const from = location.state?.from || '/';
+      navigate(from, { replace: true });
     }
   };
 
@@ -170,7 +172,7 @@ export default function Register() {
                   type="submit"
                   disabled={loading}
                   className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                    loading ? 'bg-jardinerie-primary cursor-not-allowed' : 'bg-jardinerie-primary hover:bg-green-00 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
+                    loading ? 'bg-jardinerie-primary cursor-not-allowed' : 'bg-jardinerie-primary hover:bg-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
                   } transition-colors`}
                 >
                   {loading ? 'Création en cours...' : 'Créer mon compte'}
