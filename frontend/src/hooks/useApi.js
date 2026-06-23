@@ -17,10 +17,10 @@ export function useApi() {
             const response = await fetch(url, option);
             const result = await response.json();
 
-            if(!response.ok || result.status !== 200) {
-                throw new Error(result.error || `Erreur HTTP : $response.status`);
+            if (!response.ok || result.success === false) {
+                // On cherche 'message' (notre backend) ou 'error', avec la bonne syntaxe d'interpolation ${}
+                throw new Error(result.message || result.error || `Erreur HTTP : ${response.status}`);
             }
-
             setData(result.data);
             return { success: true, data: result.data };
 
