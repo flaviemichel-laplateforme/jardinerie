@@ -119,10 +119,10 @@ class AuthController
 
         if (!$result['success']) {
             http_response_code($result['code']);
-
-            // CORRECTION ICI : On renvoie TOUT le contenu de $result (y compris notre bloc 'debug')
-            echo json_encode($result);
-
+            echo json_encode([
+                "success" => false,
+                "message" => $result['message']
+            ]);
             return;
         }
 
