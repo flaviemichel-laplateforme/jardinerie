@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\AuthService;
+use App\Core\JwtHelper;
 
 class AuthController
 {
@@ -17,8 +18,6 @@ class AuthController
     {
         header("Content-Type: application/json; charset=UTF-8");
 
-        // 1. GESTION DES MÉTHODES HTTP EN PRIORITÉ
-        // Gestion de la requête de pré-vérification du navigateur (Preflight)
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(200);
             exit;
@@ -30,18 +29,15 @@ class AuthController
             return;
         }
 
-        // 2. LECTURE ET DÉCODAGE DU JSON (Une seule fois)
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
-        // 3. SÉCURITÉ : Vérification du format
         if (!is_array($data)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Format de données invalide. JSON attendu."]);
             return;
         }
 
-        // 4. VALIDATION DE SURFACE (Champs obligatoires)
         if (
             empty($data['first_name']) ||
             empty($data['last_name']) ||
@@ -56,10 +52,8 @@ class AuthController
             return;
         }
 
-        // 5. APPEL AU SERVICE (Logique métier)
         $result = $this->authService->register($data);
 
-        // 6. GESTION DE L'ÉCHEC (Ex: email déjà pris)
         if (!$result['success']) {
             http_response_code($result['code']);
             echo json_encode([
@@ -69,23 +63,142 @@ class AuthController
             return;
         }
 
-        // 7. SUCCÈS : Configuration et envoi du Cookie HttpOnly
         $cookieOptions = [
-            'expires' => time() + (3600 * 24 * 7), // Expire dans 7 jours
+            'expires' => time() + (3600 * 24 * 7),
             'path' => '/',
             'domain' => 'localhost',
-            'secure' => false, // À passer à true en production (HTTPS)
-            'httponly' => true, // Le bouclier anti-XSS
+            'secure' => false, // Passer à true en HTTPS
+            'httponly' => true,
             'samesite' => 'Lax'
         ];
 
         setcookie('jardinerie_session', $result['data']['sessionToken'], $cookieOptions);
 
-        // 8. RÉPONSE JSON FINALE AU FRONT-END
-        http_response_code($result['code']); // Code 201 Created
+        http_response_code($result['code']);
         echo json_encode([
             "success" => true,
             "message" => "Compte créé avec succès.",
+            "data" => [
+                "user" => $result['data']['user']
+            ]
+        ]);
+    }
+
+    /**
+     * Point d'entrée pour la connexion (POST /api/auth/login)
+     */
+    public function login(): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(["success" => false, "message" => "Méthode non autorisée, POST requis."]);
+            return;
+        }
+
+        $rawInput = file_get_contents("php://input");
+        $data = json_decode($rawInput, true);
+
+        if (empty($data['email']) || empty($data['password'])) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "L'adresse email et le mot de passe sont requis."
+            ]);
+            return;
+        }
+
+        // Appel au service pour vérifier les identifiants et générer le JWT
+        $result = $this->authService->login($data['email'], $data['password']);
+
+        if (!$result['success']) {
+            http_response_code($result['code']);
+            echo json_encode([
+                "success" => false,
+                "message" => $result['message']
+            ]);
+            return;
+        }
+
+        // Sécurisation JWT dans le cookie HttpOnly
+        $cookieOptions = [
+            'expires' => time() + 86400, // Expire dans 24h
+            'path' => '/',
+            'domain' => 'localhost',
+            'secure' => false, // Passer à true en HTTPS
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ];
+
+        setcookie('jardinerie_session', $result['data']['token'], $cookieOptions);
+
+        http_response_code($result['code']); // Code 200 OK
+        echo json_encode([
+            "success" => true,
+            "message" => "Connexion réussie.",
+            "data" => [
+                "user" => $result['data']['user']
+            ]
+        ]);
+    }
+
+    /**
+     * Point d'entrée pour vérifier la session active (GET /api/auth/me)
+     */
+    public function me(): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo json_encode(["success" => false, "message" => "Méthode non autorisée, GET requis."]);
+            return;
+        }
+
+        // 1. Vérification de la présence du cookie
+        $token = $_COOKIE['jardinerie_session'] ?? null;
+
+        if (!$token) {
+            http_response_code(401);
+            echo json_encode(["success" => false, "message" => "Non authentifié."]);
+            return;
+        }
+
+        // 2. Vérification et décodage du JWT via le JwtHelper
+        $secret = $_ENV['JWT_SECRET'] ?? 'default_secret';
+        $payload = JwtHelper::verify($token, $secret);
+
+        if (!$payload) {
+            // Token invalide ou expiré, on supprime le cookie corrompu
+            setcookie('jardinerie_session', '', time() - 3600, '/');
+            http_response_code(401);
+            echo json_encode(["success" => false, "message" => "Session invalide ou expirée."]);
+            return;
+        }
+
+        // 3. Récupération des données utilisateur fraîches via le service
+        $result = $this->authService->getUserById($payload['id']);
+
+        if (!$result['success']) {
+            http_response_code($result['code']);
+            echo json_encode(["success" => false, "message" => $result['message']]);
+            return;
+        }
+
+        http_response_code(200);
+        echo json_encode([
+            "success" => true,
             "data" => [
                 "user" => $result['data']['user']
             ]

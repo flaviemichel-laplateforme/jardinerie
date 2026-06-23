@@ -59,4 +59,70 @@ class AuthService
             ];
         }
     }
+
+    /**
+     * Logique de connexion et génération du JWT
+     */
+    public function login(string $email, string $password): array
+    {
+        // 1. Récupération de l'utilisateur par email (via votre UserModel)
+        $user = $this->userModel->getUserByEmail($email);
+
+        // 2. Vérification du mot de passe
+        if (!$user || !password_verify($password, $user['password'])) {
+            return [
+                'success' => false,
+                'code' => 401,
+                'message' => 'Identifiants incorrects.'
+            ];
+        }
+
+        // 3. Création du Payload pour le JWT
+        $secret = $_ENV['JWT_SECRET'] ?? 'default_secret';
+        $payload = [
+            'id' => $user['id'],
+            'role' => $user['role'] ?? 'customer'
+        ];
+
+        // Génération du JWT (expire dans 24h)
+        $token = \App\Core\JwtHelper::generate($payload, $secret, 86400);
+
+        // Suppression du mot de passe avant l'envoi au Front-end
+        unset($user['password']);
+
+        return [
+            'success' => true,
+            'code' => 200,
+            'data' => [
+                'user' => $user,
+                'token' => $token
+            ]
+        ];
+    }
+
+    /**
+     * Récupération sécurisée d'un utilisateur par son ID
+     */
+    public function getUserById(int $id): array
+    {
+        $user = $this->userModel->findById($id);
+
+        if (!$user) {
+            return [
+                'success' => false,
+                'code' => 404,
+                'message' => 'Utilisateur introuvable.'
+            ];
+        }
+
+        unset($user['password']);
+
+        return [
+            'success' => true,
+            'code' => 200,
+            'data' => [
+                'user' => $user
+            ]
+        ];
+    }
 }

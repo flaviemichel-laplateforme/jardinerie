@@ -11,7 +11,8 @@ class UserModel
      * Cherche un utilisateur par email
      * Retourne l'ID de l'utilisateur s'il existe, sinon null.
      */
-    public function getUserByEmail(string $email): ?int
+    public function getUserByEmail(string $email): array|false 
+{
     {
         $db = Database::getConnection();
 
@@ -20,9 +21,9 @@ class UserModel
         $stmt = $db->prepare($sql);
         $stmt->execute([':email' => $email]);
 
-        $result = $stmt->fetchColumn();
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        return $result !== false ? (int)$result : null;
+        return $result;
     }
 
 
