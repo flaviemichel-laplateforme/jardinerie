@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../hooks/useApi'; // Ajustez le chemin si nécessaire
 
 export default function Login() {
@@ -42,7 +42,7 @@ export default function Login() {
     <div className="flex min-h-[80vh] items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
         <h2 className="mb-6 text-center text-3xl font-extrabold text-jardinerie-text">
-          Bon retour !
+          Se connecter !
         </h2>
         
         {/* Affichage de l'erreur gérée par useApi (en plus du toast éventuel) */}
