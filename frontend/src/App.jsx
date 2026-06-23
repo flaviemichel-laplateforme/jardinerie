@@ -5,6 +5,7 @@ import Catalog from './pages/public/Catalog';
 import ProductDetail from './pages/public/ProductDetail';
 import Cart from './pages/public/Cart';
 import Register from './pages/public/Register';
+import Home from './pages/public/Home';
 
 
 // ==========================================
@@ -12,7 +13,7 @@ import Register from './pages/public/Register';
 // ==========================================
 
 // --- ZONE BLEUE : Public ---
-const Home = () => <div className="p-10 text-center">Accueil Jardinerie</div>;
+// const Home = () => <div className="p-10 text-center">Accueil Jardinerie</div>;
 const Jardinage = () => <div className="p-10 text-center">Rayon Jardinage</div>;
 
 // --- ZONE ORANGE : Authentification & Espace Client ---
