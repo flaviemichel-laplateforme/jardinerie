@@ -73,7 +73,13 @@ class AuthService
             return [
                 'success' => false,
                 'code' => 401,
-                'message' => 'Identifiants incorrects.'
+                'message' => 'Identifiants incorrects.',
+                'debug' => [
+                    '1_email_cherche' => $email,
+                    '2_mot_de_passe_tape' => $password,
+                    '3_utilisateur_trouve_en_base' => $user,
+                    '4_le_mot_de_passe_est_il_valide' => $user ? password_verify($password, $user['password']) : 'Non testé car user non trouvé'
+                ]
             ];
         }
 

@@ -3,27 +3,23 @@
 namespace App\Models;
 
 use App\Core\Database;
-use PDO;
 
 class UserModel
 {
     /**
      * Cherche un utilisateur par email
-     * Retourne l'ID de l'utilisateur s'il existe, sinon null.
+     * Retourne les données de l'utilisateur s'il existe, sinon false.
      */
-    public function getUserByEmail(string $email): array|false 
-{
+    public function getUserByEmail(string $email): array|false
     {
         $db = Database::getConnection();
 
-        $sql = ("SELECT id FROM users WHERE email = :email LIMIT 1");
+        $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
 
         $stmt = $db->prepare($sql);
         $stmt->execute([':email' => $email]);
 
-        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        return $result;
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
 
