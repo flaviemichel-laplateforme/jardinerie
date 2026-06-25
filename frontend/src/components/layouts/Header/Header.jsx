@@ -128,7 +128,7 @@ export default function Header() {
             </button>
           </li>
           <li><Link to="/vegetaux" className="hover:underline">Nos végétaux</Link></li>
-          <li><Link to="/jardinage" className="hover:underline">Jardinage</Link></li>
+          <li><Link to="/jardinage" className="hover:underline">Nos produits de jardinage</Link></li>
           <li><Link to="/produits" className="hover:underline">Tous nos produits</Link></li>
         </ul>
       </nav>

@@ -97,7 +97,7 @@ export default function Catalog() {
       
       <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
-          {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos Végétaux & Produits"}
+          {searchQuery ? `Résultats pour "${searchQuery}"` : "Tous nos produits"}
         </h1>
         {products && (
           <span className="text-sm font-medium text-jardinerie-text/60">
