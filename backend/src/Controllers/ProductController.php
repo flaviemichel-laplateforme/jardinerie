@@ -60,6 +60,12 @@ class ProductController
             $filters['price_max'] = (float) $_GET['price_max'];
         }
 
+        //Limite dynamique
+        if (isset($_GET['limit']) && is_numeric($_GET['limit'])) {
+            // On s'assure d'obtenir un entier positif strict
+            $filters['limit'] = max(1, (int) $_GET['limit']);
+        }
+
         // 2. Appel à la couche métier (Service)
         $result = $this->productService->getCatalog($filters);
 
