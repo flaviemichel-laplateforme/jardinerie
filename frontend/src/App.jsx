@@ -8,6 +8,7 @@ import Register from './pages/public/Register';
 import Home from './pages/public/Home';
 import Login from './pages/public/Login';
 import Vegetaux from './pages/public/Vegetaux';
+import Jardinage from './pages/public/Jardinage';
 
 
 // ==========================================
@@ -16,7 +17,7 @@ import Vegetaux from './pages/public/Vegetaux';
 
 // --- ZONE BLEUE : Public ---
 // const Home = () => <div className="p-10 text-center">Accueil Jardinerie</div>;
-const Jardinage = () => <div className="p-10 text-center">Rayon Jardinage</div>;
+// const Jardinage = () => <div className="p-10 text-center">Rayon Jardinage</div>;
 
 // --- ZONE ORANGE : Authentification & Espace Client ---
 // const Login = () => <div className="p-10 text-center">Page de Connexion</div>;

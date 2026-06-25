@@ -5,7 +5,7 @@ import Spinner from '../../components/ui/Spinner';
 import ProductCard from '../../components/catalog/ProductCard';
 import FilterSidebar from '../../components/catalog/FilterSidebar'; 
 
-export default function Vegetaux() {
+export default function Jardinage() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: products, loading, error, request } = useApi();
@@ -13,8 +13,7 @@ export default function Vegetaux() {
   // Lecture des paramètres depuis l'URL du navigateur
   const searchQuery = searchParams.get('search') || '';
   const activeCategories = searchParams.get('categories') ? searchParams.get('categories').split(',') : [];
-  const activeExpositions = searchParams.get('expositions') ? searchParams.get('expositions').split(',') : [];
-  const activeWater = searchParams.get('water') ? searchParams.get('water').split(',') : [];
+  
   const activePrice = {
     min: searchParams.get('price_min') || '',
     max: searchParams.get('price_max') || ''
@@ -29,9 +28,9 @@ export default function Vegetaux() {
       // 1. On récupère les filtres tapés par l'utilisateur (categories, prix, etc.)
       const currentParams = new URLSearchParams(searchParams);
       
-      // 2. LE SECRET EST ICI : On FORCE le paramètre 'type=vegetaux' pour l'API
+    
       // Ce paramètre est envoyé au Back-end, mais n'apparaît pas dans l'URL du navigateur de l'utilisateur !
-      currentParams.set('type', 'vegetaux');
+      currentParams.set('type', 'jardinage');
       
       const queryString = currentParams.toString();
       const url = `${baseUrl}/api/products?${queryString}`;
@@ -54,17 +53,6 @@ export default function Vegetaux() {
       params.delete('categories');
     }
 
-    if (newFilters.expositions && newFilters.expositions.length > 0) {
-      params.set('expositions', newFilters.expositions.join(','));
-    } else {
-      params.delete('expositions');
-    }
-
-    if (newFilters.water && newFilters.water.length > 0) {
-      params.set('water', newFilters.water.join(','));
-    } else {
-      params.delete('water');
-    }
 
     if (newFilters.price && (newFilters.price.min !== '' || newFilters.price.max !== '')) {
       if (newFilters.price.min !== '') params.set('price_min', newFilters.price.min);
@@ -87,7 +75,7 @@ export default function Vegetaux() {
   };
 
   if (loading && !products) {
-    return <Spinner message="Recherche des végétaux en cours..." />;
+    return <Spinner message="Recherche des produits de jardinage en cours..." />;
   }
 
   if (error) {
@@ -99,11 +87,11 @@ export default function Vegetaux() {
       
       <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
-          {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos végétaux"}
+          {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos produits de jardinage"}
         </h1>
         {products && (
           <span className="text-sm font-medium text-jardinerie-text/60">
-            {products.length} {products.length > 1 ? 'Végétaux' : 'Végétal'}
+            {products.length} Produit{products.length > 1 ? 's' : ''}
           </span>
         )}
       </div>
@@ -113,13 +101,11 @@ export default function Vegetaux() {
         {/* LA BARRE DE FILTRES : Elle va devoir être adaptée pour n'afficher que les filtres "végétaux" */}
         <FilterSidebar 
           activeCategories={activeCategories}
-          activeExpositions={activeExpositions}
-          activeWater={activeWater}
-          activePrice={activePrice}
+                  activePrice={activePrice}
           onFilterChange={updateFilters} 
           onReset={resetFilters}
-          // Petite astuce : on peut lui passer une prop pour lui dire qu'elle est en mode "végétaux"
-          mode="vegetaux" 
+          
+          mode="jardinage" 
         />
 
         <main className="flex-1 relative">
