@@ -17,7 +17,7 @@ class ProductModel
         try {
             $db = Database::getConnection();
 
-            // 1. BASE DE LA REQUÊTE
+
             $sql = "SELECT 
                         p.id, 
                         p.name AS product_name, 
@@ -34,6 +34,7 @@ class ProductModel
                     INNER JOIN subcategories s ON p.subcategory_id = s.id
                     INNER JOIN categories c ON s.category_id = c.id
                     INNER JOIN departments d ON c.department_id = d.id";
+
 
             // 2. GESTION DES JOINTURES BOTANIQUES SELON LE TYPE
             if (isset($filters['type']) && $filters['type'] === 'vegetaux') {
@@ -145,6 +146,10 @@ class ProductModel
             }
 
             $sql .= " ORDER BY p.name ASC";
+
+            if (isset($filters['limit']) && $filters['limit'] > 0) {
+                $sql .= " LIMIT " . (int) $filters['limit'];
+            }
 
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
