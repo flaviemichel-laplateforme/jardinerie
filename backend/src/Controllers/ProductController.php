@@ -20,53 +20,54 @@ class ProductController
         // 1. Extraction et nettoyage rigoureux des filtres
         $filters = [];
 
+        // --- LE CORRECTIF EST ICI : On autorise et on nettoie le paramètre 'type' ---
+        if (isset($_GET['type']) && trim($_GET['type']) !== '') {
+            $filters['type'] = htmlspecialchars(trim($_GET['type']));
+        }
+
         // Filtre de recherche textuelle
         if (isset($_GET['search']) && trim($_GET['search']) !== '') {
             $filters['search'] = htmlspecialchars(trim($_GET['search']));
         }
 
-        // Filtre par catégories (ex: "1,2,4")
+        // Filtre par catégories
         if (isset($_GET['categories']) && trim($_GET['categories']) !== '') {
             $filters['categories'] = htmlspecialchars(trim($_GET['categories']));
         }
 
-        // Filtre par exposition (ex: "Sun,Partial Shade")
+        // Filtre par exposition
         if (isset($_GET['expositions']) && trim($_GET['expositions']) !== '') {
             $filters['expositions'] = htmlspecialchars(trim($_GET['expositions']));
         }
-        // Filtre par exposition (ex: "Sun,Partial Shade")
+
+        // Filtre par besoins en eau
         if (isset($_GET['water']) && trim($_GET['water']) !== '') {
             $filters['water'] = htmlspecialchars(trim($_GET['water']));
         }
-        // Filtre par critères (ex: "id 2: Facile d'entretien, id 3 : Animaux-friendly (Non toxique) ")
+
+        // Filtre par critères
         if (isset($_GET['criteria']) && trim($_GET['criteria']) !== '') {
             $filters['criteria'] = htmlspecialchars(trim($_GET['criteria']));
         }
 
-        //Filtre par Prix minimun
-        // On utilise is_numeric pour s'assurer qu'on reçoit bien un chiffre)
+        // Filtre par Prix minimun
         if (isset($_GET['price_min']) && is_numeric($_GET['price_min'])) {
-            // On force le typage en nombre à virgule flottante (float) par sécurité
             $filters['price_min'] = (float) $_GET['price_min'];
         }
 
-        //Filtre par Prix maximum
-        // On utilise is_numeric pour s'assurer qu'on reçoit bien un chiffre)
+        // Filtre par Prix maximum
         if (isset($_GET['price_max']) && is_numeric($_GET['price_max'])) {
-            // On force le typage en nombre à virgule flottante (float) par sécurité
             $filters['price_max'] = (float) $_GET['price_max'];
         }
-
-
-
 
         // 2. Appel à la couche métier (Service)
         $result = $this->productService->getCatalog($filters);
 
-        // 3. Gestion de l'échec (intercepté et géré par le Service)
+        // 3. Gestion de l'échec
         if (!$result['success']) {
-            http_response_code(500); // 500 = Internal Server Error
+            http_response_code(500);
             echo json_encode([
+                'success' => false,
                 'status' => 500,
                 'error' => $result['message']
             ], JSON_UNESCAPED_UNICODE);
@@ -76,8 +77,9 @@ class ProductController
         // 4. Gestion du succès
         $products = $result['data'] ?? [];
 
-        http_response_code(200); // 200 = OK
+        http_response_code(200);
         echo json_encode([
+            'success' => true,
             'status' => 200,
             'results' => count($products),
             'data' => $products

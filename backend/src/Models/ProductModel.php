@@ -17,8 +17,7 @@ class ProductModel
         try {
             $db = Database::getConnection();
 
-            // 1. Requête SQL moderne avec INNER JOIN pour l'arborescence
-            // et LEFT JOIN pour inclure les données botaniques sans exclure les outils
+            // 1. BASE DE LA REQUÊTE
             $sql = "SELECT 
                         p.id, 
                         p.name AS product_name, 
@@ -34,100 +33,97 @@ class ProductModel
                     FROM products p
                     INNER JOIN subcategories s ON p.subcategory_id = s.id
                     INNER JOIN categories c ON s.category_id = c.id
-                    INNER JOIN departments d ON c.department_id = d.id
-                    LEFT JOIN plants pl ON p.id = pl.product_id
-                    LEFT JOIN taxes t ON p.tax_id = t.id
-                    WHERE p.is_active = 1";
+                    INNER JOIN departments d ON c.department_id = d.id";
+
+            // 2. GESTION DES JOINTURES BOTANIQUES SELON LE TYPE
+            if (isset($filters['type']) && $filters['type'] === 'vegetaux') {
+                // Strictement des plantes
+                $sql .= " INNER JOIN plants pl ON p.id = pl.product_id";
+            } else {
+                // Global ou Jardinage : on ramène les données botaniques si elles existent, mais sans forcer
+                $sql .= " LEFT JOIN plants pl ON p.id = pl.product_id";
+            }
+
+            // Suite des jointures fixes
+            $sql .= " LEFT JOIN taxes t ON p.tax_id = t.id
+                      WHERE p.is_active = 1";
 
             $conditions = [];
             $params = [];
 
-            // 2. Filtre textuel multi-colonnes automatisé (Approche dynamique et évolutive)
-            if (!empty($filters['search'])) {
-                // Étape 1 : Définition de la liste des colonnes cibles pour la recherche
-                $columnsToSearch = [
-                    'p.name',              // Nom commercial
-                    'pl.common_name',      // Nom commun
-                    'pl.latin_name',       // Nom latin
-                    'p.description',       // Description du produit
-                    'pl.genus',            // Genre botanique
-                    'pl.species'           // Espèce botanique
-                ];
+            // 3. EXCLUSION BOTANIQUE POUR LA PAGE JARDINAGE
+            if (isset($filters['type']) && $filters['type'] === 'jardinage') {
+                $conditions[] = "pl.product_id IS NULL";
+            }
 
+            // 4. RECHERCHE TEXTUELLE
+            if (!empty($filters['search'])) {
+                $columnsToSearch = [
+                    'p.name',
+                    'pl.common_name',
+                    'pl.latin_name',
+                    'p.description',
+                    'pl.genus',
+                    'pl.species'
+                ];
                 $subConditions = [];
                 $searchTerm = '%' . $filters['search'] . '%';
 
-                // Étape 2 : Génération automatique des marqueurs SQL et du binding PDO
                 foreach ($columnsToSearch as $index => $column) {
-                    $paramName = 'search_' . $index; // Génère : search_0, search_1, search_2...
-
-                    // Construit la clause SQL pour cette colonne : "p.name LIKE :search_0"
+                    $paramName = 'search_' . $index;
                     $subConditions[] = "$column LIKE :$paramName";
-
-                    // Injecte la valeur dans le tableau de paramètres PDO
                     $params[$paramName] = $searchTerm;
                 }
-
-                // Étape 3 : Assemblage des clauses avec un opérateur "OR" et ajout aux conditions principales
-                // Résultat généré : "(p.name LIKE :search_0 OR pl.common_name LIKE :search_1 OR ...)"
                 $conditions[] = "(" . implode(' OR ', $subConditions) . ")";
             }
 
-            // 3. Filtre par Catégories (Création dynamique des paramètres PDO pour la clause IN)
+            // 5. FILTRE PAR CATÉGORIES
             if (!empty($filters['categories'])) {
                 $catIds = explode(',', $filters['categories']);
                 $catPlaceholders = [];
-
                 foreach ($catIds as $index => $id) {
                     $paramName = 'cat' . $index;
                     $catPlaceholders[] = ':' . $paramName;
                     $params[$paramName] = (int) $id;
                 }
-
                 $conditions[] = "c.id IN (" . implode(',', $catPlaceholders) . ")";
             }
 
-            // 4. Filtre par Exposition au soleil
+            // 6. FILTRE PAR EXPOSITION
             if (!empty($filters['expositions'])) {
                 $exposures = explode(',', $filters['expositions']);
                 $expPlaceholders = [];
-
                 foreach ($exposures as $index => $exp) {
                     $paramName = 'exp' . $index;
                     $expPlaceholders[] = ':' . $paramName;
                     $params[$paramName] = $exp;
                 }
-
                 $conditions[] = "pl.sun_exposure IN (" . implode(',', $expPlaceholders) . ")";
             }
 
-            // 4. Filtre par Besoin en eau 
+            // 7. FILTRE PAR BESOIN EN EAU
             if (!empty($filters['water'])) {
                 $waterReqs = explode(',', $filters['water']);
-                $expPlaceholders = [];
-
+                $waterPlaceholders = [];
                 foreach ($waterReqs as $index => $water) {
                     $paramName = 'water' . $index;
                     $waterPlaceholders[] = ':' . $paramName;
                     $params[$paramName] = $water;
                 }
-
-                $conditions[] = "pl.water_requirement IN (" . implode(',', $expPlaceholders) . ")";
+                $conditions[] = "pl.water_requirement IN (" . implode(',', $waterPlaceholders) . ")";
             }
 
-            //Filtre par prix minimum
-            if (isset($filters['price_min'])) {
+            // 8. FILTRES DE PRIX
+            if (isset($filters['price_min']) && $filters['price_min'] !== '') {
                 $conditions[] = "p.price_tax_incl >= :price_min";
                 $params['price_min'] = $filters['price_min'];
             }
-
-            //Filtre par prix maximum
-            if (isset($filters['price_max'])) {
+            if (isset($filters['price_max']) && $filters['price_max'] !== '') {
                 $conditions[] = "p.price_tax_incl <= :price_max";
                 $params['price_max'] = $filters['price_max'];
             }
 
-            // Filtre par Critères (Dépolluante, etc.) avec optimisation EXISTS
+            // 9. FILTRE PAR CRITÈRES (Dépolluante, etc.)
             if (!empty($filters['criteria'])) {
                 $critIds = explode(',', $filters['criteria']);
                 $critPlaceholders = [];
@@ -136,29 +132,28 @@ class ProductModel
                     $critPlaceholders[] = ':' . $paramName;
                     $params[$paramName] = (int) $id;
                 }
-                // La requête vérifie s'il existe au moins une ligne dans la table de liaison
-                // qui correspond à la plante actuelle ET aux critères demandés.
                 $conditions[] = "EXISTS (
                     SELECT 1 FROM plant_criterion pc 
                     WHERE pc.plant_id = pl.id 
                     AND pc.criterion_id IN (" . implode(',', $critPlaceholders) . ")
                 )";
             }
-            // 5. Assemblage final de la requête si des conditions existent
+
+            // 10. ASSEMBLAGE FINAL ET EXÉCUTION
             if (!empty($conditions)) {
                 $sql .= " AND " . implode(" AND ", $conditions);
             }
 
-            // Ajout d'un tri par défaut pour la cohérence de l'affichage
             $sql .= " ORDER BY p.name ASC";
 
-            // 6. Exécution sécurisée
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            throw new \Exception("Erreur lors de la récupération du catalogue : " . $e->getMessage());
+            // En développement, il est utile de logger l'erreur exacte pour le débogage
+            error_log("SQL Error in findWithFilters: " . $e->getMessage() . " | SQL: " . $sql);
+            throw new \Exception("Erreur lors de la récupération du catalogue.");
         }
     }
 

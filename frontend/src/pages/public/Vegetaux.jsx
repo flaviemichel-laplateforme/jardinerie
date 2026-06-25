@@ -3,13 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import Spinner from '../../components/ui/Spinner';
 import ProductCard from '../../components/catalog/ProductCard';
-import FilterSidebar from '../../components/catalog/FilterSidebar';
+import FilterSidebar from '../../components/catalog/FilterSidebar'; 
 
-export default function Catalog() {
+export default function Vegetaux() {
+
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: products, loading, error, request } = useApi();
 
-  // Lecture des paramètres depuis l'URL au chargement et à chaque modification
+  // Lecture des paramètres depuis l'URL du navigateur
   const searchQuery = searchParams.get('search') || '';
   const activeCategories = searchParams.get('categories') ? searchParams.get('categories').split(',') : [];
   const activeExpositions = searchParams.get('expositions') ? searchParams.get('expositions').split(',') : [];
@@ -25,9 +26,15 @@ export default function Catalog() {
     const fetchProducts = async () => {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       
-      // searchParams.toString() formate parfaitement l'URL (ex: search=ficus&categories=1)
-      const queryString = searchParams.toString();
-      const url = `${baseUrl}/api/products${queryString ? `?${queryString}` : ''}`;
+      // 1. On récupère les filtres tapés par l'utilisateur (categories, prix, etc.)
+      const currentParams = new URLSearchParams(searchParams);
+      
+      // 2. LE SECRET EST ICI : On FORCE le paramètre 'type=vegetaux' pour l'API
+      // Ce paramètre est envoyé au Back-end, mais n'apparaît pas dans l'URL du navigateur de l'utilisateur !
+      currentParams.set('type', 'vegetaux');
+      
+      const queryString = currentParams.toString();
+      const url = `${baseUrl}/api/products?${queryString}`;
 
       await request(url, { signal: controller.signal });
     };
@@ -35,11 +42,11 @@ export default function Catalog() {
     fetchProducts();
 
     return () => controller.abort();
-  }, [searchParams, request]); // Relance l'API à chaque modification de l'URL
+  }, [searchParams, request]);
 
-  // Fonction pour mettre à jour l'URL sans recharger la page
+  // Fonction pour mettre à jour l'URL (inchangée, elle est parfaite)
   const updateFilters = (newFilters) => {
-    const params = new URLSearchParams(searchParams); // Copie des paramètres actuels
+    const params = new URLSearchParams(searchParams); 
     
     if (newFilters.categories && newFilters.categories.length > 0) {
       params.set('categories', newFilters.categories.join(','));
@@ -70,18 +77,15 @@ export default function Catalog() {
       params.delete('price_max');
     }
 
-    setSearchParams(params); // Met à jour l'URL
+    setSearchParams(params); 
   };
 
   const resetFilters = () => {
     const params = new URLSearchParams();
-    if (searchQuery) params.set('search', searchQuery); // On conserve juste la barre de recherche
+    if (searchQuery) params.set('search', searchQuery); 
     setSearchParams(params);
   };
 
-  // --- RENDUS CONDITIONNELS ---
-  
-  // CRITÈRE D'ACCEPTATION : Affichage d'un état de chargement
   if (loading && !products) {
     return <Spinner message="Recherche des végétaux en cours..." />;
   }
@@ -90,24 +94,23 @@ export default function Catalog() {
     return <div className="py-20 text-center font-medium text-red-500">{error}</div>;
   }
 
-  // --- RENDU PRINCIPAL ---
-  
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 md:px-12">
       
       <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
-          {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos Végétaux & Produits"}
+          {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos végétaux"}
         </h1>
         {products && (
           <span className="text-sm font-medium text-jardinerie-text/60">
-            {products.length} résultat{products.length > 1 ? 's' : ''}
+            {products.length} végétal{products.length > 1 ? 'aux' : ''}
           </span>
         )}
       </div>
 
       <div className="flex flex-col md:flex-row">
         
+        {/* LA BARRE DE FILTRES : Elle va devoir être adaptée pour n'afficher que les filtres "végétaux" */}
         <FilterSidebar 
           activeCategories={activeCategories}
           activeExpositions={activeExpositions}
@@ -115,17 +118,18 @@ export default function Catalog() {
           activePrice={activePrice}
           onFilterChange={updateFilters} 
           onReset={resetFilters}
+          // Petite astuce : on peut lui passer une prop pour lui dire qu'elle est en mode "végétaux"
+          mode="vegetaux" 
         />
 
         <main className="flex-1 relative">
-          {/* Overlay de chargement subtil pendant le filtrage */}
           {loading && products && (
              <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 rounded-2xl transition-all"></div>
           )}
 
           {!products || products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center opacity-70">
-              <p className="text-lg font-medium text-jardinerie-text">Aucun produit ne correspond à vos filtres.</p>
+              <p className="text-lg font-medium text-jardinerie-text">Aucun végétal ne correspond à vos filtres.</p>
               <button 
                 onClick={resetFilters}
                 className="mt-4 text-jardinerie-primary underline"
@@ -141,7 +145,6 @@ export default function Catalog() {
             </div>
           )}
         </main>
-        
       </div>
     </div>
   );

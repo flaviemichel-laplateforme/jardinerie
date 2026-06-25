@@ -7,6 +7,7 @@ import Cart from './pages/public/Cart';
 import Register from './pages/public/Register';
 import Home from './pages/public/Home';
 import Login from './pages/public/Login';
+import Vegetaux from './pages/public/Vegetaux';
 
 
 // ==========================================
@@ -49,7 +50,8 @@ const router = createBrowserRouter([
       
       // 🔵 ZONE PUBLIQUE
       { index: true, element: <Home /> },
-      { path: 'vegetaux', element: <Catalog /> },
+      { path: 'produits', element: <Catalog /> },
+      { path: 'vegetaux', element: <Vegetaux /> },
       { path: 'produit/:id', element: <ProductDetail /> }, // :id = URL dynamique pour la fiche produit
       { path: 'jardinage', element: <Jardinage /> },
       
