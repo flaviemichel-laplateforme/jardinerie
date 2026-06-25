@@ -113,6 +113,14 @@ $router->map('POST', '/api/auth/login', 'AuthController#login', 'api_auth_login'
 $router->map('GET', '/api/auth/me', 'AuthController#me', 'api_auth_me');
 $router->map('POST', '/api/auth/logout', 'AuthController#logout', 'api_auth_logout');
 
+// -----------------------------------------------------------------------
+// ROUTES DE PAIEMENT (Stripe)
+// -----------------------------------------------------------------------
+// 1. Création de l'intention de paiement (Appelé par React lors du clic sur "Payer")
+$router->map('POST', '/api/checkout/payment-intent', 'CheckoutController#createIntent', 'api_checkout_intent');
+// 2. Webhook Stripe (Appelé par les serveurs de Stripe en arrière-plan)
+$router->map('POST', '/api/webhooks/stripe', 'CheckoutController#handleWebhook', 'api_stripe_webhook');
+
 
 
 
