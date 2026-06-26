@@ -1,27 +1,33 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom'; // Ajout de NavLink ici
 import SearchBar from './SearchBar';
 import logoImage from '../../../assets/img/Logo.png';
 import jardinierIcon from '../../../assets/img/icone-jardinier.svg';
 import panierIcon from '../../../assets/img/icone-panier.svg';
 import { useCart } from '../../../contexts/CartContext';
-// IMPORT CRUCIAL : Notre contexte d'authentification
 import { useAuth } from '../../../contexts/AuthContext'; 
 
 export default function Header() {
   const { cartCount } = useCart();
-  const { isAuthenticated, user, logout } = useAuth(); // Récupération des données utilisateur
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // Pour le petit menu profil
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  // Gère la déconnexion
   const handleLogout = async () => {
     await logout();
-    setIsProfileMenuOpen(false); // Ferme le menu
-    navigate('/'); // Redirige vers l'accueil
+    setIsProfileMenuOpen(false);
+    navigate('/');
   };
+
+  // Fonction utilitaire pour gérer le style actif de la barre de navigation principale
+  const getNavClass = ({ isActive }) => 
+    isActive ? "underline font-bold decoration-2 underline-offset-4" : "hover:underline underline-offset-4";
+
+  // Fonction utilitaire pour gérer le style actif du menu mobile (burger)
+  const getMobileNavClass = ({ isActive }) => 
+    `block rounded-lg px-3 py-2 transition-colors ${isActive ? 'bg-jardinerie-bg text-jardinerie-primary font-bold' : 'hover:bg-jardinerie-bg'}`;
 
   return (
     <header className="w-full shadow-md font-sans">
@@ -39,28 +45,21 @@ export default function Header() {
 
         <SearchBar />
 
-        {/* ========================================== */}
-        {/* Icônes utilisateur & panier                */}
-        {/* ========================================== */}
+        {/* Icônes utilisateur & panier */}
         <div className="flex items-center space-x-12 mr-10 relative">
           
-          {/* LOGIQUE D'AUTHENTIFICATION ICI */}
           {isAuthenticated ? (
-            
-            // --- UTILISATEUR CONNECTÉ ---
             <div className="relative">
               <button 
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               >
-                {/* On garde votre icône jardinier */}
                 <img src={jardinierIcon} alt="Profil" className="h-10 w-10 object-contain" />
                 <span className="text-sm font-bold text-jardinerie-text hidden md:block">
                   {user?.first_name}
                 </span>
               </button>
 
-              {/* Menu déroulant du profil */}
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-3 w-48 rounded-xl bg-white p-2 shadow-xl border border-gray-100 z-50">
                   <div className="px-4 py-2 border-b border-gray-100 mb-2">
@@ -87,16 +86,13 @@ export default function Header() {
             </div>
 
           ) : (
-            
-            // --- UTILISATEUR DÉCONNECTÉ ---
             <Link to="/connexion" className="flex flex-col items-center hover:opacity-80 transition-opacity">
               <img src={jardinierIcon} alt="Se connecter" className="h-10 w-10 object-contain mb-1" />
               <span className="text-xs font-medium text-jardinerie-text">Connexion</span>
             </Link>
-
           )}
 
-          {/* Icône Panier DYNAMIQUE  */}
+          {/* Icône Panier */}
           <Link to="/panier" className="hover:opacity-80 transition-opacity relative flex flex-col items-center">
             <img src={panierIcon} alt="Panier" className="h-11 w-11 object-contain" />
             
@@ -110,9 +106,9 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Barre de navigation  */}
+      {/* Barre de navigation principale avec NavLink */}
       <nav className="bg-jardinerie-primary text-jardinerie-light px-6 py-3">
-        <ul className="flex items-center space-x-12 text-sm font-medium uppercase tracking-wider">
+        <ul className="flex items-center space-x-12 text-sm uppercase tracking-wider">
           <li>
             <button
               type="button"
@@ -127,13 +123,13 @@ export default function Header() {
               </span>
             </button>
           </li>
-          <li><Link to="/vegetaux" className="hover:underline">Nos végétaux</Link></li>
-          <li><Link to="/jardinage" className="hover:underline">Nos produits de jardinage</Link></li>
-          <li><Link to="/produits" className="hover:underline">Tous nos produits</Link></li>
+          <li><NavLink to="/vegetaux" className={getNavClass}>Nos végétaux</NavLink></li>
+          <li><NavLink to="/jardinage" className={getNavClass}>Nos produits de jardinage</NavLink></li>
+          <li><NavLink to="/produits" className={getNavClass}>Tous nos produits</NavLink></li>
         </ul>
       </nav>
 
-      {/* Menu burger latéral  */}
+      {/* Menu burger latéral avec NavLink */}
       <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} aria-hidden={!isMenuOpen}>
         <button type="button" className="absolute inset-0 bg-black/40" onClick={() => setIsMenuOpen(false)} aria-label="Fermer le menu" />
         <aside className={`relative z-10 h-full w-72 max-w-[85vw] bg-white shadow-2xl transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -143,8 +139,16 @@ export default function Header() {
           </div>
           <nav className="px-5 py-6">
             <ul className="space-y-4 text-jardinerie-text">
-              <li><Link to="/vegetaux" onClick={() => setIsMenuOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-jardinerie-bg">Nos végétaux</Link></li>
-              <li><Link to="/jardinage" onClick={() => setIsMenuOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-jardinerie-bg">Jardinage</Link></li>
+              <li>
+                <NavLink to="/vegetaux" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
+                  Nos végétaux
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/jardinage" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
+                  Jardinage
+                </NavLink>
+              </li>
             </ul>
           </nav>
         </aside>

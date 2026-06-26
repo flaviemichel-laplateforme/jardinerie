@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import StockBadge from '../ui/StockBadge';
+// IMPORT : On importe l'image locale (Assurez-vous qu'elle existe à cet emplacement !)
+import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
 
 export default function ProductCard({ product }) {
   // Déstructuration sécurisée avec des valeurs par défaut
@@ -22,9 +24,17 @@ export default function ProductCard({ product }) {
       {/* ========================================= */}
       <div className="relative h-[240px] w-full overflow-hidden bg-white/50">
         <img 
-          src={main_image_url || 'https://via.placeholder.com/400x400?text=Image+non+disponible'} 
+          // 1. FILTRE : Si null ou vide, on utilise l'image locale
+          src={main_image_url || placeholderImg} 
+          
           alt={product_name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          
+          // 2. SÉCURITÉ : Si l'URL existe mais que le lien est mort (404)
+          onError={(e) => {
+            e.target.onerror = null; 
+            e.target.src = placeholderImg;
+          }}
         />
 
         {/* Icône d'exposition (Haut Droite) */}

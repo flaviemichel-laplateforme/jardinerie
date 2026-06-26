@@ -25,21 +25,23 @@ export default function Catalog() {
     const fetchProducts = async () => {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       
-      // searchParams.toString() formate parfaitement l'URL (ex: search=ficus&categories=1)
       const queryString = searchParams.toString();
       const url = `${baseUrl}/api/products${queryString ? `?${queryString}` : ''}`;
 
-      await request(url, { signal: controller.signal });
+      // On ajoute 'false' pour éviter les alertes visuelles d'annulation
+      await request(url, { signal: controller.signal }, false);
     };
 
     fetchProducts();
 
     return () => controller.abort();
-  }, [searchParams, request]); // Relance l'API à chaque modification de l'URL
+    // CORRECTION : Retrait de 'request' pour stopper la boucle infinie
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]); 
 
   // Fonction pour mettre à jour l'URL sans recharger la page
   const updateFilters = (newFilters) => {
-    const params = new URLSearchParams(searchParams); // Copie des paramètres actuels
+    const params = new URLSearchParams(searchParams); 
     
     if (newFilters.categories && newFilters.categories.length > 0) {
       params.set('categories', newFilters.categories.join(','));
@@ -70,25 +72,14 @@ export default function Catalog() {
       params.delete('price_max');
     }
 
-    setSearchParams(params); // Met à jour l'URL
+    setSearchParams(params); 
   };
 
   const resetFilters = () => {
     const params = new URLSearchParams();
-    if (searchQuery) params.set('search', searchQuery); // On conserve juste la barre de recherche
+    if (searchQuery) params.set('search', searchQuery); 
     setSearchParams(params);
   };
-
-  // --- RENDUS CONDITIONNELS ---
-  
-  // CRITÈRE D'ACCEPTATION : Affichage d'un état de chargement
-  if (loading && !products) {
-    return <Spinner message="Recherche des végétaux en cours..." />;
-  }
-
-  if (error) {
-    return <div className="py-20 text-center font-medium text-red-500">{error}</div>;
-  }
 
   // --- RENDU PRINCIPAL ---
   
@@ -108,6 +99,7 @@ export default function Catalog() {
 
       <div className="flex flex-col md:flex-row">
         
+        {/* LA BARRE DE FILTRES : Protégée, elle reste ancrée dans le DOM */}
         <FilterSidebar 
           activeCategories={activeCategories}
           activeExpositions={activeExpositions}
@@ -115,15 +107,22 @@ export default function Catalog() {
           activePrice={activePrice}
           onFilterChange={updateFilters} 
           onReset={resetFilters}
+          mode="global" // Mode explicite pour la clarté (ou laisser par défaut)
         />
 
-        <main className="flex-1 relative">
-          {/* Overlay de chargement subtil pendant le filtrage */}
-          {loading && products && (
-             <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 rounded-2xl transition-all"></div>
-          )}
-
-          {!products || products.length === 0 ? (
+        <main className="flex-1 relative min-h-[400px]">
+          
+          {/* ========================================== */}
+          {/* GESTION DES ÉTATS DIRECTEMENT DANS LE MAIN */}
+          {/* ========================================== */}
+          
+          {loading && !products ? (
+            <div className="flex h-full w-full items-center justify-center pt-20">
+              <Spinner message="Recherche des produits en cours..." />
+            </div>
+          ) : error ? (
+            <div className="py-20 text-center font-medium text-red-500">{error}</div>
+          ) : !products || products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center opacity-70">
               <p className="text-lg font-medium text-jardinerie-text">Aucun produit ne correspond à vos filtres.</p>
               <button 
@@ -134,14 +133,20 @@ export default function Catalog() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <>
+              {/* Overlay de chargement subtil pendant le filtrage */}
+              {loading && (
+                <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>
+              )}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </>
           )}
+
         </main>
-        
       </div>
     </div>
   );
