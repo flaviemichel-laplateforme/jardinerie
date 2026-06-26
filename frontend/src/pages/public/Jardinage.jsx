@@ -25,25 +25,23 @@ export default function Jardinage() {
     const fetchProducts = async () => {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       
-      // 1. On récupère les filtres tapés par l'utilisateur (categories, prix, etc.)
       const currentParams = new URLSearchParams(searchParams);
-      
-    
-      // Ce paramètre est envoyé au Back-end, mais n'apparaît pas dans l'URL du navigateur de l'utilisateur !
       currentParams.set('type', 'jardinage');
       
       const queryString = currentParams.toString();
       const url = `${baseUrl}/api/products?${queryString}`;
 
-      await request(url, { signal: controller.signal });
+      // On ajoute 'false' pour ne pas spammer de notifications en cas d'annulation de requête
+      await request(url, { signal: controller.signal }, false);
     };
 
     fetchProducts();
 
     return () => controller.abort();
-  }, [searchParams, request]);
+    // CORRECTION : On retire 'request' pour stopper la boucle infinie avec le parent
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
-  // Fonction pour mettre à jour l'URL (inchangée, elle est parfaite)
   const updateFilters = (newFilters) => {
     const params = new URLSearchParams(searchParams); 
     
@@ -52,7 +50,6 @@ export default function Jardinage() {
     } else {
       params.delete('categories');
     }
-
 
     if (newFilters.price && (newFilters.price.min !== '' || newFilters.price.max !== '')) {
       if (newFilters.price.min !== '') params.set('price_min', newFilters.price.min);
@@ -74,14 +71,6 @@ export default function Jardinage() {
     setSearchParams(params);
   };
 
-  if (loading && !products) {
-    return <Spinner message="Recherche des produits de jardinage en cours..." />;
-  }
-
-  if (error) {
-    return <div className="py-20 text-center font-medium text-red-500">{error}</div>;
-  }
-
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 md:px-12">
       
@@ -98,24 +87,27 @@ export default function Jardinage() {
 
       <div className="flex flex-col md:flex-row">
         
-        {/* LA BARRE DE FILTRES : Elle va devoir être adaptée pour n'afficher que les filtres "végétaux" */}
+        {/* LA BARRE DE FILTRES : Protégée, elle ne se démontera plus au chargement */}
         <FilterSidebar 
           activeCategories={activeCategories}
-                  activePrice={activePrice}
+          activePrice={activePrice}
           onFilterChange={updateFilters} 
           onReset={resetFilters}
-          
           mode="jardinage" 
         />
 
-        <main className="flex-1 relative">
-          {loading && products && (
-             <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 rounded-2xl transition-all"></div>
-          )}
-
-          {!products || products.length === 0 ? (
+        <main className="flex-1 relative min-h-[400px]">
+          
+          {/* GESTION DES ÉTATS PROPREMENT DANS LE MAIN */}
+          {loading && !products ? (
+            <div className="flex h-full w-full items-center justify-center pt-20">
+              <Spinner message="Recherche des produits de jardinage en cours..." />
+            </div>
+          ) : error ? (
+            <div className="py-20 text-center font-medium text-red-500">{error}</div>
+          ) : !products || products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center opacity-70">
-              <p className="text-lg font-medium text-jardinerie-text">Aucun végétal ne correspond à vos filtres.</p>
+              <p className="text-lg font-medium text-jardinerie-text">Aucun produit ne correspond à vos filtres.</p>
               <button 
                 onClick={resetFilters}
                 className="mt-4 text-jardinerie-primary underline"
@@ -124,12 +116,18 @@ export default function Jardinage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <>
+              {loading && (
+                <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>
+              )}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </>
           )}
+
         </main>
       </div>
     </div>
