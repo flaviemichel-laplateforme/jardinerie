@@ -18,16 +18,32 @@ export default function FilterSidebar({
   const [priceMin, setPriceMin] = useState(activePrice.min !== '' ? Number(activePrice.min) : MIN);
   const [priceMax, setPriceMax] = useState(activePrice.max !== '' ? Number(activePrice.max) : MAX);
 
+  // ==========================================
+  // LA CORRECTION EST ICI
+  // ==========================================
   useEffect(() => {
     const controller = new AbortController();
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    const url = `${baseUrl}/api/filters${mode !== 'global' ? `?type=${mode}` : ''}`;
     
-    request(url, { signal: controller.signal }, false);
+    const fetchSidebarFilters = async () => {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const url = `${baseUrl}/api/filters${mode !== 'global' ? `?type=${mode}` : ''}`;
+      
+      // On encapsule l'appel dans une fonction asynchrone pour mieux gérer l'AbortController
+      await request(url, { signal: controller.signal }, false);
+    };
 
-    return () => controller.abort();
-  }, [request, mode]);
+    fetchSidebarFilters();
 
+    return () => {
+      // Nettoyage uniquement si le composant est détruit ou si le 'mode' change
+      controller.abort();
+    };
+    // On a retiré 'request' du tableau de dépendances. 
+    // Ainsi, quand le parent se met à jour suite à un changement de prix, ce bloc n'est plus relancé.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  // Synchronisation si le parent force un nouveau prix (ex: bouton "effacer")
   useEffect(() => {
     setPriceMin(activePrice.min !== '' ? Number(activePrice.min) : MIN);
     setPriceMax(activePrice.max !== '' ? Number(activePrice.max) : MAX);
@@ -199,7 +215,6 @@ export default function FilterSidebar({
           </>
         )}
 
-        {/* --- LE FAMEUX SLIDER DE PRIX RÉINTÉGRÉ --- */}
         <div className="mt-6 border-t border-gray-100 pt-6">
           <div className="flex items-center justify-between">
             <h3 className="mb-3 text-sm font-semibold text-jardinerie-text/80">Prix</h3>
