@@ -11,8 +11,14 @@ class PaymentService
 {
     public function __construct()
     {
-        // On initialise la clé secrète de Stripe (stockée dans votre .env)
-        Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
+        // La chaîne de récupération ultime (Cherche dans les 3 emplacements possibles de PHP)
+        $stripeKey = $_ENV['STRIPE_SECRET_KEY'] ?? $_SERVER['STRIPE_SECRET_KEY'] ?? getenv('STRIPE_SECRET_KEY') ?: null;
+
+        if (!$stripeKey) {
+            throw new \Exception("Clé Stripe introuvable dans le backend. Vérifiez le fichier backend/.env !");
+        }
+
+        Stripe::setApiKey($stripeKey);
     }
 
     /**

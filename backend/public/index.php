@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 // CONFIGURATION CORS (Support des Cookies)
 $allowedOrigins = [
     'http://localhost:5173', // Votre front-end React en développement
