@@ -22,7 +22,6 @@ export default function Home() {
       
       {/* 1. HERO BANNER : Appel du composant avec ses paramètres (props) */}
       <HeroBanner 
-        imageSrc="/src/assets/img/fond.png"
         altText="Promotion du moment"
         buttonText="Voir les offres du moment"
         buttonLink="/vegetaux"

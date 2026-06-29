@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
-
 class ProductModel
 {
     /**
@@ -16,7 +15,6 @@ class ProductModel
     {
         try {
             $db = Database::getConnection();
-
 
             $sql = "SELECT 
                         p.id, 
@@ -35,29 +33,22 @@ class ProductModel
                     INNER JOIN categories c ON s.category_id = c.id
                     INNER JOIN departments d ON c.department_id = d.id";
 
-
-            // 2. GESTION DES JOINTURES BOTANIQUES SELON LE TYPE
             if (isset($filters['type']) && $filters['type'] === 'vegetaux') {
-                // Strictement des plantes
                 $sql .= " INNER JOIN plants pl ON p.id = pl.product_id";
             } else {
-                // Global ou Jardinage : on ramène les données botaniques si elles existent, mais sans forcer
                 $sql .= " LEFT JOIN plants pl ON p.id = pl.product_id";
             }
 
-            // Suite des jointures fixes
             $sql .= " LEFT JOIN taxes t ON p.tax_id = t.id
                       WHERE p.is_active = 1";
 
             $conditions = [];
             $params = [];
 
-            // 3. EXCLUSION BOTANIQUE POUR LA PAGE JARDINAGE
             if (isset($filters['type']) && $filters['type'] === 'jardinage') {
                 $conditions[] = "pl.product_id IS NULL";
             }
 
-            // 4. RECHERCHE TEXTUELLE
             if (!empty($filters['search'])) {
                 $columnsToSearch = [
                     'p.name',
@@ -76,9 +67,12 @@ class ProductModel
                     $params[$paramName] = $searchTerm;
                 }
                 $conditions[] = "(" . implode(' OR ', $subConditions) . ")";
+
+                // Paramètre dédié au tri par pertinence (voir plus bas) :
+                // un nom qui COMMENCE par le terme prime sur un simple "contient".
+                $params['search_priority'] = $filters['search'] . '%';
             }
 
-            // 5. FILTRE PAR CATÉGORIES
             if (!empty($filters['categories'])) {
                 $catIds = explode(',', $filters['categories']);
                 $catPlaceholders = [];
@@ -90,7 +84,6 @@ class ProductModel
                 $conditions[] = "c.id IN (" . implode(',', $catPlaceholders) . ")";
             }
 
-            // 6. FILTRE PAR EXPOSITION
             if (!empty($filters['expositions'])) {
                 $exposures = explode(',', $filters['expositions']);
                 $expPlaceholders = [];
@@ -102,7 +95,6 @@ class ProductModel
                 $conditions[] = "pl.sun_exposure IN (" . implode(',', $expPlaceholders) . ")";
             }
 
-            // 7. FILTRE PAR BESOIN EN EAU
             if (!empty($filters['water'])) {
                 $waterReqs = explode(',', $filters['water']);
                 $waterPlaceholders = [];
@@ -114,7 +106,6 @@ class ProductModel
                 $conditions[] = "pl.water_requirement IN (" . implode(',', $waterPlaceholders) . ")";
             }
 
-            // 8. FILTRES DE PRIX
             if (isset($filters['price_min']) && $filters['price_min'] !== '') {
                 $conditions[] = "p.price_tax_incl >= :price_min";
                 $params['price_min'] = $filters['price_min'];
@@ -124,7 +115,6 @@ class ProductModel
                 $params['price_max'] = $filters['price_max'];
             }
 
-            // 9. FILTRE PAR CRITÈRES (Dépolluante, etc.)
             if (!empty($filters['criteria'])) {
                 $critIds = explode(',', $filters['criteria']);
                 $critPlaceholders = [];
@@ -140,12 +130,15 @@ class ProductModel
                 )";
             }
 
-            // 10. ASSEMBLAGE FINAL ET EXÉCUTION
             if (!empty($conditions)) {
                 $sql .= " AND " . implode(" AND ", $conditions);
             }
 
-            $sql .= " ORDER BY p.name ASC";
+            if (!empty($filters['search'])) {
+                $sql .= " ORDER BY CASE WHEN p.name LIKE :search_priority THEN 0 ELSE 1 END ASC, p.name ASC";
+            } else {
+                $sql .= " ORDER BY p.name ASC";
+            }
 
             if (isset($filters['limit']) && $filters['limit'] > 0) {
                 $sql .= " LIMIT " . (int) $filters['limit'];
@@ -156,7 +149,6 @@ class ProductModel
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            // En développement, il est utile de logger l'erreur exacte pour le débogage
             error_log("SQL Error in findWithFilters: " . $e->getMessage() . " | SQL: " . $sql);
             throw new \Exception("Erreur lors de la récupération du catalogue.");
         }
@@ -169,7 +161,6 @@ class ProductModel
     {
         $db = Database::getConnection();
 
-        // Jointure ciblée pour récupérer la fiche complète (Produit + Botanique + Catégorie)
         $sql = "SELECT
                     p.id,
                     p.name AS product_name,
@@ -203,7 +194,7 @@ class ProductModel
     }
 
     /**
-     * Fonction de récupération du stock pour définir un status  en stock , stock faible, indisponible(épuisé)
+     * Fonction de récupération du stock pour définir un status : en stock, stock faible, indisponible (épuisé)
      */
     public function getStockQuantity(int $id): ?int
     {

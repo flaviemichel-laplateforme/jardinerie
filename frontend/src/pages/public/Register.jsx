@@ -6,6 +6,7 @@ import { authService } from '../../services/authService';
 import { buildRequestOptions } from '../../services/apiClient';
 import toast from 'react-hot-toast';
 import logoImage from '../../assets/img/Logo.png';
+import fondImage from '../../assets/img/fond.png';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -62,7 +63,7 @@ export default function Register() {
     // 1. La balise <main> avec l'image en plein écran
     <main 
       className="min-h-screen flex items-center justify-center font-sans bg-cover bg-center bg-no-repeat relative"
-      style={{ backgroundImage: "url('/src/assets/img/fond.png')" }}
+      style={{ backgroundImage: `url(${fondImage})` }}
     >
       
       {/* 2. Un léger voile assombrissant pour garantir la lisibilité du formulaire */}

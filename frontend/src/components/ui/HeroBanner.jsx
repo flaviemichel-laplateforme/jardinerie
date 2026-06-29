@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-
+import fondImage from '../../assets/img/fond.png';
 // Leçon de destructuration : On définit les "props" (propriétés) que ce composant peut recevoir.
 // On leur donne des valeurs par défaut au cas où on oublierait de les renseigner.
 export default function HeroBanner({ 
-  imageSrc = "/src/assets/img/fond.png", 
+  imageSrc = fondImage, 
   altText = "Bannière promotionnelle",
   buttonText = "Voir les offres",
   buttonLink = "/vegetaux"
