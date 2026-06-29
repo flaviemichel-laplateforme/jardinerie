@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
+import { productService } from '../../services/productService';
 import Spinner from '../../components/ui/Spinner';
 import ProductCard from '../../components/catalog/ProductCard';
 import FilterSidebar from '../../components/catalog/FilterSidebar';
@@ -23,10 +24,7 @@ export default function Catalog() {
     const controller = new AbortController();
     
     const fetchProducts = async () => {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      
-      const queryString = searchParams.toString();
-      const url = `${baseUrl}/api/products${queryString ? `?${queryString}` : ''}`;
+      const url = productService.buildCatalogUrl(searchParams);
 
       // On ajoute 'false' pour éviter les alertes visuelles d'annulation
       await request(url, { signal: controller.signal }, false);

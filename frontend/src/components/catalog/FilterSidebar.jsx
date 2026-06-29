@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '../../hooks/useApi';
+import { filterService } from '../../services/filterService';
 
 export default function FilterSidebar({
   activeCategories = [],
@@ -25,8 +26,7 @@ export default function FilterSidebar({
     const controller = new AbortController();
     
     const fetchSidebarFilters = async () => {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const url = `${baseUrl}/api/filters${mode !== 'global' ? `?type=${mode}` : ''}`;
+      const url = filterService.buildFiltersUrl(mode);
       
       // On encapsule l'appel dans une fonction asynchrone pour mieux gérer l'AbortController
       await request(url, { signal: controller.signal }, false);

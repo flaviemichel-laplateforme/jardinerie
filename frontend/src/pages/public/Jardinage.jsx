@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
+import { productService } from '../../services/productService';
+
 import Spinner from '../../components/ui/Spinner';
 import ProductCard from '../../components/catalog/ProductCard';
 import FilterSidebar from '../../components/catalog/FilterSidebar'; 
@@ -23,13 +25,8 @@ export default function Jardinage() {
     const controller = new AbortController();
     
     const fetchProducts = async () => {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       
-      const currentParams = new URLSearchParams(searchParams);
-      currentParams.set('type', 'jardinage');
-      
-      const queryString = currentParams.toString();
-      const url = `${baseUrl}/api/products?${queryString}`;
+      const url = productService.buildJardinageUrl(searchParams);
 
       // On ajoute 'false' pour ne pas spammer de notifications en cas d'annulation de requête
       await request(url, { signal: controller.signal }, false);
