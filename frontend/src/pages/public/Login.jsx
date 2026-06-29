@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { authService } from '../../services/authService';
@@ -10,6 +10,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   // Utilisation de votre hook personnalisé
@@ -24,13 +25,11 @@ export default function Login() {
       buildRequestOptions({ method: 'POST', body: { email, password } })
     );
 
-    // Si le hook renvoie success: true, on connecte l'utilisateur
-    if (result.success) {
+       if (result.success) {
       login(result.data.user);
-      navigate('/');
+      const from = location.state?.from || '/';
+      navigate(from, { replace:true });
     }
-    // Pas de 'else' ! Si ça échoue, votre useApi s'occupe déjà de populer 
-    // l'état 'error' et d'afficher le toast.
   };
 
   return (
