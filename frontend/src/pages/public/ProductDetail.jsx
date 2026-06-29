@@ -3,7 +3,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import StockBadge from '../../components/ui/StockBadge';
 import { useCart } from '../../contexts/CartContext';
-// import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import { productService } from '../../services/productService';
+import { resolveAssetUrl } from '../../services/apiClient';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
 
@@ -12,29 +14,27 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { data: product, loading, error, request } = useApi();
 
-  // ÉTATS LOCAUX
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [showFullBotanical, setShowFullBotanical] = useState(false);
-  const [realTimeStock, setRealTimeStock] = useState(null); // 2. ÉTAT POUR LE TEMPS RÉEL
+  const [realTimeStock, setRealTimeStock] = useState(null);
 
   const { addToCart } = useCart();
-  // --- REQUÊTE API PRINCIPALE ---
+
+  // Requête principale : récupère la fiche produit
   useEffect(() => {
     const controller = new AbortController();
-    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/products/${id}`;
-    request(url, { signal: controller.signal }, true);
+    request(productService.buildProductDetailUrl(id), { signal: controller.signal }, true);
     return () => controller.abort();
   }, [id, request]);
 
-  // --- REQUÊTE API SECONDAIRE (TEMPS RÉEL) ---
+  // Requête secondaire : vérifie le stock en temps réel (silencieuse, pas de toast/spinner)
   useEffect(() => {
     const controller = new AbortController();
     
     const fetchAvailability = async () => {
       try {
-        const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/products/${id}/availability`;
-        const response = await fetch(url, { signal: controller.signal });
+        const response = await fetch(productService.buildAvailabilityUrl(id), { signal: controller.signal });
         const result = await response.json();
         
         if (result.success) {
@@ -51,7 +51,7 @@ export default function ProductDetail() {
     return () => controller.abort();
   }, [id]);
 
-  // --- CORRECTION DU CASCADING RENDER ---
+  // Réinitialisation des états locaux si l'id change (navigation entre 2 fiches produit)
   const [currentId, setCurrentId] = useState(id);
 
   if (id !== currentId) {
@@ -59,21 +59,15 @@ export default function ProductDetail() {
     setSelectedThumbnail(null);
     setQuantity(1);
     setShowFullBotanical(false);
-    setRealTimeStock(null); // Réinitialisation du stock au changement de page
+    setRealTimeStock(null);
   }
 
-  // --- PRÉPARATION DES DONNÉES (Derived State) ---
-  
-  // 3. LOGIQUE DE SÉCURITÉ : Utilise le stock temps réel s'il existe, sinon le stock par défaut
   const currentStockQty = realTimeStock ? realTimeStock.stock_quantity : (product?.stock_quantity || 0);
   const currentStockStatus = realTimeStock ? realTimeStock.status : null;
 
-  // --- FONCTIONS UTILITAIRES ---
   const getImageUrl = (imagePath) => {
     if (!imagePath) return FALLBACK_IMAGE;
-    if (imagePath.startsWith('http')) return imagePath;
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    return `${baseUrl}/${imagePath.replace(/^\//, '')}`;
+    return resolveAssetUrl(imagePath);
   };
 
   const translateLabel = (val) => {
@@ -85,12 +79,11 @@ export default function ProductDetail() {
     setQuantity((prev) => {
       const next = prev + delta;
       if (next < 1) return 1;
-      if (next > currentStockQty) return currentStockQty; // Bloque selon le vrai stock
+      if (next > currentStockQty) return currentStockQty;
       return next;
     });
   };
 
-  // --- RENDUS CONDITIONNELS (Chargement & Erreur) ---
   if (loading || !product) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-12 flex justify-center">
@@ -113,7 +106,6 @@ export default function ProductDetail() {
     );
   }
 
-  // Suite préparation données image
   const galleryImages = [product.main_image_url, product.secondary_image_url]
     .filter(Boolean)
     .map(path => getImageUrl(path));
@@ -123,11 +115,9 @@ export default function ProductDetail() {
   const activeImage = selectedThumbnail || (product.main_image_url ? getImageUrl(product.main_image_url) : FALLBACK_IMAGE);
   const productRef = `REF-JARD-${String(product.id).padStart(5, '0')}`;
 
-  // --- RENDU PRINCIPAL ---
   return (
     <article className="mx-auto max-w-7xl px-6 py-8">
       
-      {/* 1. FIL D'ARIANE */}
       <nav className="mb-8 p-3 border border-gray-200 rounded text-sm text-gray-600 bg-white">
         <Link to="/" className="hover:text-jardinerie-primary hover:underline">Accueil</Link>
         <span className="mx-2 text-gray-400">&gt;</span>
@@ -140,10 +130,8 @@ export default function ProductDetail() {
         )}
       </nav>
 
-      {/* 2. BLOC HAUT : GALERIE & ACHAT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
         
-        {/* Colonne Gauche : Galerie */}
         <div className="flex flex-col gap-4">
           <div className="rounded-lg overflow-hidden border border-gray-200 bg-white aspect-[4/3] relative flex items-center justify-center group">
             <img 
@@ -154,7 +142,6 @@ export default function ProductDetail() {
             />
           </div>
 
-          {/* Miniatures */}
           {galleryImages.length > 0 && (
             <div className="flex gap-4 justify-center">
               {galleryImages.map((imgUrl, index) => (
@@ -172,11 +159,9 @@ export default function ProductDetail() {
           )}
         </div>
 
-        {/* Colonne Droite : Infos & Achat */}
         <div className="flex flex-col">
           <div className="border border-gray-200 rounded-lg p-6 mb-6 bg-white">
             
-            {/* 4. AFFICHAGE DU BADGE */}
             <div className="flex justify-between items-start mb-2 gap-4">
               <h1 className="text-3xl font-bold text-jardinerie-text">
                 {product.product_name}
@@ -198,7 +183,6 @@ export default function ProductDetail() {
 
             <div className="flex flex-wrap items-center justify-center gap-4 w-full">
               
-              {/* Quantité : Désactivée si épuisé ou limite atteinte */}
               <div className="flex items-center border border-gray-300 rounded-md bg-white">
                 <button 
                   onClick={() => handleQtyChange(-1)} 
@@ -213,9 +197,7 @@ export default function ProductDetail() {
                 >+</button>
               </div>
 
-              {/* Bouton Panier : Désactivé si stock à 0 */}
               <button 
-              
                 onClick={() => {
                   addToCart(product, quantity);
                   toast.success(`${quantity} ${product.product_name} ajouté(s) au panier !`);
@@ -234,7 +216,6 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* 3. MODULE BOTANIQUE */}
       <section className="border border-gray-200 rounded-lg p-8 mb-12 bg-white text-center">
         <h2 className="text-xl font-bold text-jardinerie-text mb-6">Caractéristiques de la plante</h2>
         

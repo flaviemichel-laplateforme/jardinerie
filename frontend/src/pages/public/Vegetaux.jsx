@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import Spinner from '../../components/ui/Spinner';
 import ProductCard from '../../components/catalog/ProductCard';
-import FilterSidebar from '../../components/catalog/FilterSidebar'; 
+import FilterSidebar from '../../components/catalog/FilterSidebar';
+import { productService } from '../../services/productService';
 
 export default function Vegetaux() {
 
@@ -23,14 +24,7 @@ export default function Vegetaux() {
     const controller = new AbortController();
     
     const fetchProducts = async () => {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      
-      const currentParams = new URLSearchParams(searchParams);
-      currentParams.set('type', 'vegetaux');
-      
-      const queryString = currentParams.toString();
-      const url = `${baseUrl}/api/products?${queryString}`;
-
+      const url = productService.buildVegetauxUrl(searchParams);
       await request(url, { signal: controller.signal }, false);
     };
 
@@ -97,7 +91,6 @@ export default function Vegetaux() {
 
       <div className="flex flex-col md:flex-row">
         
-        {/* La Sidebar reste affichée en permanence, elle n'est plus jamais détruite */}
         <FilterSidebar 
           activeCategories={activeCategories}
           activeExpositions={activeExpositions}
@@ -110,20 +103,13 @@ export default function Vegetaux() {
 
         <main className="flex-1 relative min-h-[400px]">
           
-          {/* ========================================== */}
-          {/* GESTION DES ÉTATS DIRECTEMENT DANS LE MAIN */}
-          {/* ========================================== */}
-          
           {loading && !products ? (
-            // 1er cas : Chargement initial
             <div className="flex h-full w-full items-center justify-center pt-20">
               <Spinner message="Recherche des végétaux en cours..." />
             </div>
           ) : error ? (
-            // 2ème cas : Erreur du serveur
             <div className="py-20 text-center font-medium text-red-500">{error}</div>
           ) : !products || products.length === 0 ? (
-            // 3ème cas : Succès mais aucun résultat
             <div className="flex flex-col items-center justify-center py-20 text-center opacity-70">
               <p className="text-lg font-medium text-jardinerie-text">Aucun végétal ne correspond à vos filtres.</p>
               <button 
@@ -134,7 +120,6 @@ export default function Vegetaux() {
               </button>
             </div>
           ) : (
-            // 4ème cas : Affichage des produits avec overlay si un filtre est cliqué
             <>
               {loading && (
                 <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>

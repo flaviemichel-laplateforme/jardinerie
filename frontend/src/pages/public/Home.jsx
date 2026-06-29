@@ -1,6 +1,7 @@
 // src/pages/public/Home.jsx
 import { useEffect } from 'react';
 import { useApi } from '../../hooks/useApi';
+import { productService } from '../../services/productService';
 import HeroBanner from '../../components/ui/HeroBanner';
 import SplitSection from '../../components/catalog/SplitSection'; 
 import ProductRow from '../../components/catalog/ProductRow'; 
@@ -11,8 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchHomeProducts = async () => {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      await request(`${baseUrl}/api/products`);
+      await request(productService.buildHomeUrl());
     };
     fetchHomeProducts();
   }, [request]);

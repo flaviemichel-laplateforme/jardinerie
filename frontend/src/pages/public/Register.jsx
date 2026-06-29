@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../hooks/useApi';
+import { authService } from '../../services/authService';
+import { buildRequestOptions } from '../../services/apiClient';
 import toast from 'react-hot-toast';
 import logoImage from '../../assets/img/Logo.png';
 
@@ -35,21 +37,18 @@ export default function Register() {
       return;
     }
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-    const response = await request(`${apiUrl}/api/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
+    const response = await request(
+      authService.buildRegisterUrl(),
+      buildRequestOptions({
+        method: 'POST',
+        body: {
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
         password: formData.password
-      }) 
-    });
+        }
+      })
+    );
 
     if (response.success) {
       toast.success("Bienvenue ! Votre compte a été créé.");

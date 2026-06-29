@@ -22,6 +22,22 @@ class UserModel
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Cherche un utilisateur par id
+     * Retourne les données de l'utilisateur s'il existe, sinon false.
+     */
+    public function findById(int $id): array|false
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT * FROM users WHERE id = :id LIMIT 1";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':id' => $id]);
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
 
     /**
      * Enregistre un nouvel utilisateur en base de données
