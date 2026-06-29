@@ -6,35 +6,36 @@ import { Trash2, CreditCard, ShieldCheck, Smartphone } from 'lucide-react';
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
 
-  // Récupération des outils de navigation et d'authentification ---
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth(); 
 
-  // La fonction intelligente du bouton ---
   const handleCheckout = () => {
     if (isAuthenticated) {
-      // S'il a son "badge" (true), on l'envoie à l'étape 2
       navigate('/commande/livraison');
     } else {
-      // S'il n'est pas connecté (false), on l'envoie vers la connexion
-      // Et on glisse un petit post-it dans l'URL pour lui dire où revenir après !
       navigate('/connexion', { state: { from: '/commande/livraison' } });
     }
   };
 
   const totalTTC = cartTotal;
-  
-  // On calcule le HT en additionnant le HT de chaque ligne séparément
-  const totalHT = cartItems.reduce((acc, item) => {
-    const itemTTC = item.price * item.quantity;
-    const itemRate = item.tax_rate / 100; // Utilisation de tax_rate (ex: 20 devient 0.20)
-    const itemHT = itemTTC / (1 + itemRate);
-    return acc + itemHT;
-  }, 0);
 
-  // La TVA totale est la différence exacte entre le TTC et le HT
-  const tva = totalTTC - totalHT;
-  
+  // Regroupe HT et TVA par taux distinct (ex: 5.5% et 20%),
+  // car le panier peut contenir des produits avec des taux différents
+  const vatBreakdown = cartItems.reduce((acc, item) => {
+    const rate = item.tax_rate;
+    const itemTTC = item.price * item.quantity;
+    const itemHT = itemTTC / (1 + rate / 100);
+    const itemTVA = itemTTC - itemHT;
+
+    if (!acc[rate]) acc[rate] = { ht: 0, tva: 0 };
+    acc[rate].ht += itemHT;
+    acc[rate].tva += itemTVA;
+
+    return acc;
+  }, {});
+
+  const totalHT = Object.values(vatBreakdown).reduce((sum, { ht }) => sum + ht, 0);
+
   const isFreeShipping = totalTTC >= 50 || totalTTC === 0;
   const shippingCost = isFreeShipping ? 0 : 7.90;
   const finalTotal = totalTTC + shippingCost;
@@ -53,7 +54,6 @@ export default function Cart() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
       
-      {/* --- BARRE DE PROGRESSION (STEPPER) --- */}
       <div className="max-w-3xl mx-auto mb-12">
         <div className="relative flex items-center justify-between">
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 -z-10"></div>
@@ -74,15 +74,12 @@ export default function Cart() {
         </div>
       </div>
 
-      {/* --- STRUCTURE GRILLE --- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
-        {/* COLONNE GAUCHE : LISTE DES ARTICLES */}
         <div className="lg:col-span-8 flex flex-col gap-4">
           {cartItems.map((item) => (
             <div key={item.id} className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-4 flex gap-4 relative">
               
-              {/* Image */}
               <Link to={`/produit/${item.id}`} className="shrink-0">
                 <img 
                   src={item.image || 'https://via.placeholder.com/100'} 
@@ -91,7 +88,6 @@ export default function Cart() {
                 />
               </Link>
 
-              {/* Contenu */}
               <div className="flex flex-col justify-between flex-1">
                 <div className="pr-8">
                   <h3 className="text-sm sm:text-base font-bold text-jardinerie-text leading-tight">
@@ -105,7 +101,6 @@ export default function Cart() {
                     {item.price.toFixed(2).replace('.', ',')} €
                   </p>
                   
-                  {/* Sélecteur de quantité */}
                   <div className="flex items-center border border-gray-200 rounded-full bg-white h-8">
                     <button 
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -122,7 +117,6 @@ export default function Cart() {
                 </div>
               </div>
 
-              {/* 2. Icône Corbeille avec Lucide */}
               <button 
                 onClick={() => removeFromCart(item.id)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50"
@@ -135,7 +129,6 @@ export default function Cart() {
           ))}
         </div>
 
-        {/* COLONNE DROITE : RÉSUMÉ (STICKY AVEC SELF-START) */}
         <div className="lg:col-span-4 sticky top-24 self-start">
           <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-6">
             <h2 className="text-xl font-bold text-jardinerie-text mb-6">Résumé</h2>
@@ -149,10 +142,12 @@ export default function Cart() {
                 <span>Livraison</span>
                 <span className="font-bold text-jardinerie-text">{isFreeShipping ? 'Gratuite' : `${shippingCost.toFixed(2).replace('.', ',')} €`}</span>
               </div>
-              <div className="flex justify-between">
-                <span>TVA 20%</span>
-                <span>{tva.toFixed(2).replace('.', ',')} €</span>
-              </div>
+              {Object.entries(vatBreakdown).map(([rate, { tva }]) => (
+                <div key={rate} className="flex justify-between">
+                  <span>TVA {rate}%</span>
+                  <span>{tva.toFixed(2).replace('.', ',')} €</span>
+                </div>
+              ))}
             </div>
 
             <div className="border-t border-gray-200 pt-4 mb-8 flex justify-between items-end">
@@ -167,7 +162,6 @@ export default function Cart() {
               Valider
             </button>
 
-            {/* 3. Badges de réassurance avec Lucide */}
             <div className="flex flex-col items-center">
               <span className="text-[10px] uppercase tracking-widest text-jardinerie-text/50 font-bold mb-3">Paiement sécurisé</span>
               <div className="flex justify-center gap-5 text-jardinerie-text/80">
