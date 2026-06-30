@@ -4,12 +4,14 @@ namespace App\Controllers;
 
 use App\Services\AuthService;
 use App\Core\JwtHelper;
+use App\Middlewares\AuthMiddleware;
 
 class AuthController
 {
     public function __construct(
         private AuthService $authService = new AuthService()
     ) {}
+
 
     /**
      * Point d'entrée pour l'inscription (POST /api/auth/register)
@@ -148,9 +150,7 @@ class AuthController
         ]);
     }
 
-    /**
-     * Point d'entrée pour vérifier la session active (GET /api/auth/me)
-     */
+
     public function me(): void
     {
         header("Content-Type: application/json; charset=UTF-8");
@@ -162,30 +162,11 @@ class AuthController
 
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             http_response_code(405);
-            echo json_encode(["success" => false, "message" => "Méthode non autorisée, GET requis."]);
+            echo json_encode(['success' => false, "message" => "Méthode non autorisée, GET requis."]);
             return;
         }
 
-        // 1. Vérification de la présence du cookie
-        $token = $_COOKIE['jardinerie_session'] ?? null;
-
-        if (!$token) {
-            http_response_code(401);
-            echo json_encode(["success" => false, "message" => "Non authentifié."]);
-            return;
-        }
-
-        // 2. Vérification et décodage du JWT via le JwtHelper
-        $secret = $_ENV['JWT_SECRET'] ?? 'default_secret';
-        $payload = JwtHelper::verify($token, $secret);
-
-        if (!$payload) {
-            // Token invalide ou expiré, on supprime le cookie corrompu
-            setcookie('jardinerie_session', '', time() - 3600, '/');
-            http_response_code(401);
-            echo json_encode(["success" => false, "message" => "Session invalide ou expirée."]);
-            return;
-        }
+        $payload = AuthMiddleware::authenticate();
 
         // 3. Récupération des données utilisateur fraîches via le service
         $result = $this->authService->getUserById($payload['id']);
