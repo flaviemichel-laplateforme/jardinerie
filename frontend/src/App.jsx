@@ -31,7 +31,7 @@ const CustomerSettings = () => <div className="p-10 text-center">Infos et Mot de
 // --- ZONE VERTE : Tunnel d'achat ---
 
 // const CheckoutDelivery = () => <div className="p-10 text-center">Étape 1 : Livraison</div>;
-const CheckoutPayment = () => <div className="p-10 text-center">Étape 2 : Paiement</div>;
+const CheckoutPayment = () => <div className="p-10 text-center">Étape 3 : Paiement</div>;
 const CheckoutConfirmation = () => <div className="p-10 text-center">Confirmation de commande</div>;
 
 // --- ZONE GRISE : Administration ---
