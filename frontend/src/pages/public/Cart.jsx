@@ -2,6 +2,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Trash2, CreditCard, ShieldCheck, Smartphone } from 'lucide-react';
+import { resolveAssetUrl } from '../../services/apiClient';
+import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -82,8 +84,9 @@ export default function Cart() {
               
               <Link to={`/produit/${item.id}`} className="shrink-0">
                 <img 
-                  src={item.image || 'https://via.placeholder.com/100'} 
-                  alt={item.name} 
+                  src={item.image ? resolveAssetUrl(item.image) : placeholderImg } 
+                  alt={item.name}
+                  onError={(e) => { e.target.onerror = null; e.target.src = placeholderImg}} 
                   className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg object-cover bg-gray-50 border border-gray-100"
                 />
               </Link>
