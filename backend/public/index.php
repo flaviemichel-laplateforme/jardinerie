@@ -120,7 +120,7 @@ $router->map('POST', '/api/auth/login', 'AuthController#login', 'api_auth_login'
 $router->map('GET', '/api/auth/me', 'AuthController#me', 'api_auth_me');
 $router->map('POST', '/api/auth/logout', 'AuthController#logout', 'api_auth_logout');
 
-$router->map('GET', '/api/adrresses', 'AddressController#index', 'api_addresses_list');
+$router->map('GET', '/api/addresses', 'AddressController#index', 'api_addresses_list');
 $router->map('POST', '/api/addresses', 'AddressController#store', 'api_addresses_create');
 $router->map('PUT', '/api/addresses/[i:id]', 'AddressController#update', 'api_addresses_update');
 // -----------------------------------------------------------------------

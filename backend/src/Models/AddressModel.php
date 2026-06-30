@@ -62,30 +62,42 @@ class AddressModel
     {
         $db = Database::getConnection();
 
+        // 1. Vérifie l'existence et la propriété, indépendamment du fait que
+        //    les valeurs envoyées soient identiques aux valeurs actuelles ou non.
+        $checkSql = "SELECT id FROM addresses WHERE id = :id AND user_id = :user_id";
+        $checkStmt = $db->prepare($checkSql);
+        $checkStmt->execute([':id' => $id, ':user_id' => $userId]);
+
+        if (!$checkStmt->fetch(\PDO::FETCH_ASSOC)) {
+            return false; // L'adresse n'existe pas, ou appartient à un autre utilisateur.
+        }
+
+        // 2. L'adresse est confirmée : on applique la mise à jour en toute sécurité.
         $sql = "UPDATE addresses SET
-                    recipient_first_name = :first_name,
-                    recipient_last_name = :last_name,
-                    street = :street,
-                    postal_code = :postal_code,
-                    city = :city,
-                    country = :country,
-                    phone = :phone
-                WHERE id = :id AND user_id = :user_id";
+                recipient_first_name = :first_name,
+                recipient_last_name  = :last_name,
+                street      = :street,
+                postal_code = :postal_code,
+                city        = :city,
+                country     = :country,
+                phone       = :phone
+            WHERE id = :id AND user_id = :user_id";
 
         $stmt = $db->prepare($sql);
         $stmt->execute([
             ':first_name' => $data['recipient_first_name'],
-            ':last_name' => $data['recipient_last_name'],
-            ':street' => $data['street'],
+            ':last_name'  => $data['recipient_last_name'],
+            ':street'     => $data['street'],
             ':postal_code' => $data['postal_code'],
-            ':city' => $data['city'],
-            ':country' => $data['country'] ?? 'France',
-            ':phone' => $data['phone'],
-            ':id' => $id,
-            ':user_id' => $userId,
+            ':city'       => $data['city'],
+            ':country'    => $data['country'] ?? 'France',
+            ':phone'      => $data['phone'],
+            ':id'         => $id,
+            ':user_id'    => $userId,
         ]);
-        // Si rowCount() vaut 0, soit l'adresse n'existe pas, soit elle appartient à quelqu'un d'autre.
-        // Dans les deux cas, on considère l'opération comme un échec.
-        return $stmt->rowCount() > 0;
+
+        // L'étape 1 a déjà confirmé l'existence et la propriété : on renvoie
+        // systématiquement true ici, sans dépendre du comportement de rowCount().
+        return true;
     }
 }
