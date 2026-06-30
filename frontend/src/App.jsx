@@ -9,6 +9,7 @@ import Home from './pages/public/Home';
 import Login from './pages/public/Login';
 import Vegetaux from './pages/public/Vegetaux';
 import Jardinage from './pages/public/Jardinage';
+import CheckoutDelivery from './pages/public/CheckoutDelivery';
 
 
 // ==========================================
@@ -29,7 +30,7 @@ const CustomerSettings = () => <div className="p-10 text-center">Infos et Mot de
 
 // --- ZONE VERTE : Tunnel d'achat ---
 
-const CheckoutDelivery = () => <div className="p-10 text-center">Étape 1 : Livraison</div>;
+// const CheckoutDelivery = () => <div className="p-10 text-center">Étape 1 : Livraison</div>;
 const CheckoutPayment = () => <div className="p-10 text-center">Étape 2 : Paiement</div>;
 const CheckoutConfirmation = () => <div className="p-10 text-center">Confirmation de commande</div>;
 

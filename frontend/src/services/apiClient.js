@@ -1,6 +1,6 @@
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-export function buildRequestOptions({ method = 'GET', body, headers = {} } = {}) {
+export function buildRequestOptions({ method = 'GET', body, headers = {}, signal } = {}) {
     const options = {
         method,
         credentials: 'include',
@@ -9,6 +9,7 @@ export function buildRequestOptions({ method = 'GET', body, headers = {} } = {})
             'Content-Type': 'application/json',
             ...headers,
         },
+        ...(signal && { signal }),
     };
     if (body) {
         options.body = JSON.stringify(body);

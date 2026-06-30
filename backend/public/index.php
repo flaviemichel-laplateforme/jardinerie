@@ -1,6 +1,10 @@
 <?php
 
 // CONFIGURATION CORS (Support des Cookies)
+
+use App\Controllers\AddressController;
+use App\Controllers\AuthController;
+
 $allowedOrigins = [
     'http://localhost:5173', // Votre front-end React en développement
     'https://www.votre-jardinerie.fr' // Votre futur front-end en production
@@ -104,15 +108,22 @@ $router->map('GET', '/api/test-db', function () {
 }, 'api_test_db_route');
 
 $router->map('GET', '/api/departments', 'DepartmentController#index', 'api_departments_list');
+
 $router->map('GET', '/api/products', 'ProductController#index', 'api_products_list');
 $router->map('GET', '/api/products/[i:id]', 'ProductController#show', 'api_product_show');
 $router->map('GET', '/api/products/[i:id]/availability', 'ProductController#checkAvailability', 'api_product_availability');
+
 $router->map('GET', '/api/filters', 'FilterController#index', 'api_filters_list');
+
 $router->map('POST', '/api/auth/register', 'AuthController#register', 'api_auth_register');
 $router->map('POST', '/api/auth/login', 'AuthController#login', 'api_auth_login');
 $router->map('GET', '/api/auth/me', 'AuthController#me', 'api_auth_me');
 $router->map('POST', '/api/auth/logout', 'AuthController#logout', 'api_auth_logout');
 
+$router->map('GET', '/api/addresses', 'AddressController#index', 'api_addresses_list');
+$router->map('POST', '/api/addresses', 'AddressController#store', 'api_addresses_create');
+$router->map('PUT', '/api/addresses/[i:id]', 'AddressController#update', 'api_addresses_update');
+$router->map('DELETE', '/api/addresses/[i:id]', 'AddressController#destroy', 'api_addresses_delete');
 // -----------------------------------------------------------------------
 // ROUTES DE PAIEMENT (Stripe)
 // -----------------------------------------------------------------------
