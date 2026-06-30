@@ -15,7 +15,7 @@ class AddressModel
 
         $db = Database::getConnection();
 
-        $sql = "SELECT id, recipient_first_name, recipient_last_name, street, postal_code, country, phone 
+        $sql = "SELECT id, recipient_first_name, recipient_last_name, street, postal_code, city, country, phone 
                 FROM addresses 
                 WHERE user_id = :user_id
                 ORDER BY id DESC";
@@ -51,6 +51,30 @@ class AddressModel
         ]);
 
         return (int) $db->lastInsertId();
+    }
+
+    /**
+     * Supprime une adresse, à condition qu'elle appartienne à l'utilisateur.
+     * Protection IDOR : même logique que update() — on vérifie l'existence
+     * ET la propriété avant toute action, via la clause WHERE.
+     */
+    public function delete(int $id, int $userId): bool
+    {
+        $db = Database::getConnection();
+
+        $checkSql = "SELECT id FROM addresses WHERE id = :id AND user_id = :user_id";
+        $checkStmt = $db->prepare($checkSql);
+        $checkStmt->execute([':id' => $id, ':user_id' => $userId]);
+
+        if (!$checkStmt->fetch(\PDO::FETCH_ASSOC)) {
+            return false;
+        }
+
+        $sql = "DELETE FROM addresses WHERE id = :id AND user_id = :user_id";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':id' => $id, ':user_id' => $userId]);
+
+        return true;
     }
 
     /**

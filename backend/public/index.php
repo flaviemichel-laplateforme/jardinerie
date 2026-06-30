@@ -123,6 +123,7 @@ $router->map('POST', '/api/auth/logout', 'AuthController#logout', 'api_auth_logo
 $router->map('GET', '/api/addresses', 'AddressController#index', 'api_addresses_list');
 $router->map('POST', '/api/addresses', 'AddressController#store', 'api_addresses_create');
 $router->map('PUT', '/api/addresses/[i:id]', 'AddressController#update', 'api_addresses_update');
+$router->map('DELETE', '/api/addresses/[i:id]', 'AddressController#destroy', 'api_addresses_delete');
 // -----------------------------------------------------------------------
 // ROUTES DE PAIEMENT (Stripe)
 // -----------------------------------------------------------------------

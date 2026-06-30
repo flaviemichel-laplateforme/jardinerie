@@ -124,6 +124,45 @@ class AddressController
             "message" => "Adresse mise à jour avec succès."
         ], JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * DELETE /api/addresses/{id}
+     */
+    public function destroy(int $id): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        $payload = AuthMiddleware::authenticate();
+
+        try {
+            $deleted = $this->addressModel->delete($id, $payload['id']);
+
+            if (!$deleted) {
+                http_response_code(404);
+                echo json_encode(["success" => false, "message" => "Adresse introuvable."], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            http_response_code(200);
+            echo json_encode(["success" => true, "message" => "Adresse supprimée avec succès."], JSON_UNESCAPED_UNICODE);
+        } catch (\PDOException $e) {
+            // Code 1451 = violation de clé étrangère (l'adresse est encore référencée ailleurs)
+            if ($e->errorInfo[1] === 1451) {
+                http_response_code(409);
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Cette adresse est liée à une commande existante et ne peut pas être supprimée."
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            throw $e;
+        }
+    }
     /**
      * Validation minimale des champs obligatoires d'une adresse.
      * Privée : c'est un détail d'implémentation interne, partagé entre store() et update().
