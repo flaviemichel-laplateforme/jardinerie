@@ -3,6 +3,8 @@ import { addressService } from '../../services/addressService';
 import { useApi } from '../../hooks/useApi';
 import AddressPicker from '../../components/checkout/AddressPicker';
 import { buildRequestOptions } from '../../services/apiClient';
+import { useNavigate } from 'react-router-dom';
+import { useCheckout } from '../../contexts/CheckoutContext'
 
 export default function CheckoutDelivery() {
   const { data: addressData, request, setData } = useApi();
@@ -10,9 +12,10 @@ export default function CheckoutDelivery() {
   // Donnée DÉRIVÉE : pas de useState séparé, pas de useEffect de synchronisation.
   const addresses = addressData?.addresses ?? [];
 
-  const [shippingAddressId, setShippingAddressId] = useState(null);
+ const { shippingAddressId, setShippingAddressId, billingAddressId, setBillingAddressId } = useCheckout();
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
-  const [billingAddressId, setBillingAddressId] = useState(null);
+  const navigate = useNavigate();
+  
 
   useEffect(() => {
     const controller = new AbortController();
@@ -46,6 +49,10 @@ export default function CheckoutDelivery() {
 
   const effectiveBillingId = billingSameAsShipping ? shippingAddressId : billingAddressId;
 
+  const handleValidate = () => {
+    setBillingAddressId(effectiveBillingId);
+    navigate('/commande/paiement');
+  }
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h2 className="mb-4 text-lg font-bold text-jardinerie-text">Adresse de livraison</h2>
@@ -83,6 +90,7 @@ export default function CheckoutDelivery() {
 
       <button
         type="button"
+        onClick={handleValidate}
         disabled={!shippingAddressId || !effectiveBillingId}
         className="mt-8 w-full rounded-full bg-jardinerie-primary py-3.5 text-sm font-bold text-white disabled:opacity-40"
       >
