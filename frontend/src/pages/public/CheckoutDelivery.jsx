@@ -4,18 +4,21 @@ import { useApi } from '../../hooks/useApi';
 import AddressPicker from '../../components/checkout/AddressPicker';
 import { buildRequestOptions } from '../../services/apiClient';
 import { useNavigate } from 'react-router-dom';
-import { useCheckout } from '../../contexts/CheckoutContext'
+import { useCheckout } from '../../contexts/CheckoutContext';
+import { useCart } from '../../contexts/CartContext';
+import { checkoutService } from '../../services/checkoutService';
 
 export default function CheckoutDelivery() {
   const { data: addressData, request, setData } = useApi();
+  const { request: paymentRequest, loading: paymentLoading } = useApi();
 
-  // Donnée DÉRIVÉE : pas de useState séparé, pas de useEffect de synchronisation.
   const addresses = addressData?.addresses ?? [];
 
- const { shippingAddressId, setShippingAddressId, billingAddressId, setBillingAddressId } = useCheckout();
+  const { shippingAddressId, setShippingAddressId, billingAddressId, setBillingAddressId, setClientSecret } = useCheckout();
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+
   const navigate = useNavigate();
-  
+  const { cartItems } = useCart();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -49,10 +52,27 @@ export default function CheckoutDelivery() {
 
   const effectiveBillingId = billingSameAsShipping ? shippingAddressId : billingAddressId;
 
-  const handleValidate = () => {
+  const handleValidate = async () => {
     setBillingAddressId(effectiveBillingId);
+
+    // Transformation du panier React vers le format attendu par le serveur
+    const items = cartItems.map((item) => ({
+      product_id: item.id,
+      quantity: item.quantity,
+    }));
+
+    const result = await paymentRequest(
+      checkoutService.buildPaymentIntentUrl(),
+      buildRequestOptions({ method: 'POST', body: { items } }),
+      false
+    );
+
+    if (!result.success) return; // l'erreur est déjà gérée par useApi
+
+    setClientSecret(result.data.paymentIntent.clientSecret);
     navigate('/commande/paiement');
-  }
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h2 className="mb-4 text-lg font-bold text-jardinerie-text">Adresse de livraison</h2>
@@ -91,10 +111,10 @@ export default function CheckoutDelivery() {
       <button
         type="button"
         onClick={handleValidate}
-        disabled={!shippingAddressId || !effectiveBillingId}
+        disabled={!shippingAddressId || !effectiveBillingId || paymentLoading}
         className="mt-8 w-full rounded-full bg-jardinerie-primary py-3.5 text-sm font-bold text-white disabled:opacity-40"
       >
-        Valider les modifications
+        {paymentLoading ? 'Préparation du paiement...' : 'Valider les modifications'}
       </button>
     </div>
   );
