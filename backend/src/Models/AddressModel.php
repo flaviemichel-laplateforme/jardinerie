@@ -134,7 +134,7 @@ class AddressModel
     {
         $db = Database::getConnection();
 
-        $sql = "SELECT recipent_first_name, recipient_last_name, street, postal_code, city, country, phone
+        $sql = "SELECT recipient_first_name, recipient_last_name, street, postal_code, city, country, phone
             FROM addresses WHERE id = :id LIMIT 1";
 
         $stmt = $db->prepare($sql);
