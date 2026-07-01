@@ -30,7 +30,11 @@ class PaymentService
             'currency' => 'eur',
             'metadata' => [
                 'cart_hash' => $cartHash,
-                'user_id'   => $userId
+                'user_id'   => $userId,
+                'items'     => json_encode(array_map(fn($i) => [
+                    'pid' => $i['product_id'],
+                    'qty' => $i['quantity']
+                ], $cartItems)),
             ]
         ], [
             'idempotency_key' => $idempotencyKey
