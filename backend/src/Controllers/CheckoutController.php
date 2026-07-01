@@ -52,10 +52,10 @@ class CheckoutController
             $result = $this->paymentService->createPaymentIntent(
                 $cart['total'],
                 $userId,
-                $cart['items',
+                $cart['items'],
                 (int) ($data['shipping_address_id'] ?? 0),
                 (int) ($data['billing_address_id'] ?? 0)
-                ]);
+            );
 
             http_response_code(200);
             echo json_encode([
@@ -80,49 +80,47 @@ class CheckoutController
         $sigHeader = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
 
         try {
-            // 1. Vérification cryptographique — seul Stripe peut signer ce payload
             $event = $this->paymentService->verifyWebhookSignature($payload, $sigHeader);
 
             if ($event->type === 'payment_intent.succeeded') {
                 $paymentIntent   = $event->data->object;
                 $paymentIntentId = $paymentIntent->id;
                 $userId          = isset($paymentIntent->metadata->user_id)
-                        ? (int) $paymentIntent->metadata->user_id
-                        : null;
-        $itemsJson       = $paymentIntent->metadata->items ?? '[]';
+                    ? (int) $paymentIntent->metadata->user_id
+                    : null;
+                $itemsJson       = $paymentIntent->metadata->items ?? '[]';
+                $shippingId      = (int) ($paymentIntent->metadata->shipping_address_id ?? 0);
+                $billingId       = (int) ($paymentIntent->metadata->billing_address_id ?? 0);
 
-        // Si les métadonnées sont absentes (événement de test synthétique),
-        // on logge et on sort proprement sans créer de commande.
-        if (!$userId) {
-         http_response_code(200);
-         echo json_encode(['status' => 'skipped_no_metadata']);
-         return;
-        }
+                if (!$userId) {
+                    http_response_code(200);
+                    echo json_encode(['status' => 'skipped_no_metadata']);
+                    return;
+                }
 
-                // 3. Reconstruction du panier depuis les métadonnées Stripe
+                if ($this->orderModel->existsByPaymentIntent($paymentIntentId)) {
+                    http_response_code(200);
+                    echo json_encode(['status' => 'already_processed']);
+                    return;
+                }
+
                 $rawItems = json_decode($itemsJson, true) ?? [];
-
-                // Les clés courtes 'pid'/'qty' ont été utilisées pour rester
-                // sous la limite de 500 caractères des métadonnées Stripe
                 $items = array_map(fn($i) => [
                     'product_id' => $i['pid'],
                     'quantity'   => $i['qty'],
                 ], $rawItems);
 
-                // 4. Recalcul intégral côté serveur (même logique que createIntent)
                 $cart = empty($items)
                     ? ['items' => [], 'total' => $paymentIntent->amount / 100]
                     : $this->cartItemModel->calculateCart($items);
 
-                // 5. Création de la commande en base (transaction SQL atomique)
-                $this->orderModel->createFromPayment($userId, $cart, $paymentIntentId);
+                $this->orderModel->createFromPayment($userId, $cart, $paymentIntentId, $shippingId, $billingId);
             }
 
-            // Stripe exige une réponse 200 rapide
             http_response_code(200);
             echo json_encode(['status' => 'success']);
         } catch (\Exception $e) {
-              error_log("WEBHOOK ERROR: " . $e->getMessage() . " | " . $e->getTraceAsString());
+            error_log("WEBHOOK ERROR: " . $e->getMessage() . " | " . $e->getTraceAsString());
             http_response_code(400);
             echo json_encode(['error' => $e->getMessage()]);
         }

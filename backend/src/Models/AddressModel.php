@@ -126,14 +126,24 @@ class AddressModel
     }
 
     /**
- * Construit un texte d'adresse formaté pour l'archivage dans orders.
- * Ce texte est figé au moment de la commande — même si l'adresse est
- * modifiée plus tard, l'historique reste exact.
- */
-public function getAddressText(int $id): string
-{
-    $db = Database::getconne
-}
+     * Construit un texte d'adresse formaté pour l'archivage dans orders.
+     * Ce texte est figé au moment de la commande — même si l'adresse est
+     * modifiée plus tard, l'historique reste exact.
+     */
+    public function getAddressText(int $id): string
+    {
+        $db = Database::getConnection();
 
+        $sql = "SELECT recipent_first_name, recipient_last_name, street, postal_code, city, country, phone
+            FROM addresses WHERE id = :id LIMIT 1";
 
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        $addr = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$addr) return '';
+
+        return "{$addr['recipient_first_name']} {$addr['recipient_last_name']}, " .
+            "{$addr['street']}, {$addr['postal_code']} {$addr['city']}, {$addr['country']}, {$addr['phone']}";
+    }
 }
