@@ -124,4 +124,16 @@ class AddressModel
         // systématiquement true ici, sans dépendre du comportement de rowCount().
         return true;
     }
+
+    /**
+ * Construit un texte d'adresse formaté pour l'archivage dans orders.
+ * Ce texte est figé au moment de la commande — même si l'adresse est
+ * modifiée plus tard, l'historique reste exact.
+ */
+public function getAddressText(int $id): string
+{
+    $db = Database::getconne
+}
+
+
 }

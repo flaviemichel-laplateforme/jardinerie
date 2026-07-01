@@ -18,7 +18,7 @@ class PaymentService
     /**
      * Crée une intention de paiement avec Idempotence
      */
-    public function createPaymentIntent(float $totalAmount, int $userId, array $cartItems = []): array
+    public function createPaymentIntent(float $totalAmount, int $userId, array $cartItems = [], int $shippingAddressId = 0, int $billingAddressId = 0): array
     {
         $amountInCents = (int) round($totalAmount * 100);
 
@@ -31,6 +31,8 @@ class PaymentService
             'metadata' => [
                 'cart_hash' => $cartHash,
                 'user_id'   => $userId,
+                'shipping_address_id' => $shippingAddressId,
+                'billing_address_id'  => $billingAddressId,
                 'items'     => json_encode(array_map(fn($i) => [
                     'pid' => $i['product_id'],
                     'qty' => $i['quantity']

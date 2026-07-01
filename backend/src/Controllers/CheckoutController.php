@@ -49,7 +49,13 @@ class CheckoutController
                 return;
             }
 
-            $result = $this->paymentService->createPaymentIntent($cart['total'], $userId, $cart['items']);
+            $result = $this->paymentService->createPaymentIntent(
+                $cart['total'],
+                $userId,
+                $cart['items',
+                (int) ($data['shipping_address_id'] ?? 0),
+                (int) ($data['billing_address_id'] ?? 0)
+                ]);
 
             http_response_code(200);
             echo json_encode([
@@ -80,15 +86,18 @@ class CheckoutController
             if ($event->type === 'payment_intent.succeeded') {
                 $paymentIntent   = $event->data->object;
                 $paymentIntentId = $paymentIntent->id;
-                $userId          = (int) $paymentIntent->metadata->user_id;
-                $itemsJson       = $paymentIntent->metadata->items ?? '[]';
+                $userId          = isset($paymentIntent->metadata->user_id)
+                        ? (int) $paymentIntent->metadata->user_id
+                        : null;
+        $itemsJson       = $paymentIntent->metadata->items ?? '[]';
 
-                // 2. Protection idempotence — Stripe peut envoyer le même webhook 2x
-                if ($this->orderModel->existsByPaymentIntent($paymentIntentId)) {
-                    http_response_code(200);
-                    echo json_encode(['status' => 'already_processed']);
-                    return;
-                }
+        // Si les métadonnées sont absentes (événement de test synthétique),
+        // on logge et on sort proprement sans créer de commande.
+        if (!$userId) {
+         http_response_code(200);
+         echo json_encode(['status' => 'skipped_no_metadata']);
+         return;
+        }
 
                 // 3. Reconstruction du panier depuis les métadonnées Stripe
                 $rawItems = json_decode($itemsJson, true) ?? [];
@@ -113,6 +122,7 @@ class CheckoutController
             http_response_code(200);
             echo json_encode(['status' => 'success']);
         } catch (\Exception $e) {
+              error_log("WEBHOOK ERROR: " . $e->getMessage() . " | " . $e->getTraceAsString());
             http_response_code(400);
             echo json_encode(['error' => $e->getMessage()]);
         }

@@ -63,7 +63,14 @@ export default function CheckoutDelivery() {
 
     const result = await paymentRequest(
       checkoutService.buildPaymentIntentUrl(),
-      buildRequestOptions({ method: 'POST', body: { items } }),
+      buildRequestOptions({
+        method: 'POST',
+        body: {
+           items,
+           shipping_address_id: shippingAddressId,
+           billing_address_id: effectiveBillingId,
+          } 
+        }),
       false
     );
 
