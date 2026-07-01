@@ -50,14 +50,14 @@ class CheckoutController
                 return;
             }
 
-            // --- TEST TEMPORAIRE : Stripe commenté pour valider CartItemModel seul ---
-            // $result = $this->paymentService->createPaymentIntent($cart['total'], $userId, $cart['items']);
+            // Appel du service de paiement avec le total VÉRIFIÉ
+            $result = $this->paymentService->createPaymentIntent($cart['total'], $userId, $cart['items']);
 
             http_response_code(200);
             echo json_encode([
                 'status' => 200,
                 'data' => [
-                    'paymentIntent' => null, // désactivé temporairement
+                    'paymentIntent' => $result,
                     'cart' => $cart,
                 ]
             ], JSON_UNESCAPED_UNICODE);
