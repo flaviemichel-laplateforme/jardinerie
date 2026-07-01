@@ -25,6 +25,8 @@ yarn-error.log*
 # On ignore les librairies PHP (elles seront réinstallées avec 'composer install')
 /backend/vendor/
 /backend/composer.phar
+backend/.env
+frontend/.env
 
 
 # ==========================================

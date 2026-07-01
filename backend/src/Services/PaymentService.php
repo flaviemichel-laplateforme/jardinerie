@@ -18,24 +18,22 @@ class PaymentService
     /**
      * Crée une intention de paiement avec Idempotence
      */
-    public function createPaymentIntent(int $cartId, float $totalAmount, int $userId): array
+    public function createPaymentIntent(float $totalAmount, int $userId, array $cartItems = []): array
     {
-        // Stripe attend des centimes (ex: 15.50€ -> 1550)
         $amountInCents = (int) round($totalAmount * 100);
 
-        // CRITÈRE 2 : L'IDEMPOTENCE
-        // On crée une clé unique basée sur le Panier et le Montant
-        $idempotencyKey = "pi_cart_{$cartId}_amount_{$amountInCents}";
+        $cartHash = md5(json_encode($cartItems));
+        $idempotencyKey = "pi_user_{$userId}_amount_{$amountInCents}_{$cartHash}";
 
         $paymentIntent = PaymentIntent::create([
-            'amount' => $amountInCents,
+            'amount'   => $amountInCents,
             'currency' => 'eur',
             'metadata' => [
-                'cart_id' => $cartId,
-                'user_id' => $userId
+                'cart_hash' => $cartHash,
+                'user_id'   => $userId
             ]
         ], [
-            'idempotency_key' => $idempotencyKey // Stripe garantit le non-double paiement grâce à ceci
+            'idempotency_key' => $idempotencyKey
         ]);
 
         return [
