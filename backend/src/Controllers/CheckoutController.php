@@ -3,15 +3,14 @@
 namespace App\Controllers;
 
 use App\Services\PaymentService;
-// use App\Services\CartService; // (Supposé)
-// use App\Services\OrderService; // (Supposé)
+use App\Models\CartItemModel;
+use App\Middlewares\AuthMiddleware;
 
 class CheckoutController
 {
     public function __construct(
-        private PaymentService $paymentService = new PaymentService()
-        // private CartService $cartService = new CartService(),
-        // private OrderService $orderService = new OrderService()
+        private PaymentService $paymentService = new PaymentService(),
+        private CartItemModel $cartItemModel = new CartItemModel()
     ) {}
 
     /**
@@ -22,22 +21,45 @@ class CheckoutController
         header('Content-Type: application/json; charset=utf-8');
 
         try {
-            // 1. Récupérer l'utilisateur (via session ou JWT)
-            $userId = $_SESSION['user_id'] ?? 1; // Exemple
+            // 1. Authentification obligatoire (même mécanisme que toutes les routes protégées)
+            $payload = AuthMiddleware::authenticate();
+            $userId = $payload['id'];
 
-            // 2. RÈGLE D'OR : Recalculer le total CÔTÉ SERVEUR !
-            // Ne faites jamais confiance au montant envoyé par le front-end.
-            // $cart = $this->cartService->getCartByUserId($userId);
-            $cartId = 123; // Exemple
-            $totalAmount = 45.90; // Exemple recalculé en BDD
+            // 2. Lecture du panier envoyé par React (product_id + quantity uniquement)
+            $rawInput = file_get_contents("php://input");
+            $data = json_decode($rawInput, true);
+            $items = $data['items'] ?? [];
 
-            // 3. Appel du service de paiement
-            $result = $this->paymentService->createPaymentIntent($cartId, $totalAmount, $userId);
+            if (empty($items)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Le panier est vide.'
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            // 3. RÈGLE D'OR : Recalcul intégral côté serveur, jamais confiance au front-end.
+            $cart = $this->cartItemModel->calculateCart($items);
+
+            if ($cart['total'] <= 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Panier invalide.',
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // 4. Appel du service de paiement avec le total VÉRIFIÉ
+            $result = $this->paymentService->createPaymentIntent($cart['total'], $userId);
 
             http_response_code(200);
             echo json_encode([
                 'status' => 200,
-                'data' => $result
+                'data' => [
+                    'paymentIntent' => $result,
+                    'cart' => $cart,
+                ]
             ], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             http_response_code(500);
