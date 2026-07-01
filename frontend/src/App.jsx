@@ -11,6 +11,7 @@ import Vegetaux from './pages/public/Vegetaux';
 import Jardinage from './pages/public/Jardinage';
 import CheckoutDelivery from './pages/public/CheckoutDelivery';
 import CheckoutPayment from './pages/public/CheckoutPayment';
+import CheckoutConfirmation from './pages/public/CheckoutConfirmation';
 
 
 // ==========================================
@@ -33,7 +34,7 @@ const CustomerSettings = () => <div className="p-10 text-center">Infos et Mot de
 
 // const CheckoutDelivery = () => <div className="p-10 text-center">Étape 1 : Livraison</div>;
 // const CheckoutPayment = () => <div className="p-10 text-center">Étape 3 : Paiement</div>;
-const CheckoutConfirmation = () => <div className="p-10 text-center">Confirmation de commande</div>;
+// const CheckoutConfirmation = () => <div className="p-10 text-center">Confirmation de commande</div>;
 
 // --- ZONE GRISE : Administration ---
 const AdminDashboard = () => <div className="p-10 text-center">Dashboard et Alertes Stocks</div>;
