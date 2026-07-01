@@ -20,44 +20,44 @@ class CheckoutController
     {
         header('Content-Type: application/json; charset=utf-8');
 
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
         try {
-            // 1. Authentification obligatoire (même mécanisme que toutes les routes protégées)
+            // 1. Authentification obligatoire
             $payload = AuthMiddleware::authenticate();
             $userId = $payload['id'];
 
-            // 2. Lecture du panier envoyé par React (product_id + quantity uniquement)
+            // 2. Lecture du panier envoyé par React
             $rawInput = file_get_contents("php://input");
             $data = json_decode($rawInput, true);
             $items = $data['items'] ?? [];
 
             if (empty($items)) {
                 http_response_code(400);
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Le panier est vide.'
-                ], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['success' => false, 'message' => 'Le panier est vide.'], JSON_UNESCAPED_UNICODE);
                 return;
             }
-            // 3. RÈGLE D'OR : Recalcul intégral côté serveur, jamais confiance au front-end.
+
+            // 3. RÈGLE D'OR : Recalcul intégral côté serveur
             $cart = $this->cartItemModel->calculateCart($items);
 
             if ($cart['total'] <= 0) {
                 http_response_code(400);
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Panier invalide.',
-                ], JSON_UNESCAPED_UNICODE);
+                echo json_encode(['success' => false, 'message' => 'Panier invalide.'], JSON_UNESCAPED_UNICODE);
                 return;
             }
 
-            // 4. Appel du service de paiement avec le total VÉRIFIÉ
-            $result = $this->paymentService->createPaymentIntent($cart['total'], $userId);
+            // --- TEST TEMPORAIRE : Stripe commenté pour valider CartItemModel seul ---
+            // $result = $this->paymentService->createPaymentIntent($cart['total'], $userId, $cart['items']);
 
             http_response_code(200);
             echo json_encode([
                 'status' => 200,
                 'data' => [
-                    'paymentIntent' => $result,
+                    'paymentIntent' => null, // désactivé temporairement
                     'cart' => $cart,
                 ]
             ], JSON_UNESCAPED_UNICODE);
