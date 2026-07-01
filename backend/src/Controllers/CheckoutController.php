@@ -4,13 +4,15 @@ namespace App\Controllers;
 
 use App\Services\PaymentService;
 use App\Models\CartItemModel;
+use App\Models\OrderModel;
 use App\Middlewares\AuthMiddleware;
 
 class CheckoutController
 {
     public function __construct(
         private PaymentService $paymentService = new PaymentService(),
-        private CartItemModel $cartItemModel = new CartItemModel()
+        private CartItemModel $cartItemModel = new CartItemModel(),
+        private OrderModel $orderModel = new OrderModel()
     ) {}
 
     /**
@@ -26,11 +28,9 @@ class CheckoutController
         }
 
         try {
-            // 1. Authentification obligatoire
             $payload = AuthMiddleware::authenticate();
             $userId = $payload['id'];
 
-            // 2. Lecture du panier envoyé par React
             $rawInput = file_get_contents("php://input");
             $data = json_decode($rawInput, true);
             $items = $data['items'] ?? [];
@@ -41,7 +41,6 @@ class CheckoutController
                 return;
             }
 
-            // 3. RÈGLE D'OR : Recalcul intégral côté serveur
             $cart = $this->cartItemModel->calculateCart($items);
 
             if ($cart['total'] <= 0) {
@@ -50,23 +49,25 @@ class CheckoutController
                 return;
             }
 
-            // Appel du service de paiement avec le total VÉRIFIÉ
-            $result = $this->paymentService->createPaymentIntent($cart['total'], $userId, $cart['items']);
+            $result = $this->paymentService->createPaymentIntent(
+                $cart['total'],
+                $userId,
+                $cart['items'],
+                (int) ($data['shipping_address_id'] ?? 0),
+                (int) ($data['billing_address_id'] ?? 0)
+            );
 
             http_response_code(200);
             echo json_encode([
                 'status' => 200,
                 'data' => [
                     'paymentIntent' => $result,
-                    'cart' => $cart,
+                    'cart'          => $cart,
                 ]
             ], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode([
-                'status' => 500,
-                'error' => $e->getMessage()
-            ], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['status' => 500, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
     }
 
@@ -75,30 +76,51 @@ class CheckoutController
      */
     public function handleWebhook(): void
     {
-        // Les webhooks n'ont pas besoin d'être au format classique
-        $payload = @file_get_contents('php://input');
+        $payload   = @file_get_contents('php://input');
         $sigHeader = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
 
         try {
-            // 1. Vérification de la signature (Le garde du corps)
             $event = $this->paymentService->verifyWebhookSignature($payload, $sigHeader);
 
-            // 2. Traitement de l'événement sécurisé
             if ($event->type === 'payment_intent.succeeded') {
-                $paymentIntent = $event->data->object;
+                $paymentIntent   = $event->data->object;
+                $paymentIntentId = $paymentIntent->id;
+                $userId          = isset($paymentIntent->metadata->user_id)
+                    ? (int) $paymentIntent->metadata->user_id
+                    : null;
+                $itemsJson       = $paymentIntent->metadata->items ?? '[]';
+                $shippingId      = (int) ($paymentIntent->metadata->shipping_address_id ?? 0);
+                $billingId       = (int) ($paymentIntent->metadata->billing_address_id ?? 0);
 
-                $cartId = $paymentIntent->metadata->cart_id;
-                $stripePaymentId = $paymentIntent->id; // Ex: pi_3O...
+                if (!$userId) {
+                    http_response_code(200);
+                    echo json_encode(['status' => 'skipped_no_metadata']);
+                    return;
+                }
 
-                // 3. Créer la commande en BDD et marquer comme payée
-                // $this->orderService->createPaidOrder($cartId, $stripePaymentId);
+                if ($this->orderModel->existsByPaymentIntent($paymentIntentId)) {
+                    http_response_code(200);
+                    echo json_encode(['status' => 'already_processed']);
+                    return;
+                }
+
+                $rawItems = json_decode($itemsJson, true) ?? [];
+                $items = array_map(fn($i) => [
+                    'product_id' => $i['pid'],
+                    'quantity'   => $i['qty'],
+                ], $rawItems);
+
+                $cart = empty($items)
+                    ? ['items' => [], 'total' => $paymentIntent->amount / 100]
+                    : $this->cartItemModel->calculateCart($items);
+
+                $this->orderModel->createFromPayment($userId, $cart, $paymentIntentId, $shippingId, $billingId);
             }
 
-            // Stripe exige une réponse rapide (Code 200) pour savoir qu'on a bien reçu l'info
             http_response_code(200);
             echo json_encode(['status' => 'success']);
         } catch (\Exception $e) {
-            // Si la signature est fausse, on renvoie une erreur 400
+            error_log("WEBHOOK ERROR: " . $e->getMessage() . " | " . $e->getTraceAsString());
             http_response_code(400);
             echo json_encode(['error' => $e->getMessage()]);
         }
