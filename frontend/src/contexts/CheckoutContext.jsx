@@ -5,13 +5,16 @@ const CheckoutContext = createContext();
 export function CheckoutProvider({ children }) {
   const [shippingAddressId, setShippingAddressId] = useState(null);
   const [billingAddressId, setBillingAddressId] = useState(null);
-
+  const [clientSecret, setClientSecret] = useState(null);
+  
   return (
     <CheckoutContext.Provider value={{
       shippingAddressId,
       setShippingAddressId,
       billingAddressId,
       setBillingAddressId,
+      clientSecret,
+      setClientSecret,
     }}>
       {children}
     </CheckoutContext.Provider>
