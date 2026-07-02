@@ -14,6 +14,7 @@ import CheckoutPayment from './pages/public/CheckoutPayment';
 import CheckoutConfirmation from './pages/public/CheckoutConfirmation';
 import CustomerOrders from './pages/customer/CustomerOrders';
 import CustomerOrderDetail from './pages/customer/CustomerOrderDetail';
+import CustomerAddresses from './pages/customer/CustomerAddresses';
 
 
 // ==========================================
@@ -82,6 +83,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <CustomerDashboard /> }, // Correspond à /compte
           { path: 'commandes', element: <CustomerOrders /> }, // /compte/commandes
+           { path: 'adresses', element: <CustomerAddresses /> }, //Mes adresses
           { path: 'commandes/:id', element: <CustomerOrderDetail /> },
           { path: 'tickets', element: <CustomerTickets /> },
           { path: 'parametres', element: <CustomerSettings /> },
