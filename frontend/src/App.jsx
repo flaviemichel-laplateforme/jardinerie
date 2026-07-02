@@ -12,6 +12,8 @@ import Jardinage from './pages/public/Jardinage';
 import CheckoutDelivery from './pages/public/CheckoutDelivery';
 import CheckoutPayment from './pages/public/CheckoutPayment';
 import CheckoutConfirmation from './pages/public/CheckoutConfirmation';
+import CustomerOrders from './pages/customer/CustomerOrders';
+import CustomerOrderDetail from './pages/customer/CustomerOrderDetail';
 
 
 // ==========================================
@@ -26,7 +28,7 @@ import CheckoutConfirmation from './pages/public/CheckoutConfirmation';
 // const Login = () => <div className="p-10 text-center">Page de Connexion</div>;
 
 const CustomerDashboard = () => <div className="p-10 text-center">Mon Profil (Tableau de bord client)</div>;
-const CustomerOrders = () => <div className="p-10 text-center">Mes Commandes</div>;
+// const CustomerOrders = () => <div className="p-10 text-center">Mes Commandes</div>;
 const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
 const CustomerSettings = () => <div className="p-10 text-center">Infos et Mot de passe</div>;
 
@@ -80,6 +82,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <CustomerDashboard /> }, // Correspond à /compte
           { path: 'commandes', element: <CustomerOrders /> }, // /compte/commandes
+          { path: 'commandes/:id', element: <CustomerOrderDetail /> },
           { path: 'tickets', element: <CustomerTickets /> },
           { path: 'parametres', element: <CustomerSettings /> },
         ]

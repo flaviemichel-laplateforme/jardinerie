@@ -1,9 +1,75 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-export default function Sidebar({ userName = 'Admin' }) {
+export default function Sidebar({ userName = 'Invité', userRole = 'customer' }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+
+  const customerLinks = [
+  {
+    name: 'Retour à la boutique',
+    path: '/',
+    icon: (
+   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+         <path d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V10.5Z" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
+         <path d="M9 21V12H15V21" fill="#88B04B" stroke="#2B3A67" strokeWidth="2"/>
+       </svg>
+     )
+  },
+  {
+    name: 'Tableau de bord',
+    path: '/compte',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="7" height="9" rx="1" fill="#7DCEB2" stroke="#2B3A67" strokeWidth="2"/>
+        <rect x="14" y="3" width="7" height="5" rx="1" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
+        <rect x="3" y="16" width="7" height="5" rx="1" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
+        <rect x="14" y="12" width="7" height="9" rx="1" fill="#88B04B" stroke="#2B3A67" strokeWidth="2"/>
+      </svg>
+    )
+  },
+  {
+    name: 'Mes commandes',
+    path: '/compte/commandes',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 7L12 12L21 7L12 2Z" fill="#F4A261" stroke="#2B3A67" strokeWidth="2"/>
+        <path d="M3 12L12 17L21 12" stroke="#2B3A67" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M3 17L12 22L21 17" stroke="#2B3A67" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    )
+  },
+  {
+    name: 'Mes adresses',
+    path: '/compte/adresses',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
+        <circle cx="12" cy="9" r="2.5" fill="#88B04B" stroke="#2B3A67" strokeWidth="1.5"/>
+      </svg>
+    )
+  },
+  {
+    name: 'Mon profil',
+    path: '/compte/parametres',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="8" r="4" fill="#FFCDB2" stroke="#2B3A67" strokeWidth="2"/>
+        <path d="M4 20C4 16.134 7.13401 13 11 13H13C16.866 13 20 16.134 20 20" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
+      </svg>
+    )
+  },
+  {
+     name: 'Confidentialité & RGPD',
+     path: '/compte/rgpd',
+     icon: (
+       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22C17.16 20.74 21 16.55 21 12V7L12 2Z" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
+        <path d="M9 12L11 14L15 10" stroke="#88B04B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+     </svg>
+     )
+   },
+];
 
   const adminLinks = [
     {
@@ -101,7 +167,7 @@ export default function Sidebar({ userName = 'Admin' }) {
       )}
 
       <nav className={`flex flex-col flex-grow ${isCollapsed ? 'space-y-3' : 'space-y-2'}`}>
-        {adminLinks.map((link) => {
+        {(userRole === 'admin' ? adminLinks : customerLinks).map((link) =>{
           const isActive = location.pathname === link.path;
 
           return (
