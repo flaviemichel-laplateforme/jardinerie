@@ -104,4 +104,85 @@ class OrderModel
 
         return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Liste toutes les commandes d'un utilisateur.
+     * Protection IDOR : filtre toujours par user_id.
+     */
+    public function findByUserId(int $userId): array
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT
+                    o.id,
+                    o.order_reference,
+                    o.order_date,
+                    o.total_amount_tax_incl,
+                    o.shipping_cost_tax_incl,
+                    o.status,
+                    o.shipping_address_text,
+                    COUNT(oi.id) AS items_count
+                FROM orders o
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                WHERE o.user_id = :user_id
+                GROUP BY o.id
+                ORDER BY o.order_date DESC";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':user_id' => $userId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupère une commande avec ses articles.
+     * Protection IDOR : vérifie que la commande appartient à l'utilisateur.
+     */
+    public function findByIdAndUserId(int $orderId, int $userId): array|false
+    {
+        $db = Database::getConnection();
+
+        // 1. La commande (avec protection IDOR dans le WHERE)
+        $orderSql = "SELECT
+                        o.id,
+                        o.order_reference,
+                        o.order_date,
+                        o.total_amount_tax_incl,
+                        o.shipping_cost_tax_incl,
+                        o.status,
+                        o.shipping_address_text,
+                        o.billing_address_text,
+                        dm.name AS delivery_method,
+                        pm.name AS payment_method
+                    FROM orders o
+                    LEFT JOIN delivery_methods dm ON dm.id = o.delivery_method_id
+                    LEFT JOIN payment_methods pm  ON pm.id = o.payment_method_id
+                    WHERE o.id = :id AND o.user_id = :user_id
+                    LIMIT 1";
+
+        $orderStmt = $db->prepare($orderSql);
+        $orderStmt->execute([':id' => $orderId, ':user_id' => $userId]);
+        $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$order) {
+            return false;
+        }
+
+        // 2. Les articles de cette commande
+        $itemsSql = "SELECT
+                        oi.product_id,
+                        oi.quantity,
+                        oi.unit_price_tax_incl,
+                        p.name AS product_name,
+                        p.main_image_url
+                    FROM order_items oi
+                    LEFT JOIN products p ON p.id = oi.product_id
+                    WHERE oi.order_id = :order_id";
+
+        $itemsStmt = $db->prepare($itemsSql);
+        $itemsStmt->execute([':order_id' => $orderId]);
+        $order['items'] = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $order;
+    }
 }
