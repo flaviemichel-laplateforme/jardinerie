@@ -3,19 +3,21 @@ import { Toaster } from 'react-hot-toast';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function MainLayout() {
   const location = useLocation();
+  const { user } = useAuth();
   
   // 1. Détection des espaces privés (Admin et Compte client)
-  const isPrivateSpace = location.pathname.startsWith('/admin') || location.pathname.startsWith('/account');
+  const isPrivateSpace = location.pathname.startsWith('/admin') || location.pathname.startsWith('/compte');
   
   // 2. Détection spécifique de l'espace d'administration
   const isAdminSpace = location.pathname.startsWith('/admin');
   
   // Données fictives pour le profil (en attendant le système d'authentification)
-  const userRole = isAdminSpace ? 'admin' : 'client';
-  const userName = isAdminSpace ? 'Admin' : 'Flavie';
+  const userRole = isAdminSpace ? 'admin' : 'customer';
+  const userName = user?.first_name ?? 'Invité';
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
