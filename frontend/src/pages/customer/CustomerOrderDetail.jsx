@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { orderService } from '../../services/orderService';
 import { buildRequestOptions, resolveAssetUrl } from '../../services/apiClient';
 import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
+import Spinner from '../../components/ui/Spinner';
 
 const statusConfig = {
   paid:      { label: 'Payée',      color: 'bg-green-100 text-green-700' },
@@ -29,11 +30,7 @@ export default function CustomerOrderDetail() {
   }, [request, id]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-jardinerie-primary border-t-transparent" />
-      </div>
-    );
+    return <Spinner message='Chargement de votre commande...' />;
   }
 
   if (error || !order) {

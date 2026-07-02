@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { orderService } from '../../services/orderService';
 import { buildRequestOptions } from '../../services/apiClient';
+import Spinner from '../../components/ui/Spinner';
 
 const statusConfig = {
   paid:      { label: 'Payée',     color: 'bg-green-100 text-green-700' },
@@ -27,11 +28,7 @@ export default function CustomerOrders() {
   }, [request]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-jardinerie-primary border-t-transparent" />
-      </div>
-    );
+    return <Spinner message='Chargement de vos commande...' />;
   }
 
   if (error) {
