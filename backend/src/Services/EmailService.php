@@ -49,6 +49,7 @@ class EmailService
             // On logue l'erreur mais on ne la propage pas —
             // la commande est déjà créée, l'email est secondaire.
             error_log("EMAIL ERROR [{$orderReference}]: " . $e->getMessage());
+            error_log("EMAIL ERROR TRACE: " . $e->getTraceAsString());
             return false;
         }
     }
@@ -147,7 +148,7 @@ class EmailService
                             <span>{$shippingFormatted}</span>
                         </div>
                         <div style='display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #027148; border-top: 2px solid #027148; padding-top: 12px;'>
-                            <span>Total payé</span>
+                            <span>Total payé </span>
                             <span>{$grandTotal} €</span>
                         </div>
                     </div>

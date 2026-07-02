@@ -23,7 +23,7 @@ class PaymentService
         $amountInCents = (int) round($totalAmount * 100);
 
         $cartHash = md5(json_encode($cartItems));
-        $idempotencyKey = "pi_user_{$userId}_amount_{$amountInCents}_{$cartHash}";
+        $idempotencyKey = "pi_user_{$userId}_amount_{$amountInCents}_{$cartHash}_{$shippingAddressId}_{$billingAddressId}";
 
         $paymentIntent = PaymentIntent::create([
             'amount'   => $amountInCents,

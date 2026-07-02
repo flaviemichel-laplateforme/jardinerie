@@ -6,13 +6,17 @@ use App\Services\PaymentService;
 use App\Models\CartItemModel;
 use App\Models\OrderModel;
 use App\Middlewares\AuthMiddleware;
+use App\Services\EmailService;
+use App\Models\UserModel;
 
 class CheckoutController
 {
     public function __construct(
         private PaymentService $paymentService = new PaymentService(),
         private CartItemModel $cartItemModel = new CartItemModel(),
-        private OrderModel $orderModel = new OrderModel()
+        private OrderModel $orderModel = new OrderModel(),
+        private EmailService $emailService = new EmailService(),
+        private UserModel $userModel = new UserModel()
     ) {}
 
     /**
@@ -115,7 +119,23 @@ class CheckoutController
                     : $this->cartItemModel->calculateCart($items);
 
                 $this->orderModel->createFromPayment($userId, $cart, $paymentIntentId, $shippingId, $billingId);
+
+                //Email de confirmation (non bloquant — la commande est déjà créée)
+                $user = $this->userModel->findById($userId);
+                if ($user) {
+                    error_log("EMAIL DEBUG: user=" . json_encode($user) . " | items=" . count($cart['items']));
+                    $shippingCost = $cart['total'] >= 50 ? 0.00 : 7.90;
+                    $this->emailService->sendOrderConfirmation(
+                        $user['email'],
+                        $user['first_name'],
+                        'REF-' . strtoupper(substr($paymentIntentId, 3, 12)),
+                        $cart['items'],
+                        $cart['total'],
+                        $shippingCost
+                    );
+                }
             }
+
 
             http_response_code(200);
             echo json_encode(['status' => 'success']);
