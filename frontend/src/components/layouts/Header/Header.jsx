@@ -68,7 +68,7 @@ export default function Header() {
                   </div>
                   
                   <Link 
-                    to="/mon-compte" 
+                    to="/compte" 
                     onClick={() => setIsProfileMenuOpen(false)}
                     className="block rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-jardinerie-bg hover:text-jardinerie-primary"
                   >
