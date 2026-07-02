@@ -6,21 +6,18 @@ import { useCart } from '../../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
-// Initialisation de Stripe — en dehors du composant pour n'être exécutée qu'une seule fois.
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-// Composant interne : accède aux hooks Stripe (uniquement disponibles à l'intérieur de <Elements>)
 function PaymentForm() {
   const stripe = useStripe();
   const elements = useElements();
-  const navigate = useNavigate();
-  const { clearCart } = useCart();
+  const { setClientSecret } = useCheckout();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return; // Stripe n'est pas encore prêt
+    if (!stripe || !elements) return;
 
     setLoading(true);
     setErrorMessage(null);
@@ -28,21 +25,20 @@ function PaymentForm() {
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // URL vers laquelle Stripe redirige après paiement réussi
         return_url: `${window.location.origin}/commande/confirmation`,
       },
     });
 
-    // Si on arrive ici, c'est qu'il y a eu une erreur (sinon Stripe aurait redirigé)
     if (error) {
       setErrorMessage(error.message);
       setLoading(false);
     }
+    // Si succès → Stripe redirige, on n'arrive jamais ici
+    // Le clientSecret sera vidé dans CheckoutConfirmation
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* La fenêtre sécurisée Stripe — jamais un vrai <input> de votre côté */}
       <PaymentElement />
 
       {errorMessage && (
@@ -62,12 +58,12 @@ function PaymentForm() {
   );
 }
 
-// Composant principal : initialise Stripe avec le clientSecret
 export default function CheckoutPayment() {
-  const { clientSecret } = useCheckout();
+  const { clientSecret, setClientSecret } = useCheckout();
   const navigate = useNavigate();
 
-  // Si on arrive ici sans clientSecret (accès direct à l'URL), on renvoie au début
+  // Si on arrive ici sans clientSecret (accès direct à l'URL ou après
+  // une confirmation déjà traitée), on renvoie au début du tunnel.
   if (!clientSecret) {
     navigate('/commande/livraison');
     return null;
@@ -77,7 +73,7 @@ export default function CheckoutPayment() {
     clientSecret,
     appearance: {
       theme: 'stripe',
-      variables: { colorPrimary: '#027148' }, // votre couleur jardinerie-primary
+      variables: { colorPrimary: '#027148' },
     },
   };
 
@@ -85,7 +81,6 @@ export default function CheckoutPayment() {
     <div className="mx-auto max-w-xl px-4 py-10">
       <h2 className="mb-6 text-lg font-bold text-jardinerie-text">Paiement sécurisé</h2>
 
-      {/* Elements fournit le contexte Stripe à PaymentForm */}
       <Elements stripe={stripePromise} options={options}>
         <PaymentForm />
       </Elements>

@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
+import { useCheckout} from '../../contexts/CheckoutContext';
 
 export default function CheckoutConfirmation() {
   const [searchParams] = useSearchParams();
   const { clearCart } = useCart();
+  const { setClientSecret } = useCheckout();
 
   const status = searchParams.get('redirect_status');
   const paymentIntentId = searchParams.get('payment_intent');
@@ -14,6 +16,7 @@ export default function CheckoutConfirmation() {
   useEffect(() => {
     if (status === 'succeeded') {
       clearCart();
+      setClientSecret(null); // Libère l'ancien clientSecret
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
