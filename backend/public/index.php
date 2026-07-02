@@ -124,6 +124,10 @@ $router->map('GET', '/api/addresses', 'AddressController#index', 'api_addresses_
 $router->map('POST', '/api/addresses', 'AddressController#store', 'api_addresses_create');
 $router->map('PUT', '/api/addresses/[i:id]', 'AddressController#update', 'api_addresses_update');
 $router->map('DELETE', '/api/addresses/[i:id]', 'AddressController#destroy', 'api_addresses_delete');
+
+$router->map('GET', '/api/me/orders/[i:id]', 'OrderController#show', 'api_me_orders_show');
+$router->map('GET', '/api/me/orders', 'OrderController#index', 'api_me_orders_list');
+
 // -----------------------------------------------------------------------
 // ROUTES DE PAIEMENT (Stripe)
 // -----------------------------------------------------------------------
