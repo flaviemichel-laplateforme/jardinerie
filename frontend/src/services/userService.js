@@ -18,4 +18,9 @@ export const userService = {
       buildDashboardUrl() {
         return `${ME_ENDPOINT}/dashboard`
       },
+
+      // Supprimer les données utilisateurs
+      buildDeleteUrl() {
+        return `${ME_ENDPOINT}`
+      }
 };

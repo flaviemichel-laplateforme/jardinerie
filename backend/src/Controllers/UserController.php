@@ -208,4 +208,59 @@ class UserController
             ]
         ], JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * DELETE /api/me
+     * Anonymise les données personnelles (droit à l'oubli RGPD).
+     * Déconnecte l'utilisateur après l'opération.
+     * Le front doit envoyer { "confirm": true } pour éviter toute suppression accidentelle.
+     */
+    public function delete(): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        $payload  = AuthMiddleware::authenticate();
+        $rawInput = file_get_contents("php://input");
+        $data     = json_decode($rawInput, true);
+
+        // Double protection : confirmation explicite obligatoire
+        if (empty($data['confirm']) || $data['confirm'] !== true) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Confirmation requise pour supprimer le compte.'
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $anonymized = $this->userModel->anonymize($payload['id']);
+
+        if (!$anonymized) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de la suppression du compte.'
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        // Supprimer le cookie de session côté serveur
+        setcookie('jardinerie_session', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Votre compte a été supprimé. Vos données personnelles ont été effacées conformément au RGPD.'
+        ], JSON_UNESCAPED_UNICODE);
+    }
 }

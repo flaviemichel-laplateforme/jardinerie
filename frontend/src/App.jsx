@@ -17,6 +17,7 @@ import CustomerOrderDetail from './pages/customer/CustomerOrderDetail';
 import CustomerAddresses from './pages/customer/CustomerAddresses';
 import CustomerProfile from './pages/customer/CustomerProfile';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import CustomerRgpd from './pages/customer/CustomerRgpd';
 
 
 // ==========================================
@@ -89,6 +90,7 @@ const router = createBrowserRouter([
           { path: 'commandes/:id', element: <CustomerOrderDetail /> },
           { path: 'tickets', element: <CustomerTickets /> },
           { path: 'parametres', element: <CustomerProfile /> },
+          { path: 'rgpd', element: <CustomerRgpd /> },
         ]
       },
 

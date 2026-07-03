@@ -8,11 +8,14 @@ import toast from 'react-hot-toast';
 export default function CustomerProfile() {
   const { user, login } = useAuth();
 
-  const [profileForm, setProfileForm] = useState(() => ({
-    first_name: user?.first_name ?? '',
-    last_name:  user?.last_name  ?? '',
-    email:      user?.email      ?? '',
-    }));
+  // user est garanti non-null ici : AuthContext bloque l'affichage
+ // jusqu'à ce que la session soit vérifiée, et la route /compte
+ // n'est accessible qu'aux utilisateurs connectés.
+ const [profileForm, setProfileForm] = useState({
+   first_name: user?.first_name ?? '',
+   last_name:  user?.last_name  ?? '',
+   email:      user?.email      ?? '',
+ });
 
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
