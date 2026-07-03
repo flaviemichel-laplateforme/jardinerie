@@ -15,6 +15,7 @@ import CheckoutConfirmation from './pages/public/CheckoutConfirmation';
 import CustomerOrders from './pages/customer/CustomerOrders';
 import CustomerOrderDetail from './pages/customer/CustomerOrderDetail';
 import CustomerAddresses from './pages/customer/CustomerAddresses';
+import CustomerProfile from './pages/customer/CustomerProfile';
 
 
 // ==========================================
@@ -31,7 +32,7 @@ import CustomerAddresses from './pages/customer/CustomerAddresses';
 const CustomerDashboard = () => <div className="p-10 text-center">Mon Profil (Tableau de bord client)</div>;
 // const CustomerOrders = () => <div className="p-10 text-center">Mes Commandes</div>;
 const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
-const CustomerSettings = () => <div className="p-10 text-center">Infos et Mot de passe</div>;
+// const CustomerProfile = () => <div className="p-10 text-center">Infos et Mot de passe</div>;
 
 // --- ZONE VERTE : Tunnel d'achat ---
 
@@ -86,7 +87,7 @@ const router = createBrowserRouter([
            { path: 'adresses', element: <CustomerAddresses /> }, //Mes adresses
           { path: 'commandes/:id', element: <CustomerOrderDetail /> },
           { path: 'tickets', element: <CustomerTickets /> },
-          { path: 'parametres', element: <CustomerSettings /> },
+          { path: 'parametres', element: <CustomerProfile /> },
         ]
       },
 
