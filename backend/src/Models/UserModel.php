@@ -101,4 +101,30 @@ class UserModel
             ':id' => $id
         ]);
     }
+
+    /**
+     * Anonymise les données personnelles d'un utilisateur (droit à l'oubli RGPD).
+     * On ne supprime pas la ligne pour préserver l'historique des commandes —
+     * les données comptables doivent rester traçables.
+     */
+    public function anonymize(int $id): bool
+    {
+        $db = Database::getConnection();
+
+        $sql = "UPDATE users SET
+                first_name       = 'Compte',
+                last_name        = 'Supprimé',
+                email            = CONCAT('anonymized_', :id_email, '@deleted.local'),
+                password         = '',
+                gdpr_consent_key = NULL
+            WHERE id = :id";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':id_email' => $id,
+            ':id'       => $id,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
 }

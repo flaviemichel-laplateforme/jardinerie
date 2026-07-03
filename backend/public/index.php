@@ -133,6 +133,7 @@ $router->map('GET', '/api/me', 'UserController#show', 'api_me_show');
 $router->map('GET', '/api/me/dashboard', 'UserController#dashboard', 'api_me_dashboard');
 $router->map('PUT', '/api/me/profile', 'UserController#update', 'api_me_update');
 $router->map('PUT', '/api/me/password', 'UserController#updatePassword', 'api_me_password');
+$router->map('DELETE', '/api/me', 'UserController#delete', 'api_me_delete');
 
 
 // -----------------------------------------------------------------------
