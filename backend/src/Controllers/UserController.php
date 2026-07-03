@@ -167,4 +167,45 @@ class UserController
             'message' => 'Mot de passe modifié avec succès.'
         ], JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * GET api/me/dashboard
+     * Données agrégées pour le tableau de bord client.
+     */
+    public function dashboard(): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        $payload = AuthMiddleware::authenticate();
+        $user = $this->userModel->findById($payload['id']);
+
+        if (!$user) {
+            http_response_code(404);
+            json_encode([
+                'success' => false,
+                'message' => 'Utilisateur introuvalbe.'
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $orderModel = new \App\Models\OrderModel();
+        $dashboardData = $orderModel->getDashboardData($payload['id']);
+
+        unset($user['password']);
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'total_orders' => $dashboardData['total_orders'],
+                'last_order' => $dashboardData['last_order'],
+            ]
+        ], JSON_UNESCAPED_UNICODE);
+    }
 }
