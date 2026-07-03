@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import Spinner from '../components/ui/Spinner';
 
 const AuthContext = createContext();
 
@@ -65,7 +66,7 @@ export function AuthProvider({ children }) {
 
   // Écran d'attente subtil pendant la vérification du cookie (évite le clignotement)
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center text-jardinerie-primary font-medium">Initialisation sécurisée...</div>;
+    return <Spinner message="Chargement en cours..." />;
   }
 
   return (
