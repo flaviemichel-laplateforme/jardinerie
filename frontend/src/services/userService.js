@@ -13,4 +13,9 @@ export const userService = {
       buildPasswordUrl() {
         return `${ME_ENDPOINT}/password`
       },
+
+       //Récupéré les données utilisateur:
+      buildDashboardUrl() {
+        return `${ME_ENDPOINT}/dashboard`
+      },
 };

@@ -204,7 +204,7 @@ class UserController
             'data' => [
                 'user' => $user,
                 'total_orders' => $dashboardData['total_orders'],
-                'last_orders' => $dashboardData['last_orders'],
+                'last_order' => $dashboardData['last_order'],
             ]
         ], JSON_UNESCAPED_UNICODE);
     }

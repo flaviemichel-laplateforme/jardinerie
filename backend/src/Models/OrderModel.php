@@ -220,7 +220,7 @@ class OrderModel
 
         return [
             'total_orders' => $totalOrders,
-            'last_orders' => $lastOrder ?: null,
+            'last_order' => $lastOrder ?: null,
         ];
     }
 }
