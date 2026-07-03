@@ -4,6 +4,7 @@
 
 use App\Controllers\AddressController;
 use App\Controllers\AuthController;
+use App\Controllers\UserController;
 
 $allowedOrigins = [
     'http://localhost:5173', // Votre front-end React en développement
@@ -129,8 +130,10 @@ $router->map('GET', '/api/me/orders/[i:id]', 'OrderController#show', 'api_me_ord
 $router->map('GET', '/api/me/orders', 'OrderController#index', 'api_me_orders_list');
 
 $router->map('GET', '/api/me', 'UserController#show', 'api_me_show');
+$router->map('GET', '/api/me/dashboard', 'UserController#dashboard', 'api_me_dashboard');
 $router->map('PUT', '/api/me/profile', 'UserController#update', 'api_me_update');
 $router->map('PUT', '/api/me/password', 'UserController#updatePassword', 'api_me_password');
+
 
 // -----------------------------------------------------------------------
 // ROUTES DE PAIEMENT (Stripe)

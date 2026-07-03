@@ -16,6 +16,7 @@ import CustomerOrders from './pages/customer/CustomerOrders';
 import CustomerOrderDetail from './pages/customer/CustomerOrderDetail';
 import CustomerAddresses from './pages/customer/CustomerAddresses';
 import CustomerProfile from './pages/customer/CustomerProfile';
+import CustomerDashboard from './pages/customer/CustomerDashboard';
 
 
 // ==========================================
@@ -29,7 +30,7 @@ import CustomerProfile from './pages/customer/CustomerProfile';
 // --- ZONE ORANGE : Authentification & Espace Client ---
 // const Login = () => <div className="p-10 text-center">Page de Connexion</div>;
 
-const CustomerDashboard = () => <div className="p-10 text-center">Mon Profil (Tableau de bord client)</div>;
+// const CustomerDashboard = () => <div className="p-10 text-center">Mon Profil (Tableau de bord client)</div>;
 // const CustomerOrders = () => <div className="p-10 text-center">Mes Commandes</div>;
 const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
 // const CustomerProfile = () => <div className="p-10 text-center">Infos et Mot de passe</div>;
