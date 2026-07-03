@@ -185,4 +185,42 @@ class OrderModel
 
         return $order;
     }
+
+    /**
+     * Récupère les doonées agrégées pour le tableau de bord client.
+     * Une seule requête plutôt que plusieurs appels séparés.
+     */
+    public function getDashboardData(int $userId): array
+    {
+        $db = Database::getConnection();
+
+        //Nombre total de commandeq
+        $countSql = "SELECT COUNT(*) FROM orders WHERE user_id = :user_id";
+        $countStmt = $db->prepare($countSql);
+        $countStmt->execute([':user_id' => $userId]);
+        $totalOrders = (int) $countStmt->fetchColumn();
+
+        //dernière commande
+        $lastSql = "SELECT
+                        id, 
+                        order_reference,
+                        order_date,
+                        total_amount_tax_incl,
+                        shipping_cost_tax_incl,
+                        status
+                    FROM orders
+                    WHERE user_id = :user_id
+                    ORDER BY order_date DESC
+                    LIMIT 1";
+        $lastStmt = $db->prepare($lastSql);
+        $lastStmt->execute([
+            ':user_id' => $userId
+        ]);
+        $lastOrder = $lastStmt->fetch(\PDO::FETCH_ASSOC);
+
+        return [
+            'total_orders' => $totalOrders,
+            'last_orders' => $lastOrder ?: null,
+        ];
+    }
 }
