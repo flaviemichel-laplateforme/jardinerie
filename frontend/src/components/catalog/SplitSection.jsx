@@ -1,4 +1,4 @@
-// Vous pouvez placer ce code dans Home.jsx, au-dessus de 'export default function Home()'
+import fond from '../../../public/assets/img/fond.png';
 
 export default function SplitSection() {
   return (
@@ -19,7 +19,7 @@ export default function SplitSection() {
         {/* Sur mobile on force une hauteur (h-64), sur desktop elle s'adapte (md:h-full) */}
         <div className="h-64 w-full overflow-hidden rounded-2xl md:h-[400px]">
           <img 
-            src="/src/assets/img/serre.png" 
+            src={fond} 
             alt="Jardinage professionnel" 
             className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
           />

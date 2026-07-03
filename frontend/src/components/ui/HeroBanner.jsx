@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import fondImage from '../../assets/img/fond.png';
+import fondImage from '../../../public/assets/img/fond.png';
 // Leçon de destructuration : On définit les "props" (propriétés) que ce composant peut recevoir.
 // On leur donne des valeurs par défaut au cas où on oublierait de les renseigner.
 export default function HeroBanner({ 
