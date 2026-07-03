@@ -62,19 +62,43 @@ class UserModel
 
     /**
      * Mise à jour du profil utilisateur
+     * Retourne false si l'email est déjà pris par un autre compte.
      */
-    public function update(string $lastName, string $firstName, string $email, string $hashedPassword): string
+    public function update(int $id, string $firstName, string $lastName, string $email): bool
     {
         $db = Database::getConnection();
 
-        $sql = "SELECT 
-                    first_name,
-                    last_name,
-                    email,
-                    password
-                FROM users 
-                WHERE id = :id
-                    
-        ";
+        // Vérifier que l'email n'est pas déjà utilisé par quelqu'un d'autre
+        $checkSql = "SELECT id FROM users WHERE email = :email AND id != :id LIMIT 1";
+        $checkStmt = $db->prepare($checkSql);
+        $checkStmt->execute([':email' => $email, ':id' => $id]);
+
+        if ($checkStmt->fetch(\PDO::FETCH_ASSOC)) {
+            return false; // Email déjà pris
+        }
+
+        $sql = "UPDATE users SET first_name = :first_name, last_name = :last_name, email = :email WHERE id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':first_name' => $firstName,
+            ':last_name'  => $lastName,
+            ':email'      => $email,
+            ':id'         => $id,
+        ]);
+
+        return true;
+    }
+    /**
+     * Met à jour le mot de passe
+     */
+    public function updatePassword(int $id, string $newPassword): void
+    {
+        $db = Database::getConnection();
+        $sql = "UPDATE users SET password = :password WHERE id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':password' => password_hash($newPassword, PASSWORD_BCRYPT),
+            ':id' => $id
+        ]);
     }
 }
