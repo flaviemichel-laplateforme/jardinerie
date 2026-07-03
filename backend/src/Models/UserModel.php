@@ -59,4 +59,22 @@ class UserModel
 
         return (int)$db->lastInsertId();
     }
+
+    /**
+     * Mise à jour du profil utilisateur
+     */
+    public function update(string $lastName, string $firstName, string $email, string $hashedPassword): string
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT 
+                    first_name,
+                    last_name,
+                    email,
+                    password
+                FROM users 
+                WHERE id = :id
+                    
+        ";
+    }
 }
