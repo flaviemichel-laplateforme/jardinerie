@@ -1,9 +1,19 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext'; 
 
 export default function Sidebar({ userName = 'Invité', userRole = 'customer' }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+
+   const { logout } = useAuth();
+   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+        navigate('/');
+  };
+
 
   const customerLinks = [
   {
@@ -189,6 +199,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
 
       <div className="mt-auto pt-6 border-t border-jardinerie-primary/20">
         <button
+          onClick={handleLogout}
           type="button"
           title={isCollapsed ? 'Déconnexion' : undefined}
           className={`w-full py-3.5 text-xs font-bold tracking-wider flex items-center text-jardinerie-text hover:bg-white hover:text-red-600 hover:rounded-full transition-all duration-200 uppercase shadow-sm hover:shadow ${isCollapsed ? 'justify-center px-0 gap-0' : 'text-left px-5 gap-4'}`}

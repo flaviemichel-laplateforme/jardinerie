@@ -185,4 +185,33 @@ class AuthController
             ]
         ]);
     }
+
+    /**
+     * POST /api/auth/logout
+     * Supprime le cookie de session côté serveur.
+     */
+    public function logout(): void
+    {
+        header('Content-Type: application/json; Charset-UTF-8');
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        setcookie('jardinerie_session', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'domain' => 'localhost',
+            'secure' => false,
+            'httponly' => true,
+            'samesite' => 'LAX'
+        ]);
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Déconnexion réussie.'
+        ], JSON_UNESCAPED_UNICODE);
+    }
 }
