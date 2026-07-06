@@ -74,7 +74,7 @@ class AuthController
             'samesite' => 'Lax'
         ];
 
-        setcookie('jardinerie_session', $result['data']['sessionToken'], $cookieOptions);
+        setcookie('jardinerie_session', $result['data']['token'], $cookieOptions);
 
         http_response_code($result['code']);
         echo json_encode([

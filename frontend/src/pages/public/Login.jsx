@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { authService } from '../../services/authService';
@@ -74,10 +74,15 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-jardinerie-primary py-3.5 text-sm font-bold text-white transition-all hover:bg-green-700 disabled:opacity-70"
+            className="w-full rounded-full bg-jardinerie-primary py-3.5 text-sm font-bold text-white transition-all hover:bg-green-700 disabled:opacity-70 "
           >
             {loading ? 'Connexion en cours...' : 'Se connecter'}
           </button>
+          <div className='flex items-center justify-center'>
+          <Link to="/inscription" className="font-medium text-jardinerie-primary hover:bg-jardinerie-primary hover:text-white px-4 py-1.5 rounded-full transition-all">
+              Pas encore de compte ? Inscrivez-vous !
+            </Link>
+            </div>
         </form>
       </div>
     </div>
