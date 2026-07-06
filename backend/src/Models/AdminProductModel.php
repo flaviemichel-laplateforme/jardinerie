@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Core\Database;
-use PDO;
 
 class AdminProductModel
 {
@@ -33,7 +32,7 @@ class AdminProductModel
         $stmt = $db->prepare($sql);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -70,7 +69,7 @@ class AdminProductModel
         $stmt = $db->prepare($sql);
         $stmt->execute([':id' => $id]);
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -94,19 +93,17 @@ class AdminProductModel
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                ':subcategory_id'          => (int) $data['subcategory_id'],
+                ':subcategory_id'          => isset($data['subcategory_id']) ? (int) $data['subcategory_id'] : null,
                 ':tax_id'                  => (int) $data['tax_id'],
                 ':name'                    => (string) trim($data['name']),
                 ':description'             => isset($data['description']) ? (string) trim($data['description']) : null,
                 ':price_tax_incl'          => (float) $data['price_tax_incl'],
                 ':purchase_price_tax_incl' => isset($data['purchase_price_tax_incl']) ? (float) $data['purchase_price_tax_incl'] : null,
-                null,
-                ':stock_quantity'          => (int) ($data['stock_quantity']    ?? 0),
-                ':main_image_url'          =>  isset($data['main_image_url']) ? (string) trim($data['main_image_url']) : null,
-                ':secondary_image_url'     =>  isset($data['secondary_image_url']) ? (string) trim($data['secondary_image_url']) : null,
-                ':is_active'               => (int) ($data['is_active']) ?? 1,
+                ':stock_quantity'          => (int) ($data['stock_quantity'] ?? 0),
+                ':main_image_url'          => isset($data['main_image_url']) ? (string) trim($data['main_image_url']) : null,
+                ':secondary_image_url'     => isset($data['secondary_image_url']) ? (string) trim($data['secondary_image_url']) : null,
+                ':is_active'               => isset($data['is_active']) ? (int) $data['is_active'] : 1,
             ]);
-
             $productId = (int) $db->lastInsertId();
 
             // Si des données botaniques sont fournies → insérer dans plants
