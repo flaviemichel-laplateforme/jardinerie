@@ -174,6 +174,10 @@ class AdminProductController
             return ['Format JSON invalide.'];
         }
 
+        if (isset($data['name'])) {
+            $data['name'] = trim($data['name']);
+        }
+
         $required = ['subcategory_id', 'tax_id', 'name', 'price_tax_incl'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
