@@ -17,7 +17,7 @@ export default function ProductCard({ product }) {
   } = product;
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-[20px] bg-jardinerie-bg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+    <div className="group flex h-full w-full flex-col overflow-hidden rounded-[20px] bg-jardinerie-bg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       
       {/* ========================================= */}
       {/* ZONE 1 : L'IMAGE ET LES ÉLÉMENTS ABSOLUS  */}

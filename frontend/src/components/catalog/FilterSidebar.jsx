@@ -97,7 +97,7 @@ export default function FilterSidebar({
 
   if (error) {
     return (
-      <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6">
+      <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
         <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">
           Impossible de charger les filtres pour le moment.
         </div>
@@ -107,7 +107,7 @@ export default function FilterSidebar({
 
   if (loading || !apiFilters) {
     return (
-      <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 h-96 animate-pulse bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center">
+      <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto h-96 animate-pulse bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center">
         <span className="text-gray-400 text-sm">Chargement des filtres...</span>
       </aside>
     );
@@ -141,7 +141,7 @@ export default function FilterSidebar({
   const showBotanicalFilters = mode !== 'jardinage';
 
   return (
-    <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6">
+    <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
       <div className="rounded-2xl border border-jardinerie-primary/10 bg-white p-5 shadow-sm">
         
         <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">

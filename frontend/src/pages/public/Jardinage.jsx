@@ -69,7 +69,7 @@ export default function Jardinage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10 md:px-12">
+    <div className="mx-auto max-w-[1880px] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       
       <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
@@ -82,7 +82,7 @@ export default function Jardinage() {
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row">
+      <div className="flex flex-col gap-8 lg:flex-row xl:gap-10">
         
         {/* LA BARRE DE FILTRES : Protégée, elle ne se démontera plus au chargement */}
         <FilterSidebar 
@@ -93,7 +93,7 @@ export default function Jardinage() {
           mode="jardinage" 
         />
 
-        <main className="flex-1 relative min-h-[400px]">
+        <main className="relative min-h-[400px] min-w-0 flex-1">
           
           {/* GESTION DES ÉTATS PROPREMENT DANS LE MAIN */}
           {loading && !products ? (
@@ -117,7 +117,7 @@ export default function Jardinage() {
               {loading && (
                 <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>
               )}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
