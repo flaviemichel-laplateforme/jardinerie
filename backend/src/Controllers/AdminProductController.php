@@ -189,6 +189,14 @@ class AdminProductController
             $errors[] = "Le stock doit être un entier.";
         }
 
+        if (!empty($data['name']) && strlen($data['name']) > 255) {
+            $errors[] = "Le nom ne peut pas dépasser 255 caractères.";
+        }
+
+        if (!empty($data['subcategory_id']) && !is_numeric($data['subcategory_id'])) {
+            $errors[] = "L'identifiant de sous-catégorie- est invalide.";
+        }
+
         return $errors;
     }
 }
