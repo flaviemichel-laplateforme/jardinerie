@@ -135,6 +135,12 @@ $router->map('PUT', '/api/me/profile', 'UserController#update', 'api_me_update')
 $router->map('PUT', '/api/me/password', 'UserController#updatePassword', 'api_me_password');
 $router->map('DELETE', '/api/me', 'UserController#delete', 'api_me_delete');
 
+$router->map('GET', '/api/admin/test', function () {
+    $payload = \App\Middlewares\AdminMiddleware::authenticate();
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'role' => $payload['role']]);
+}, 'admin_test');
+
 
 // -----------------------------------------------------------------------
 // ROUTES DE PAIEMENT (Stripe)

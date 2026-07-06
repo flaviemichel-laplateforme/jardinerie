@@ -34,15 +34,17 @@ class AuthService
                 $hashedPassword
             );
 
-            // 4. Génération d'un token de session
-            $sessionToken = bin2hex(random_bytes(64));
 
             // 5. LE FAMEUX RETOUR STRUCTURÉ (Pattern Result attendu par le Contrôleur)
             return [
                 'success' => true,
                 'code' => 201,
                 'data' => [
-                    'sessionToken' => $sessionToken,
+                    'token' => \App\Core\JwtHelper::generate(
+                        ['id' => $userId, 'role' => 'customer'],
+                        $_ENV['JWT_SECRET'] ?? 'default_secret',
+                        86400
+                    ),
                     'user' => [
                         'id' => $userId,
                         'first_name' => $data['first_name'],
