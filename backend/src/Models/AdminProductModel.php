@@ -94,16 +94,17 @@ class AdminProductModel
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                ':subcategory_id'          => $data['subcategory_id'],
-                ':tax_id'                  => $data['tax_id'],
-                ':name'                    => $data['name'],
-                ':description'             => $data['description']             ?? null,
-                ':price_tax_incl'          => $data['price_tax_incl'],
-                ':purchase_price_tax_incl' => $data['purchase_price_tax_incl'] ?? null,
-                ':stock_quantity'          => $data['stock_quantity']           ?? 0,
-                ':main_image_url'          => $data['main_image_url']           ?? null,
-                ':secondary_image_url'     => $data['secondary_image_url']      ?? null,
-                ':is_active'               => $data['is_active']                ?? 1,
+                ':subcategory_id'          => (int) $data['subcategory_id'],
+                ':tax_id'                  => (int) $data['tax_id'],
+                ':name'                    => (string) trim($data['name']),
+                ':description'             => isset($data['description']) ? (string) trim($data['description']) : null,
+                ':price_tax_incl'          => (float) $data['price_tax_incl'],
+                ':purchase_price_tax_incl' => isset($data['purchase_price_tax_incl']) ? (float) $data['purchase_price_tax_incl'] : null,
+                null,
+                ':stock_quantity'          => (int) ($data['stock_quantity']    ?? 0),
+                ':main_image_url'          =>  isset($data['main_image_url']) ? (string) trim($data['main_image_url']) : null,
+                ':secondary_image_url'     =>  isset($data['secondary_image_url']) ? (string) trim($data['secondary_image_url']) : null,
+                ':is_active'               => (int) ($data['is_active']) ?? 1,
             ]);
 
             $productId = (int) $db->lastInsertId();
@@ -205,13 +206,13 @@ class AdminProductModel
 
         $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':product_id'       => $productId,
-            ':common_name'      => $plant['common_name']      ?? null,
-            ':latin_name'       => $plant['latin_name']       ?? null,
-            ':genus'            => $plant['genus']             ?? null,
-            ':species'          => $plant['species']           ?? null,
-            ':sun_exposure'     => $plant['sun_exposure']      ?? null,
-            ':water_requirement' => $plant['water_requirement'] ?? null,
+            ':product_id'       => (int) $productId,
+            ':common_name'      => isset($plant['common_name']) ? (string) trim($plant['common_name']) : null,
+            ':latin_name'       => isset($plant['latin_name']) ? (string) trim($plant['latin_name']) : null,
+            ':genus'            => isset($plant['genus']) ? (string) trim($plant['genus']) : null,
+            ':species'          => isset($plant['species']) ? (string) trim($plant['species']) : null,
+            ':sun_exposure'     => isset($plant['sun_exposure']) ? (string) $plant['sun_exposure'] : null,
+            ':water_requirement' => isset($plant['water_requirement']) ? (string) $plant['water_requirement'] : null,
         ]);
     }
 
@@ -243,13 +244,13 @@ class AdminProductModel
 
         $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':product_id'        => $productId,
-            ':common_name'       => $plant['common_name']       ?? null,
-            ':latin_name'        => $plant['latin_name']        ?? null,
-            ':genus'             => $plant['genus']              ?? null,
-            ':species'           => $plant['species']           ?? null,
-            ':sun_exposure'      => $plant['sun_exposure']      ?? null,
-            ':water_requirement' => $plant['water_requirement'] ?? null,
+            ':product_id'        => (int) $productId,
+            ':common_name'       => isset($plant['common_name']) ? (string) trim($plant['common_name']) : null,
+            ':latin_name'        => isset($plant['latin_name']) ? (string) trim($plant['latin_name']) : null,
+            ':genus'             => isset($plant['genus']) ? (string) trim($plant['genus']) : null,
+            ':species'           => isset($plant['species']) ? (string) trim($plant['species']) : null,
+            ':sun_exposure'      => isset($plant['sun_exposure']) ? (string) $plant["sun_exposure"] : null,
+            ':water_requirement' => isset($plant['water_requirement']) ? (string) $plant['water_requirement'] : null,
         ]);
     }
 }
