@@ -135,6 +135,16 @@ $router->map('PUT', '/api/me/profile', 'UserController#update', 'api_me_update')
 $router->map('PUT', '/api/me/password', 'UserController#updatePassword', 'api_me_password');
 $router->map('DELETE', '/api/me', 'UserController#delete', 'api_me_delete');
 
+
+// -----------------------------------------------------------------------
+// ROUTES ADMIN — PRODUITS
+// -----------------------------------------------------------------------
+$router->map('GET',    '/api/admin/products',        'AdminProductController#index',   'admin_products_list');
+$router->map('GET',    '/api/admin/products/[i:id]', 'AdminProductController#show',    'admin_products_show');
+$router->map('POST',   '/api/admin/products',        'AdminProductController#store',   'admin_products_store');
+$router->map('PATCH',  '/api/admin/products/[i:id]', 'AdminProductController#update',  'admin_products_update');
+$router->map('DELETE', '/api/admin/products/[i:id]', 'AdminProductController#destroy', 'admin_products_delete');
+
 $router->map('GET', '/api/admin/test', function () {
     $payload = \App\Middlewares\AdminMiddleware::authenticate();
     header('Content-Type: application/json');
