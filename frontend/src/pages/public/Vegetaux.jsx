@@ -76,7 +76,7 @@ export default function Vegetaux() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10 md:px-12">
+    <div className="mx-auto max-w-[1880px] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       
       <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
@@ -89,7 +89,7 @@ export default function Vegetaux() {
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row">
+      <div className="flex flex-col gap-8 lg:flex-row xl:gap-10">
         
         <FilterSidebar 
           activeCategories={activeCategories}
@@ -101,7 +101,7 @@ export default function Vegetaux() {
           mode="vegetaux" 
         />
 
-        <main className="flex-1 relative min-h-[400px]">
+        <main className="relative min-h-[400px] min-w-0 flex-1">
           
           {loading && !products ? (
             <div className="flex h-full w-full items-center justify-center pt-20">
@@ -124,7 +124,7 @@ export default function Vegetaux() {
               {loading && (
                 <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>
               )}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
