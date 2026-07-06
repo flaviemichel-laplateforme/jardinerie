@@ -124,7 +124,7 @@ export default function Vegetaux() {
               {loading && (
                 <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>
               )}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

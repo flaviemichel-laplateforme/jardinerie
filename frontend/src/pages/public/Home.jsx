@@ -39,9 +39,9 @@ export default function Home() {
 
         {products && products.length >= 1 && (
           <>
-            <ProductRow title="Sélection du moment !" products={products.slice(0, 3)} />
-            <ProductRow title="Nouveauté !" products={products.slice(3, 6)} />
-            <ProductRow title="Sélection aromatique !" products={products.slice(0, 3)} />
+            <ProductRow title="Sélection du moment !" products={products.slice(0,5)} />
+            <ProductRow title="Nouveauté !" products={products.slice(5, 10)} />
+            <ProductRow title="Sélection aromatique !" products={products.slice(0, 5)} />
             
             <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6">
         <hr className="border-gray-200" />
