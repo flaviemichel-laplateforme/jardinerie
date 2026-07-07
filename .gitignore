@@ -28,6 +28,9 @@ yarn-error.log*
 backend/.env
 frontend/.env
 
+# Uploads utilisateurs — jamais committés
+backend/public/uploads/products/*
+!backend/public/uploads/products/.gitkeep
 
 # ==========================================
 # 4. FICHIERS SYSTÈMES ET ÉDITEURS (IDE)

@@ -145,6 +145,15 @@ $router->map('POST',   '/api/admin/products',        'AdminProductController#sto
 $router->map('PATCH',  '/api/admin/products/[i:id]', 'AdminProductController#update',  'admin_products_update');
 $router->map('DELETE', '/api/admin/products/[i:id]', 'AdminProductController#destroy', 'admin_products_delete');
 
+// ADMIN — CATÉGORIES & TAXES
+$router->map('GET',  '/api/admin/categories',   'AdminCategoryController#tree',             'admin_cat_tree');
+$router->map('GET',  '/api/admin/taxes',         'AdminCategoryController#taxes',            'admin_taxes');
+$router->map('POST', '/api/admin/categories',    'AdminCategoryController#createCategory',   'admin_cat_create');
+$router->map('POST', '/api/admin/subcategories', 'AdminCategoryController#createSubcategory', 'admin_subcat_create');
+
+// ADMIN -- UPLOAD
+$router->map('POST', '/api/admin/upload', 'AdminUploadController#store', 'admin_upload');
+
 $router->map('GET', '/api/admin/test', function () {
     $payload = \App\Middlewares\AdminMiddleware::authenticate();
     header('Content-Type: application/json');
