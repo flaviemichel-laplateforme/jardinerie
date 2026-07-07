@@ -20,10 +20,10 @@ class AdminCategoryModel
                     c.id AS cat_id,
                     c.name AS category,
                     s.id AS sub_id,
-                    s.name AS subcategory,
+                    s.name AS subcategory
                 FROM subcategories s 
                 INNER JOIN categories c ON c.id = s.category_id
-                INNER JOIN department d ON d.id = c.department_id
+                INNER JOIN departments d ON d.id = c.department_id
                 ORDER BY d.name, c.name, s.name";
 
         $stmt = $db->prepare($sql);
@@ -88,10 +88,10 @@ class AdminCategoryModel
             $deptId = (int) $row['dept_id'];
             $catId = (int) $row['cat_id'];
 
-            if (!isset($tree['deptId'])) {
+            if (!isset($tree[$deptId])) {
                 $tree[$deptId] = [
                     'id'        => $deptId,
-                    'name'      => $raw['department'],
+                    'name'      => $row['department'],
                     'categories'     => [],
                 ];
             }
