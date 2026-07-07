@@ -18,6 +18,7 @@ import CustomerAddresses from './pages/customer/CustomerAddresses';
 import CustomerProfile from './pages/customer/CustomerProfile';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import CustomerRgpd from './pages/customer/CustomerRgpd';
+import AdminProductForm from './pages/admin/AdminProductForm';
 
 
 // ==========================================
@@ -100,6 +101,8 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <AdminDashboard /> }, // Correspond à /admin
           { path: 'catalogue', element: <AdminCatalog /> }, // /admin/catalogue
+          { path: 'catalogue/nouveau',      element: <AdminProductForm /> },
+          { path: 'catalogue/:id/modifier', element: <AdminProductForm /> },
           { path: 'commandes', element: <AdminOrders /> },
         ]
       },
