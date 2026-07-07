@@ -106,7 +106,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'GESTION DU CATALOGUE',
-      path: '/admin/catalog',
+      path: '/admin/catalogue',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 6H20V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>

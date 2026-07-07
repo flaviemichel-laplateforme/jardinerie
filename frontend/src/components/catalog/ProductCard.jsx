@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import StockBadge from '../ui/StockBadge';
-// IMPORT : On importe l'image locale (Assurez-vous qu'elle existe à cet emplacement !)
+// IMPORT 1 : On importe l'outil de résolution d'URL (Vérifiez bien le chemin de l'import selon votre dossier)
+import { resolveAssetUrl } from '../../services/apiClient'; 
+// IMPORT 2 : L'image par défaut
 import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
 
 export default function ProductCard({ product }) {
@@ -16,6 +18,9 @@ export default function ProductCard({ product }) {
     packaging_options = 2 
   } = product;
 
+  // 3. MAGIE : On construit la vraie URL de l'image (PHP) ou on garde le placeholder
+  const finalImageUrl = main_image_url ? resolveAssetUrl(main_image_url) : placeholderImg;
+
   return (
     <div className="group flex h-full w-full flex-col overflow-hidden rounded-[20px] bg-jardinerie-bg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       
@@ -24,13 +29,13 @@ export default function ProductCard({ product }) {
       {/* ========================================= */}
       <div className="relative h-[240px] w-full overflow-hidden bg-white/50">
         <img 
-          // 1. FILTRE : Si null ou vide, on utilise l'image locale
-          src={main_image_url || placeholderImg} 
+          // 4. On utilise notre variable calculée qui contient le bon chemin du serveur
+          src={finalImageUrl} 
           
           alt={product_name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           
-          // 2. SÉCURITÉ : Si l'URL existe mais que le lien est mort (404)
+          // SÉCURITÉ : Si l'URL de PHP est morte (404), on remet le placeholder
           onError={(e) => {
             e.target.onerror = null; 
             e.target.src = placeholderImg;
