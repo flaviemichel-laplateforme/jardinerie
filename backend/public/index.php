@@ -22,7 +22,7 @@ if (in_array($origin, $allowedOrigins)) {
 }
 
 header("Access-Control-Allow-Credentials: true"); // INDISPENSABLE pour les cookies HttpOnly
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
 // Si le navigateur envoie une requête de pré-vérification (OPTIONS), on valide immédiatement
