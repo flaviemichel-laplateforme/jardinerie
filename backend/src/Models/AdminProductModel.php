@@ -54,6 +54,8 @@ class AdminProductModel
                     p.main_image_url,
                     p.secondary_image_url,
                     p.is_active,
+                    s.category_id,
+                    c.department_id,
                     pl.id          AS plant_id,
                     pl.common_name,
                     pl.latin_name,
@@ -63,6 +65,8 @@ class AdminProductModel
                     pl.water_requirement
                 FROM products p
                 LEFT JOIN plants pl ON pl.product_id = p.id
+                LEFT JOIN subcategories s ON s.id = p.subcategory_id
+                LEFT JOIN categories c ON c.id = s.category_id
                 WHERE p.id = :id
                 LIMIT 1";
 

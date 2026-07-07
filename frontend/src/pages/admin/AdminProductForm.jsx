@@ -8,7 +8,7 @@ import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
 import Spinner from '../../components/ui/Spinner';
 import toast from 'react-hot-toast';
 
-// Import de nos nouveaux composants modulaires
+// Import de nos composants modulaires
 import GeneralInfoSection from '../../components/admin/GeneralInfoSection';
 import CategoryCascadeSection from '../../components/admin/CategoryCascadeSection';
 import PriceAndStockSection from '../../components/admin/PriceAndStockSection';
@@ -47,7 +47,7 @@ export default function AdminProductForm() {
   });
 
   const { handleSubmit, reset, watch, formState: { isSubmitting } } = methods;
-  const watchDeptId = watch('department_id'); // Pour l'affichage conditionnel Botanique
+  const watchDeptId = watch('department_id');
 
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile,    setImageFile]    = useState(null);
@@ -59,6 +59,7 @@ export default function AdminProductForm() {
   const { loading: uploading,      request: uploadRequest }  = useApi();
   const { request: saveRequest } = useApi();
 
+  // 1. Chargement des métadonnées (Catégories et Taxes)
   useEffect(() => {
     const loadMeta = async () => {
       const [catResult, taxResult] = await Promise.all([
@@ -71,6 +72,7 @@ export default function AdminProductForm() {
     loadMeta();
   }, [requestMeta]);
 
+  // 2. Chargement du produit en mode Édition avec le "Détective"
   useEffect(() => {
     if (!isEditing) return;
 
@@ -89,6 +91,21 @@ export default function AdminProductForm() {
 
       const p = result.data.product;
 
+      // 🔍 LE DÉTECTIVE : Retrouver le Département et la Catégorie
+      let foundDeptId = p.department_id || '';
+      let foundCatId = p.category_id || '';
+
+      if (!foundDeptId && !foundCatId && tree.length > 0) {
+        for (const dept of tree) {
+          for (const cat of dept.categories) {
+            if (cat.subcategories.some(sub => String(sub.id) === String(p.subcategory_id))) {
+              foundDeptId = dept.id;
+              foundCatId = cat.id;
+            }
+          }
+        }
+      }
+
       reset({
         name:                    p.name ?? '',
         description:             p.description ?? '',
@@ -97,9 +114,9 @@ export default function AdminProductForm() {
         stock_quantity:          p.stock_quantity ?? 0,
         tax_id:                  p.tax_id ?? '',
         subcategory_id:          p.subcategory_id ?? '',
-        department_id:           p.department_id ?? '', // Ajouté si présent dans votre API
-        category_id:             p.category_id ?? '',   // Ajouté si présent dans votre API
-        is_active:               p.is_active === 1,
+        department_id:           foundDeptId, 
+        category_id:             foundCatId,  
+        is_active:               parseInt(p.is_active) === 1,
         main_image_url:          p.main_image_url ?? '',
         plant: {
           common_name:       p.common_name ?? '',
@@ -114,8 +131,11 @@ export default function AdminProductForm() {
       if (p.main_image_url) setImagePreview(resolveAssetUrl(p.main_image_url));
     };
 
-    loadProduct();
-  }, [id, isEditing, requestProduct, navigate, reset]);
+    // On attend que l'arbre soit chargé avant de lancer le détective
+    if (tree.length > 0) {
+      loadProduct();
+    }
+  }, [id, isEditing, requestProduct, navigate, reset, tree]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -179,16 +199,12 @@ export default function AdminProductForm() {
         </Link>
       </div>
 
-      {/* Le FormProvider enveloppe le formulaire et diffuse les pouvoirs de RHF aux composants enfants */}
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
           <GeneralInfoSection />
-          
           <CategoryCascadeSection tree={tree} />
-          
           <PriceAndStockSection taxes={taxes} />
-          
           <ImageUploadSection 
             imagePreview={imagePreview} 
             placeholderImg={placeholderImg} 
@@ -196,10 +212,8 @@ export default function AdminProductForm() {
             uploading={uploading} 
           />
 
-          {/* Affichage conditionnel de la section Botanique géré par le parent */}
           {String(watchDeptId) === '1' && <BotanicalDataSection />}
 
-          {/* Boutons d'action */}
           <div className="flex gap-3 justify-end pb-8">
             <Link to="/admin/catalogue" className="rounded-full border border-gray-300 px-8 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50">
               Annuler
