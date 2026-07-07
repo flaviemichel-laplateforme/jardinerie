@@ -151,6 +151,9 @@ $router->map('GET',  '/api/admin/taxes',         'AdminCategoryController#taxes'
 $router->map('POST', '/api/admin/categories',    'AdminCategoryController#createCategory',   'admin_cat_create');
 $router->map('POST', '/api/admin/subcategories', 'AdminCategoryController#createSubcategory', 'admin_subcat_create');
 
+// ADMIN -- UPLOAD
+$router->map('POST', '/api/admin/upload', 'AdminUploadController#store', 'admin_upload');
+
 $router->map('GET', '/api/admin/test', function () {
     $payload = \App\Middlewares\AdminMiddleware::authenticate();
     header('Content-Type: application/json');
