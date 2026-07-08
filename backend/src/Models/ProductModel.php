@@ -208,4 +208,31 @@ class ProductModel
 
         return $result !== false ? (int) $result : null;
     }
+
+    /**
+     * Récupère les produits dont le stock est inférieur ou égal au seuil (threshold).
+     * Trié du stock le plus critique (0) au plus élevé.
+     */
+    public function getLowStockAlerts(int $threshold): array
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT
+                    id,
+                    name AS product_name,
+                    stock_quantity,
+                    price_tax_incl,
+                    main_image_url,
+                FROM products
+                WHERE stock_quantity <= :threshold
+                    AND is_active = 1
+                ORDER BY stock_quantity ASC, name ASC";
+
+        $stmt = $db->prepare($sql);
+        // PDO::PARAM_INT sécurise l'entrée contre les injections SQL
+        $stmt->bindValue(':threshold', $threshold, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
