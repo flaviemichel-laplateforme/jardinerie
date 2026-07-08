@@ -154,6 +154,9 @@ $router->map('POST', '/api/admin/subcategories', 'AdminCategoryController#create
 // ADMIN -- UPLOAD
 $router->map('POST', '/api/admin/upload', 'AdminUploadController#store', 'admin_upload');
 
+//ADMIN DASHBOARD
+$router->map('GET', '/api/admin/kpis/sales', 'AdminKpiController#sales', 'admin_kpis');
+
 $router->map('GET', '/api/admin/test', function () {
     $payload = \App\Middlewares\AdminMiddleware::authenticate();
     header('Content-Type: application/json');

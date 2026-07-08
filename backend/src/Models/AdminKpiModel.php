@@ -15,40 +15,40 @@ class AdminKpiModel
 
         switch ($range) {
             case 'day':
-
+                // Aujourd'hui : on groupe strictement par l'alias 'label'
                 $sql = "SELECT
-                    DATE_FORMAT(order_date, '%H:00') AS label,
-                    SUM(total_amount_tax_icl) AS total,
-                    FROM orders
-                    WHERE order_date >= CURDATE()
-                    AND status != 'cancelled'
-                    GROUP BY HOUR(order_date)
-                    ORDER BY HOUR(order_date) ASC";
-
+                            DATE_FORMAT(order_date, '%H:00') AS label,
+                            COALESCE(SUM(total_amount_tax_incl), 0) AS total
+                        FROM orders
+                        WHERE order_date >= CURDATE()
+                          AND status != 'cancelled'
+                        GROUP BY label
+                        ORDER BY label ASC";
                 break;
-            case 'week':
 
+            case 'week':
+                // 7 derniers jours : on groupe strictement par l'alias 'label'
                 $sql = "SELECT
-                    DATE_FORMAT(order_date, '%Y-%m-%d'') AS label,
-                    SUM(total_amount_tax_incl) AS total,
-                    FROM orders,
-                    WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-                    AND status != 'cancelled'
-                    GROUP BY DATE(order_date)
-                    ORDER BY DATE(order_date) ASC";
+                            DATE_FORMAT(order_date, '%Y-%m-%d') AS label,
+                            COALESCE(SUM(total_amount_tax_incl), 0) AS total
+                        FROM orders
+                        WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+                          AND status != 'cancelled'
+                        GROUP BY label
+                        ORDER BY label ASC";
                 break;
 
             case 'month':
             default:
-                // 30 derniers jours, groupé par jour
+                // 30 derniers jours : on groupe strictement par l'alias 'label'
                 $sql = "SELECT
-                    DATE_FORMAT(order_date, '%Y-%m-%d') AS label,
-                    SUM(total_amount_tax_incl) AS total,
-                    FROM orders,
-                    WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
-                    AND status != 'cancelled'
-                    GROUP BY DATE(order_date)
-                    ORDER BY DATE(order_date) ASC";
+                            DATE_FORMAT(order_date, '%Y-%m-%d') AS label,
+                            COALESCE(SUM(total_amount_tax_incl), 0) AS total
+                        FROM orders
+                        WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+                          AND status != 'cancelled'
+                        GROUP BY label
+                        ORDER BY label ASC";
                 break;
         }
 
