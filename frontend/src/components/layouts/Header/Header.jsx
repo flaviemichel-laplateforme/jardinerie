@@ -40,6 +40,11 @@ export default function Header() {
   const getMobileNavClass = ({ isActive }) =>
     `block rounded-lg px-3 py-2 transition-colors ${isActive ? 'bg-jardinerie-bg text-jardinerie-primary font-bold' : 'hover:bg-jardinerie-bg'}`;
 
+
+  // On définit l'URL et le texte du bouton selon le rôle stocké dans le context
+  const dashboardUrl = user?.role === 'admin' ? '/admin' : '/compte';
+  const dashboardLabel = user?.role === 'admin' ? 'Tableau de bord administration' : 'Mon espace client';
+
   return (
     <header className="w-full shadow-md font-sans">
       {/* Barre supérieure */}
@@ -80,26 +85,34 @@ export default function Header() {
                 </button>
 
                 {/* Menu déroulant connecté */}
-                {isProfileMenuOpen && (
+                {isProfileMenuOpen && user && (
                   <div className="absolute right-0 mt-3 w-48 rounded-xl bg-white p-2 shadow-xl border border-gray-100 z-50">
                     <div className="px-4 py-2 border-b border-gray-100 mb-2">
                       <p className="text-sm font-bold text-jardinerie-text">
                         {user?.first_name} {user?.last_name}
                       </p>
                       <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      
+                      {/* Petit badge pour indiquer le rôle admin si besoin */}
+                      {user?.role === 'admin' && (
+                        <span className="inline-block mt-1 bg-jardinerie-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          ADMIN
+                        </span>
+                      )}
                     </div>
 
+                    {/* LIEN DYNAMIQUE INTÉGRÉ ICI */}
                     <Link
-                      to="/compte"
+                      to={dashboardUrl}
                       onClick={() => setIsProfileMenuOpen(false)}
-                      className="block rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-jardinerie-bg hover:text-jardinerie-primary"
+                      className="block rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-jardinerie-bg hover:text-jardinerie-primary transition-colors"
                     >
-                      Mon tableau de bord
+                      {dashboardLabel}
                     </Link>
 
                     <button
                       onClick={handleLogout}
-                      className="mt-1 w-full text-left rounded-lg px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50"
+                      className="mt-1 w-full text-left rounded-lg px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
                     >
                       Déconnexion
                     </button>
@@ -157,7 +170,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Barre de navigation principale */}
+      {/* Barre de navigation principale (Inchangée) */}
       <nav className="bg-jardinerie-primary text-jardinerie-light px-6 py-3">
         <ul className="flex items-center space-x-12 text-sm uppercase tracking-wider">
           <li>
@@ -180,7 +193,7 @@ export default function Header() {
         </ul>
       </nav>
 
-      {/* Menu burger latéral */}
+      {/* Menu burger latéral (Inchangé) */}
       <div
         className={`fixed inset-0 z-50 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         aria-hidden={!isMenuOpen}

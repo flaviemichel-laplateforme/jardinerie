@@ -20,7 +20,7 @@ class AuthMiddleware
         }
 
         $secret = $_ENV['JWT_SECRET'] ?? 'default_secret';
-        $payload = jwtHelper::verify($token, $secret);
+        $payload = JwtHelper::verify($token, $secret);
 
         if (!$payload) {
             setcookie('jardinerie_session', '', time() - 3600, '/');
@@ -32,7 +32,7 @@ class AuthMiddleware
 
     private static function reject(string $message): never
     {
-        header("Content-type: application/json; charset=UTF-8");
+        header("Content-Type: application/json; charset=UTF-8");
         http_response_code(401);
         echo json_encode(["success" => false, "message" => $message]);
         exit;
