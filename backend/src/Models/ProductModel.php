@@ -222,7 +222,7 @@ class ProductModel
                     name AS product_name,
                     stock_quantity,
                     price_tax_incl,
-                    main_image_url,
+                    main_image_url
                 FROM products
                 WHERE stock_quantity <= :threshold
                     AND is_active = 1

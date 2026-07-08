@@ -156,6 +156,8 @@ $router->map('POST', '/api/admin/upload', 'AdminUploadController#store', 'admin_
 
 //ADMIN DASHBOARD
 $router->map('GET', '/api/admin/kpis/sales', 'AdminKpiController#sales', 'admin_kpis');
+// Route pour les alertes de stock admin
+$router->map('GET', '/api/admin/stock/alerts', 'AdminStockController#getAlerts', 'admin_stock_alerts');
 
 $router->map('GET', '/api/admin/test', function () {
     $payload = \App\Middlewares\AdminMiddleware::authenticate();

@@ -118,4 +118,45 @@ class ProductService
             ];
         }
     }
+
+    /**
+     * Gère la logique des alertes de stock pour l'administration.
+     * @param int|null $requestedThreshold Le seuil demandé via l'URL (ex: ?threshold=10)
+     */
+    public function getLowStockAlerts(?int $requestedThreshold): array
+    {
+        // 1. Règle métier : Définition d'un seuil par défaut et sécurisation
+        $threshold = $requestedThreshold ?? 5; // Si rien n'est demandé, le seuil est à 5
+
+        if ($threshold < 0) {
+            $threshold = 0; // Un stock ne peut pas être alerté sous 0
+        } elseif ($threshold > 100) {
+            $threshold = 100; // Plafond de sécurité pour éviter de charger tout le catalogue
+        }
+
+        try {
+            // 2. Appel au Modèle
+            $alerts = $this->productModel->getLowStockAlerts($threshold);
+
+            // 3. Retour selon le Pattern Result
+            return [
+                'success' => true,
+                'code'    => 200,
+                'data'    => [
+                    'threshold_applied' => $threshold,
+                    'alerts_count'      => count($alerts),
+                    'items'             => $alerts
+                ]
+            ];
+        } catch (\Exception $e) {
+            // Log de l'erreur technique
+            error_log("Erreur critique dans ProductService (getLowStockAlerts) : " . $e->getMessage());
+
+            return [
+                'success' => false,
+                'code'    => 500,
+                'message' => "Impossible de récupérer les alertes de stock pour le moment."
+            ];
+        }
+    }
 }
