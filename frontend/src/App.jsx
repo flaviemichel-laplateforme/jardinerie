@@ -1,6 +1,8 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import MainLayout from './components/layouts/MainLayout';
+import ProtectedRoute from './components/auth/ProtectedRoute'; 
+
 import Catalog from './pages/public/Catalog';
 import ProductDetail from './pages/public/ProductDetail';
 import Cart from './pages/public/Cart';
@@ -26,27 +28,8 @@ import AdminCatalog      from './pages/admin/AdminCatalog';
 // 1. PLACEHOLDERS (Composants temporaires)
 // ==========================================
 
-// --- ZONE BLEUE : Public ---
-// const Home = () => <div className="p-10 text-center">Accueil Jardinerie</div>;
-// const Jardinage = () => <div className="p-10 text-center">Rayon Jardinage</div>;
-
-// --- ZONE ORANGE : Authentification & Espace Client ---
-// const Login = () => <div className="p-10 text-center">Page de Connexion</div>;
-
-// const CustomerDashboard = () => <div className="p-10 text-center">Mon Profil (Tableau de bord client)</div>;
-// const CustomerOrders = () => <div className="p-10 text-center">Mes Commandes</div>;
 const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
-// const CustomerProfile = () => <div className="p-10 text-center">Infos et Mot de passe</div>;
-
-// --- ZONE VERTE : Tunnel d'achat ---
-
-// const CheckoutDelivery = () => <div className="p-10 text-center">Étape 1 : Livraison</div>;
-// const CheckoutPayment = () => <div className="p-10 text-center">Étape 3 : Paiement</div>;
-// const CheckoutConfirmation = () => <div className="p-10 text-center">Confirmation de commande</div>;
-
-// --- ZONE GRISE : Administration ---
 const AdminDashboard = () => <div className="p-10 text-center">Dashboard et Alertes Stocks</div>;
-// const AdminCatalog = () => <div className="p-10 text-center">Gestion du Catalogue</div>;
 const AdminOrders = () => <div className="p-10 text-center">Gestion des Commandes Clients</div>;
 
 
@@ -60,18 +43,18 @@ const router = createBrowserRouter([
     element: <MainLayout />, // Le Layout global (Header, Footer, Sidebar admin)
     children: [
       
-      // 🔵 ZONE PUBLIQUE
+      // 🔵 ZONE PUBLIQUE (Accès libre)
       { index: true, element: <Home /> },
       { path: 'produits', element: <Catalog /> },
       { path: 'vegetaux', element: <Vegetaux /> },
-      { path: 'produit/:id', element: <ProductDetail /> }, // :id = URL dynamique pour la fiche produit
+      { path: 'produit/:id', element: <ProductDetail /> },
       { path: 'jardinage', element: <Jardinage /> },
       
-      // 🟠 AUTHENTIFICATION
+      // 🟠 AUTHENTIFICATION (Accès libre)
       { path: 'connexion', element: <Login /> },
       { path: 'inscription', element: <Register /> },
       
-      // 🟢 TUNNEL D'ACHAT
+      // 🟢 TUNNEL D'ACHAT (Accès libre pour l'instant)
       { path: 'panier', element: <Cart /> },
       {
         path: 'commande',
@@ -82,13 +65,14 @@ const router = createBrowserRouter([
         ]
       },
 
-      // 🟠 ESPACE CLIENT
+      // 🟠 ESPACE CLIENT (🛡️ PROTÉGÉ)
       {
         path: 'compte',
+        element: <ProtectedRoute />, 
         children: [
           { index: true, element: <CustomerDashboard /> }, // Correspond à /compte
-          { path: 'commandes', element: <CustomerOrders /> }, // /compte/commandes
-           { path: 'adresses', element: <CustomerAddresses /> }, //Mes adresses
+          { path: 'commandes', element: <CustomerOrders /> },
+          { path: 'adresses', element: <CustomerAddresses /> },
           { path: 'commandes/:id', element: <CustomerOrderDetail /> },
           { path: 'tickets', element: <CustomerTickets /> },
           { path: 'parametres', element: <CustomerProfile /> },
@@ -96,12 +80,13 @@ const router = createBrowserRouter([
         ]
       },
 
-      // ⚪ ESPACE ADMINISTRATEUR
+      // ⚪ ESPACE ADMINISTRATEUR (🛡️ HAUTEMENT PROTÉGÉ)
       {
         path: 'admin',
+        element: <ProtectedRoute requireAdmin={true} />, 
         children: [
           { index: true, element: <AdminDashboard /> }, // Correspond à /admin
-          { path: 'catalogue', element: <AdminCatalog /> }, // /admin/catalogue
+          { path: 'catalogue', element: <AdminCatalog /> },
           { path: 'catalogue/nouveau',      element: <AdminProductForm /> },
           { path: 'catalogue/:id/modifier', element: <AdminProductForm /> },
           { path: 'commandes', element: <AdminOrders /> },
@@ -124,7 +109,7 @@ export default function App() {
       <Toaster 
         position="bottom-right"
         toastOptions={{
-          duration: 4000, // Le toast restera visible 4 secondes
+          duration: 4000,
           style: {
             background: '#ffffff',
             color: '#333333',
