@@ -11,7 +11,9 @@ export default function AdminDashboard() {
     salesWeek: null,
     salesMonth: null,
     pendingOrdersCount: 0,
+    pendingOrdersItems: [],
     stockAlertsCount: 0,
+    stockAlertsItems: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +33,9 @@ export default function AdminDashboard() {
           salesWeek: weekRes.data,
           salesMonth: monthRes.data,
           pendingOrdersCount: ordersRes.data?.pagination?.total_items || 0,
+          pendingOrdersItems: ordersRes.data?.items || [],
           stockAlertsCount: stockRes.data?.alerts_count || 0,
+          stockAlertsItems: stockRes.data?.items || [],
         });
       } catch (error) {
         console.error("Échec du chargement des composants du tableau de bord:", error);
@@ -148,7 +152,7 @@ export default function AdminDashboard() {
         {/* COMMANDES EN ATTENTE */}
         <button
           type="button"
-          className="w-full text-left bg-white border border-slate-200 shadow hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
+          className="w-full text-left bg-white border border-slate-200 shadow hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col min-h-[150px]"
           onClick={() => navigate('/admin/commandes')}
         >
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
@@ -165,19 +169,32 @@ export default function AdminDashboard() {
               {data.pendingOrdersCount}
             </div>
             <div className="text-xs text-blue-600 mt-2 font-semibold flex items-center group-hover:text-blue-700 transition-colors">
-              Traiter les expéditions 
+              Traiter les expéditions
               {/* SVG pur (ArrowRight) */}
               <svg className="w-3 h-3 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </div>
+
+            {data.pendingOrdersItems.length > 0 && (
+              <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
+                {data.pendingOrdersItems.slice(0, 3).map(order => (
+                  <li key={order.id} className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                    <span className="truncate">{order.order_reference}</span>
+                    <span className="font-bold text-slate-600 shrink-0">
+                      {formatCurrency(order.total_amount_tax_incl)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </button>
 
         {/* ALERTES STOCK */}
         <button
           type="button"
-          className="w-full text-left bg-white border border-slate-200 shadow hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
+          className="w-full text-left bg-white border border-slate-200 shadow hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col min-h-[150px]"
           onClick={() => navigate('/admin/catalogue?filter=critical')}
         >
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
@@ -199,6 +216,19 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </div>
+
+            {data.stockAlertsItems.length > 0 && (
+              <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
+                {data.stockAlertsItems.slice(0, 3).map(item => (
+                  <li key={item.id} className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                    <span className="truncate">{item.product_name}</span>
+                    <span className="font-bold text-red-600 shrink-0">
+                      {item.stock_quantity} restant{item.stock_quantity > 1 ? 's' : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </button>
 
