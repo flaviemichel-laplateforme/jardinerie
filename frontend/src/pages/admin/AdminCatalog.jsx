@@ -84,8 +84,10 @@ export default function AdminCatalog() {
       const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
       const matchActive =
         filterActive === 'tous'     ? true :
-        filterActive === 'actif'  ? parseInt(p.is_active) === 1 :
-                                     parseInt(p.is_active) === 0;
+        filterActive === 'actif'    ? parseInt(p.is_active) === 1 :
+        filterActive === 'inactif'  ? parseInt(p.is_active) === 0 :
+        filterActive === 'critical' ? parseInt(p.stock_quantity) < 5 :
+                                       true;
       
       const matchCategory = 
         selectedCategory === 'tous' ? true : p.category_name === selectedCategory;
