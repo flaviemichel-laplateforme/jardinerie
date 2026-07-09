@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
 import { buildRequestOptions } from '../../services/apiClient';
@@ -15,8 +15,11 @@ export default function AdminCatalog() {
   const { loading: deleteLoading, request: deleteRequest } = useApi();
 
   const products = data?.products ?? [];
+  const [searchParams] = useSearchParams();
   const [search,              setSearch]              = useState('');
-  const [filterActive,        setFilterActive]        = useState('tous');
+  const [filterActive,        setFilterActive]        = useState(
+    searchParams.get('filter') === 'critical' ? 'critical' : 'tous'
+  );
   const [sortBy,              setSortBy]              = useState('alpha-asc');
   const [selectedCategory,    setSelectedCategory]    = useState('tous'); // NOUVEAU
   const [selectedSubcategory, setSelectedSubcategory] = useState('tous');
@@ -84,8 +87,10 @@ export default function AdminCatalog() {
       const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
       const matchActive =
         filterActive === 'tous'     ? true :
-        filterActive === 'actif'  ? parseInt(p.is_active) === 1 :
-                                     parseInt(p.is_active) === 0;
+        filterActive === 'actif'    ? parseInt(p.is_active) === 1 :
+        filterActive === 'inactif'  ? parseInt(p.is_active) === 0 :
+        filterActive === 'critical' ? parseInt(p.stock_quantity) < 5 :
+                                       true;
       
       const matchCategory = 
         selectedCategory === 'tous' ? true : p.category_name === selectedCategory;
