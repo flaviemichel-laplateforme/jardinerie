@@ -94,11 +94,13 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* LIGNE 1 : KPIs (Remplacement des composants shadcn par des divs HTML purs) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        
+      {/* LIGNE 1a : Indicateurs clés (informatifs, aucune action requise) */}
+      <div className="space-y-3">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Indicateurs clés</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
         {/* CA DU MOIS */}
-        <div className="bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col justify-between min-h-[150px]">
+        <div className="bg-white border border-slate-200 shadow rounded-2xl flex flex-col justify-between min-h-[150px]">
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">CA du mois</h3>
             <div className="p-2.5 bg-jardinerie-primary/5 rounded-xl">
@@ -117,7 +119,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* PANIER MOYEN */}
-        <div className="bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col justify-between min-h-[150px]">
+        <div className="bg-white border border-slate-200 shadow rounded-2xl flex flex-col justify-between min-h-[150px]">
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Panier Moyen</h3>
             <div className="p-2.5 bg-slate-50 rounded-xl">
@@ -135,10 +137,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        </div>
+      </div>
+
+      {/* LIGNE 1b : Actions requises (nécessitent une intervention de l'admin) */}
+      <div className="space-y-3">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Actions requises</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
         {/* COMMANDES EN ATTENTE */}
         <button
           type="button"
-          className="w-full text-left bg-white border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
+          className="w-full text-left bg-white border border-slate-200 shadow hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
           onClick={() => navigate('/admin/commandes')}
         >
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
@@ -167,7 +177,7 @@ export default function AdminDashboard() {
         {/* ALERTES STOCK */}
         <button
           type="button"
-          className="w-full text-left bg-white border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
+          className="w-full text-left bg-white border border-slate-200 shadow hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
           onClick={() => navigate('/admin/catalogue?filter=critical')}
         >
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
@@ -192,13 +202,14 @@ export default function AdminDashboard() {
           </div>
         </button>
 
+        </div>
       </div>
 
       {/* LIGNE 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* GRAPHIQUE NATIF 100% CSS/FLEXBOX */}
-        <div className="lg:col-span-2 bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col">
+        <div className="lg:col-span-2 bg-white border border-slate-200 shadow rounded-2xl flex flex-col">
           <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <h3 className="text-sm font-bold text-slate-700">Dynamique des ventes</h3>
             <div className="flex bg-slate-100 p-1 rounded-lg">
@@ -219,7 +230,7 @@ export default function AdminDashboard() {
           
           <div className="px-6 pb-6 flex-grow">
             {/* Conteneur du graphique flex */}
-            <div className="h-[280px] w-full flex items-end justify-between pt-8 border-b border-slate-100 relative">
+            <div className="h-[280px] w-full flex items-end justify-between pt-8 border-b border-slate-200 relative">
               {/* Lignes de repère (Optionnel, juste pour l'esthétique) */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                 <div className="border-t border-slate-50 w-full h-0"></div>
@@ -258,7 +269,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* PANNEAU LATÉRAL */}
-        <div className="lg:col-span-1 bg-white border border-slate-100 shadow-sm rounded-2xl flex flex-col">
+        <div className="lg:col-span-1 bg-white border border-slate-200 shadow rounded-2xl flex flex-col">
           <div className="p-6 border-b border-slate-50">
             <h3 className="text-sm font-bold text-slate-700">Performances récentes</h3>
           </div>
