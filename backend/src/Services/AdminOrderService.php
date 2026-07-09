@@ -61,4 +61,48 @@ class AdminOrderService
             ];
         }
     }
+
+    /**
+     * Modifie le statut d'une commande, après validation.
+     */
+    public function updateStatus(int $id, ?string $status): array
+    {
+        // 1. Même liste blanche que getOrders() (sans 'all', qui n'a de sens qu'en filtre de lecture)
+        $validStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
+
+        if (!$status || !in_array($status, $validStatuses, true)) {
+            return [
+                'success' => false,
+                'code'    => 400,
+                'message' => "Statut invalide. Valeurs autorisées : " . implode(', ', $validStatuses)
+            ];
+        }
+
+        // 2. La commande doit exister avant qu'on essaie de la modifier
+        if (!$this->model->findById($id)) {
+            return [
+                'success' => false,
+                'code'    => 404,
+                'message' => "Commande introuvable."
+            ];
+        }
+
+        try {
+            // 3. Mise à jour effective
+            $this->model->updateStatus($id, $status);
+
+            return [
+                'success' => true,
+                'code'    => 200,
+                'message' => "Statut de la commande mis à jour avec succès."
+            ];
+        } catch (\Exception $e) {
+            error_log("Erreur dans AdminOrderService::updateStatus : " . $e->getMessage());
+            return [
+                'success' => false,
+                'code'    => 500,
+                'message' => "Impossible de mettre à jour le statut."
+            ];
+        }
+    }
 }
