@@ -10,6 +10,11 @@ export const adminService = {
   buildSubcategoriesUrl: ()   => `${ADMIN_ENDPOINT}/subcategories`,
   buildTaxesUrl:         ()   => `${ADMIN_ENDPOINT}/taxes`,
   buildUploadUrl:        ()   => `${ADMIN_ENDPOINT}/upload`,
+  buildOrdersListUrl: (status = 'all', page = 1, limit = 10) =>
+  `${ADMIN_ENDPOINT}/orders?status=${status}&page=${page}&limit=${limit}`,
+
+buildOrderStatusUpdateUrl: (id) => `${ADMIN_ENDPOINT}/orders/${id}/status`,
+
 
   // --- Constructeurs d'URL (Dashboard) — utilisés avec le hook useApi ---
   buildSalesKpiUrl: (range = 'month') => `${ADMIN_ENDPOINT}/kpis/sales?range=${range}`,

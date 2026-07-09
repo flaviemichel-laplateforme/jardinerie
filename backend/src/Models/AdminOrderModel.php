@@ -68,4 +68,40 @@ class AdminOrderModel
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Vérifie qu'une commande existe et récupère son statut actuel
+     */
+    public function findById(int $id): array
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT 
+                    id,
+                    order_reference,
+                    status
+                    FROM orders
+                    WHERE id = :id";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+
+        $order = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $order ?: null;
+    }
+
+    /**
+     * Met à jour le statut d'une commande
+     */
+    public function updateStatus(int $id, string $status): bool
+    {
+        $db = Database::getConnection();
+
+        $sql = "UPDATE orders SET status = :status WHERE id = :id";
+
+        $stmt = $db->prepare($sql);
+
+        return $stmt->execute(['status' => $status, 'id' => $id]);
+    }
 }

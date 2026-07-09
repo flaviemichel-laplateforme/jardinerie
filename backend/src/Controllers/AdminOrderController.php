@@ -40,4 +40,28 @@ class AdminOrderController
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * Point de terminaison : PATCH /api/admin/orders/{id}/status
+     */
+    public function updateStatus(int $id): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        AdminMiddleware::authenticate();
+
+        // Lecture du corps de la requête PATCH (ex: {"status": "shipped"})
+        $data   = json_decode(file_get_contents("php://input"), true);
+        $status = $data['status'] ?? null;
+
+        $result = $this->service->updateStatus($id, $status);
+
+        http_response_code($result['code']);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
 }
