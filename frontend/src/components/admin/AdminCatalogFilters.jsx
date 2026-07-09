@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 export default function AdminCatalogFilters({ 
   search, setSearch, 
   sortBy, setSortBy, 
@@ -47,6 +49,7 @@ export default function AdminCatalogFilters({
       {/* Ligne secondaire */}
       <div className="flex flex-wrap items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-100">
         
+        {/* Tris */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-gray-400 uppercase">Trier par:</span>
           <select
@@ -59,24 +62,28 @@ export default function AdminCatalogFilters({
             <option value="price-desc">Prix décroissant</option>
             <option value="price-asc">Prix croissant</option>
             <option value="stock-asc">Stock bas</option>
+            <option value="stock-desc">Stock haut</option>
           </select>
         </div>
 
-        <div className="flex bg-gray-100 p-1 rounded-lg">
+        {/* Onglets de Statuts / Stocks */}
+        <div className="flex flex-wrap bg-gray-100 p-1 rounded-lg gap-1">
           {[
             { id: 'tous', label: 'Tous' },
             { id: 'actif', label: 'Actifs' },
-            { id: 'inactif', label: 'Inactifs' }
+            { id: 'inactif', label: 'Inactifs' },
+            { id: 'critical', label: 'Stock Critique', isAlert: true }
           ].map((status) => (
             <button
               key={status.id}
               onClick={() => setFilterActive(status.id)}
-              className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
                 filterActive === status.id 
-                ? 'bg-white text-jardinerie-primary shadow-sm' 
-                : 'text-gray-500 hover:text-gray-700'
+                ? (status.isAlert ? 'bg-red-50 text-red-700 shadow-sm border border-red-100' : 'bg-white text-jardinerie-primary shadow-sm border border-gray-200') 
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
               }`}
             >
+              {status.isAlert && <AlertTriangle className={`w-3.5 h-3.5 ${filterActive === status.id ? 'text-red-600' : 'text-gray-400'}`} />}
               {status.label}
             </button>
           ))}
