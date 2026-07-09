@@ -11,62 +11,10 @@ export const adminService = {
   buildTaxesUrl:         ()   => `${ADMIN_ENDPOINT}/taxes`,
   buildUploadUrl:        ()   => `${ADMIN_ENDPOINT}/upload`,
 
-  // --- Nouvelles méthodes d'exécution métier (Dashboard) ---
-
-  /**
-   * Récupère les indicateurs du Chiffre d'Affaires
-   * @param {string} range 'day', 'week', ou 'month'
-   */
-  getSalesKpi: async (range = 'month') => {
-    try {
-      const response = await fetch(`${ADMIN_ENDPOINT}/kpis/sales?range=${range}`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        credentials: 'include' // Transmission sécurisée du cookie de session PHP
-      });
-      return await response.json();
-    } catch (error) {
-      console.error("Erreur de communication avec le endpoint Sales API");
-      throw error;
-    }
-  },
-
-  /**
-   * Récupère la liste des commandes filtrée par statut
-   * @param {string} status 'pending', 'paid', etc.
-   */
-  getOrdersByStatus: async (status = 'pending') => {
-    try {
-      const response = await fetch(`${ADMIN_ENDPOINT}/orders?status=${status}`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        credentials: 'include'
-      });
-      return await response.json();
-    } catch (error) {
-      console.error("Erreur de communication avec le endpoint Orders API");
-      throw error;
-    }
-  },
-
-  /**
-   * Récupère les alertes de stock faible
-   */
-  getStockAlerts: async (threshold = null) => {
-    try {
-      const url = threshold 
-        ? `${ADMIN_ENDPOINT}/stock/alerts?threshold=${threshold}`
-        : `${ADMIN_ENDPOINT}/stock/alerts`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        credentials: 'include'
-      });
-      return await response.json();
-    } catch (error) {
-      console.error("Erreur de communication avec le endpoint Stock API");
-      throw error;
-    }
-  }
+  // --- Constructeurs d'URL (Dashboard) — utilisés avec le hook useApi ---
+  buildSalesKpiUrl: (range = 'month') => `${ADMIN_ENDPOINT}/kpis/sales?range=${range}`,
+  buildOrdersByStatusUrl: (status = 'pending') => `${ADMIN_ENDPOINT}/orders?status=${status}`,
+  buildStockAlertsUrl: (threshold = null) => threshold
+    ? `${ADMIN_ENDPOINT}/stock/alerts?threshold=${threshold}`
+    : `${ADMIN_ENDPOINT}/stock/alerts`,
 };

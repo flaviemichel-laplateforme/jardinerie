@@ -1,51 +1,40 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import { buildRequestOptions } from '../../services/apiClient';
+import { useApi } from '../../hooks/useApi';
+import Skeleton from '../../components/ui/Skeleton';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
-  const [chartRange, setChartRange] = useState('month'); 
-  const [data, setData] = useState({
-    salesDay: null,
-    salesWeek: null,
-    salesMonth: null,
-    pendingOrdersCount: 0,
-    pendingOrdersItems: [],
-    stockAlertsCount: 0,
-    stockAlertsItems: [],
-  });
-  const [loading, setLoading] = useState(true);
+  const [chartRange, setChartRange] = useState('month');
+
+  // Un hook useApi par appel : chaque carte a ainsi son propre loading/error,
+  // et useApi affiche déjà un toast automatique en cas d'échec.
+  const { data: dayData, loading: dayLoading, request: requestDay } = useApi();
+  const { data: weekData, loading: weekLoading, request: requestWeek } = useApi();
+  const { data: monthData, loading: monthLoading, request: requestMonth } = useApi();
+  const { data: ordersData, loading: ordersLoading, request: requestOrders } = useApi();
+  const { data: stockData, loading: stockLoading, request: requestStock } = useApi();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [dayRes, weekRes, monthRes, ordersRes, stockRes] = await Promise.all([
-          adminService.getSalesKpi('day'),
-          adminService.getSalesKpi('week'),
-          adminService.getSalesKpi('month'),
-          adminService.getOrdersByStatus('pending'),
-          adminService.getStockAlerts()
-        ]);
+    const controller = new AbortController();
+    const options = buildRequestOptions({ signal: controller.signal });
 
-        setData({
-          salesDay: dayRes.data,
-          salesWeek: weekRes.data,
-          salesMonth: monthRes.data,
-          pendingOrdersCount: ordersRes.data?.pagination?.total_items || 0,
-          pendingOrdersItems: ordersRes.data?.items || [],
-          stockAlertsCount: stockRes.data?.alerts_count || 0,
-          stockAlertsItems: stockRes.data?.items || [],
-        });
-      } catch (error) {
-        console.error("Échec du chargement des composants du tableau de bord:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    requestDay(adminService.buildSalesKpiUrl('day'), options);
+    requestWeek(adminService.buildSalesKpiUrl('week'), options);
+    requestMonth(adminService.buildSalesKpiUrl('month'), options);
+    requestOrders(adminService.buildOrdersByStatusUrl('pending'), options);
+    requestStock(adminService.buildStockAlertsUrl(), options);
 
-    fetchDashboardData();
-  }, []);
+    return () => controller.abort();
+  }, [requestDay, requestWeek, requestMonth, requestOrders, requestStock]);
+
+  const pendingOrdersCount = ordersData?.pagination?.total_items || 0;
+  const pendingOrdersItems = ordersData?.items || [];
+  const stockAlertsCount = stockData?.alerts_count || 0;
+  const stockAlertsItems = stockData?.items || [];
 
   const formatXAxis = (tickItem) => {
     const date = new Date(tickItem);
@@ -58,13 +47,15 @@ export default function AdminDashboard() {
 
   // Optimisations
   const averageOrderValue = useMemo(() => {
-    if (!data.salesMonth || data.salesMonth.total_orders === 0) return 0;
-    return data.salesMonth.total_sales / data.salesMonth.total_orders;
-  }, [data.salesMonth]);
+    if (!monthData || !monthData.total_orders) return 0;
+    return monthData.total_sales / monthData.total_orders;
+  }, [monthData]);
 
   const chartData = useMemo(() => {
-    return chartRange === 'week' ? data.salesWeek?.breakdown : data.salesMonth?.breakdown;
-  }, [chartRange, data.salesWeek, data.salesMonth]);
+    return chartRange === 'week' ? weekData?.breakdown : monthData?.breakdown;
+  }, [chartRange, weekData, monthData]);
+
+  const chartLoading = chartRange === 'week' ? weekLoading : monthLoading;
 
   // 🚀 LOGIQUE DU GRAPHIQUE NATIF
   // On calcule la valeur maximale pour définir la hauteur à 100%
@@ -72,16 +63,6 @@ export default function AdminDashboard() {
     if (!chartData || chartData.length === 0) return 1;
     return Math.max(...chartData.map(item => item.total), 1);
   }, [chartData]);
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="text-jardinerie-primary/60 animate-pulse font-medium text-lg tracking-wide">
-          Initialisation de l'espace...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-[1880px] p-6 md:p-10 space-y-8 bg-slate-50/30 min-h-screen font-sans">
@@ -115,10 +96,19 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="px-6 pb-6 pt-0">
-            <div className="text-3xl font-extrabold text-slate-700 tracking-tight">
-              {formatCurrency(data.salesMonth?.total_sales)}
-            </div>
-            <p className="text-xs text-slate-400 mt-2 font-medium">Consolidé sur 30 jours</p>
+            {monthLoading ? (
+              <>
+                <Skeleton className="h-9 w-32" />
+                <Skeleton className="h-3 w-40 mt-2" />
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-extrabold text-slate-700 tracking-tight">
+                  {formatCurrency(monthData?.total_sales)}
+                </div>
+                <p className="text-xs text-slate-400 mt-2 font-medium">Consolidé sur 30 jours</p>
+              </>
+            )}
           </div>
         </div>
 
@@ -134,10 +124,19 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="px-6 pb-6 pt-0">
-            <div className="text-3xl font-extrabold text-slate-700 tracking-tight">
-              {formatCurrency(averageOrderValue)}
-            </div>
-            <p className="text-xs text-slate-400 mt-2 font-medium">Sur le mois en cours</p>
+            {monthLoading ? (
+              <>
+                <Skeleton className="h-9 w-32" />
+                <Skeleton className="h-3 w-40 mt-2" />
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-extrabold text-slate-700 tracking-tight">
+                  {formatCurrency(averageOrderValue)}
+                </div>
+                <p className="text-xs text-slate-400 mt-2 font-medium">Sur le mois en cours</p>
+              </>
+            )}
           </div>
         </div>
 
@@ -165,28 +164,42 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="px-6 pb-6 pt-0">
-            <div className="text-3xl font-extrabold text-slate-700 tracking-tight">
-              {data.pendingOrdersCount}
-            </div>
-            <div className="text-xs text-blue-600 mt-2 font-semibold flex items-center group-hover:text-blue-700 transition-colors">
-              Traiter les expéditions
-              {/* SVG pur (ArrowRight) */}
-              <svg className="w-3 h-3 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </div>
+            {ordersLoading ? (
+              <>
+                <Skeleton className="h-9 w-12" />
+                <Skeleton className="h-4 w-36 mt-2" />
+                <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-extrabold text-slate-700 tracking-tight">
+                  {pendingOrdersCount}
+                </div>
+                <div className="text-xs text-blue-600 mt-2 font-semibold flex items-center group-hover:text-blue-700 transition-colors">
+                  Traiter les expéditions
+                  {/* SVG pur (ArrowRight) */}
+                  <svg className="w-3 h-3 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </div>
 
-            {data.pendingOrdersItems.length > 0 && (
-              <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
-                {data.pendingOrdersItems.slice(0, 3).map(order => (
-                  <li key={order.id} className="flex items-center justify-between gap-2 text-xs text-slate-500">
-                    <span className="truncate">{order.order_reference}</span>
-                    <span className="font-bold text-slate-600 shrink-0">
-                      {formatCurrency(order.total_amount_tax_incl)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                {pendingOrdersItems.length > 0 && (
+                  <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
+                    {pendingOrdersItems.slice(0, 3).map(order => (
+                      <li key={order.id} className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                        <span className="truncate">{order.order_reference}</span>
+                        <span className="font-bold text-slate-600 shrink-0">
+                          {formatCurrency(order.total_amount_tax_incl)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </div>
         </button>
@@ -199,35 +212,49 @@ export default function AdminDashboard() {
         >
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Critique</h3>
-            <div className={`p-2.5 rounded-xl transition-colors ${data.stockAlertsCount > 0 ? 'bg-red-50/50 group-hover:bg-red-50' : 'bg-green-50/50'}`}>
+            <div className={`p-2.5 rounded-xl transition-colors ${stockAlertsCount > 0 ? 'bg-red-50/50 group-hover:bg-red-50' : 'bg-green-50/50'}`}>
               {/* SVG pur (Alert) */}
-              <svg className={`w-4 h-4 ${data.stockAlertsCount > 0 ? 'text-red-500' : 'text-green-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-4 h-4 ${stockAlertsCount > 0 ? 'text-red-500' : 'text-green-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
           </div>
           <div className="px-6 pb-6 pt-0">
-            <div className={`text-3xl font-extrabold tracking-tight ${data.stockAlertsCount > 0 ? 'text-red-600' : 'text-slate-700'}`}>
-              {data.stockAlertsCount}
-            </div>
-            <div className={`text-xs mt-2 font-semibold flex items-center transition-colors ${data.stockAlertsCount > 0 ? 'text-red-600 group-hover:text-red-700' : 'text-green-600'}`}>
-              {data.stockAlertsCount > 0 ? 'Réapprovisionner' : 'Stock sain'}
-              <svg className="w-3 h-3 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </div>
+            {stockLoading ? (
+              <>
+                <Skeleton className="h-9 w-12" />
+                <Skeleton className="h-4 w-28 mt-2" />
+                <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={`text-3xl font-extrabold tracking-tight ${stockAlertsCount > 0 ? 'text-red-600' : 'text-slate-700'}`}>
+                  {stockAlertsCount}
+                </div>
+                <div className={`text-xs mt-2 font-semibold flex items-center transition-colors ${stockAlertsCount > 0 ? 'text-red-600 group-hover:text-red-700' : 'text-green-600'}`}>
+                  {stockAlertsCount > 0 ? 'Réapprovisionner' : 'Stock sain'}
+                  <svg className="w-3 h-3 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </div>
 
-            {data.stockAlertsItems.length > 0 && (
-              <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
-                {data.stockAlertsItems.slice(0, 3).map(item => (
-                  <li key={item.id} className="flex items-center justify-between gap-2 text-xs text-slate-500">
-                    <span className="truncate">{item.product_name}</span>
-                    <span className="font-bold text-red-600 shrink-0">
-                      {item.stock_quantity} restant{item.stock_quantity > 1 ? 's' : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                {stockAlertsItems.length > 0 && (
+                  <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
+                    {stockAlertsItems.slice(0, 3).map(item => (
+                      <li key={item.id} className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                        <span className="truncate">{item.product_name}</span>
+                        <span className="font-bold text-red-600 shrink-0">
+                          {item.stock_quantity} restant{item.stock_quantity > 1 ? 's' : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </div>
         </button>
@@ -269,7 +296,16 @@ export default function AdminDashboard() {
                 <div className="border-t border-slate-50 w-full h-0"></div>
               </div>
 
-              {chartData && chartData.map((item, index) => {
+              {chartLoading && Array.from({ length: 12 }).map((_, index) => (
+                <div key={index} className="flex flex-col items-center flex-1 h-full justify-end z-10">
+                  <Skeleton
+                    className="w-full max-w-[24px] rounded-t-sm rounded-b-none"
+                    style={{ height: `${20 + (index % 4) * 20}%` }}
+                  />
+                </div>
+              ))}
+
+              {!chartLoading && chartData && chartData.map((item, index) => {
                 // Calcul du pourcentage de hauteur par rapport au max (évite les divisions par zéro)
                 const barHeight = maxChartValue > 0 ? Math.max((item.total / maxChartValue) * 100, 2) : 0; 
                 
@@ -287,7 +323,6 @@ export default function AdminDashboard() {
                       style={{ height: `${barHeight}%` }}
                     ></div>
                     
-                    {/* L'étiquette de l'axe X (Optionnel: n'afficher qu'un jour sur deux si trop compressé) */}
                     <span className="text-[10px] text-slate-400 mt-2 truncate max-w-full px-1">
                       {formatXAxis(item.label)}
                     </span>
@@ -315,7 +350,11 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Aujourd'hui</p>
-                  <p className="text-xl font-extrabold text-slate-700 mt-1">{formatCurrency(data.salesDay?.total_sales)}</p>
+                  {dayLoading ? (
+                    <Skeleton className="h-6 w-24 mt-1" />
+                  ) : (
+                    <p className="text-xl font-extrabold text-slate-700 mt-1">{formatCurrency(dayData?.total_sales)}</p>
+                  )}
                 </div>
               </div>
 
@@ -328,7 +367,11 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">7 derniers jours</p>
-                  <p className="text-xl font-extrabold text-slate-700 mt-1">{formatCurrency(data.salesWeek?.total_sales)}</p>
+                  {weekLoading ? (
+                    <Skeleton className="h-6 w-24 mt-1" />
+                  ) : (
+                    <p className="text-xl font-extrabold text-slate-700 mt-1">{formatCurrency(weekData?.total_sales)}</p>
+                  )}
                 </div>
               </div>
             </div>
