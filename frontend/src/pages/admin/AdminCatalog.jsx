@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
 import { buildRequestOptions } from '../../services/apiClient';
@@ -15,8 +15,11 @@ export default function AdminCatalog() {
   const { loading: deleteLoading, request: deleteRequest } = useApi();
 
   const products = data?.products ?? [];
+  const [searchParams] = useSearchParams();
   const [search,              setSearch]              = useState('');
-  const [filterActive,        setFilterActive]        = useState('tous');
+  const [filterActive,        setFilterActive]        = useState(
+    searchParams.get('filter') === 'critical' ? 'critical' : 'tous'
+  );
   const [sortBy,              setSortBy]              = useState('alpha-asc');
   const [selectedCategory,    setSelectedCategory]    = useState('tous'); // NOUVEAU
   const [selectedSubcategory, setSelectedSubcategory] = useState('tous');
