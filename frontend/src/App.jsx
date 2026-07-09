@@ -22,6 +22,7 @@ import CustomerDashboard from './pages/customer/CustomerDashboard';
 import CustomerRgpd from './pages/customer/CustomerRgpd';
 import AdminProductForm from './pages/admin/AdminProductForm';
 import AdminCatalog      from './pages/admin/AdminCatalog';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 
 // ==========================================
@@ -29,7 +30,7 @@ import AdminCatalog      from './pages/admin/AdminCatalog';
 // ==========================================
 
 const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
-const AdminDashboard = () => <div className="p-10 text-center">Dashboard et Alertes Stocks</div>;
+// const AdminDashboard = () => <div className="p-10 text-center">Dashboard et Alertes Stocks</div>;
 const AdminOrders = () => <div className="p-10 text-center">Gestion des Commandes Clients</div>;
 
 
