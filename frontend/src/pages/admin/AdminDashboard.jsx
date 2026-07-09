@@ -136,8 +136,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* COMMANDES EN ATTENTE */}
-        <div 
-          className="bg-white border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl cursor-pointer group flex flex-col justify-between min-h-[150px]"
+        <button
+          type="button"
+          className="w-full text-left bg-white border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
           onClick={() => navigate('/admin/commandes')}
         >
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
@@ -161,12 +162,13 @@ export default function AdminDashboard() {
               </svg>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* ALERTES STOCK */}
-        <div 
-          className="bg-white border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl cursor-pointer group flex flex-col justify-between min-h-[150px]"
-          onClick={() => navigate('/admin/catalogue?filter=critical')} 
+        <button
+          type="button"
+          className="w-full text-left bg-white border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 rounded-2xl group flex flex-col justify-between min-h-[150px]"
+          onClick={() => navigate('/admin/catalogue?filter=critical')}
         >
           <div className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Stock Critique</h3>
@@ -188,7 +190,7 @@ export default function AdminDashboard() {
               </svg>
             </div>
           </div>
-        </div>
+        </button>
 
       </div>
 
