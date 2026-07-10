@@ -104,4 +104,63 @@ class AdminOrderModel
 
         return $stmt->execute(['status' => $status, 'id' => $id]);
     }
+
+    /**
+     * Récupère le détail complet d'une commande (infos client, adresse, méthodes).
+     */
+    public function getById(int $id): ?array
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT
+                    o.id,
+                    o.order_reference,
+                    o.order_date,
+                    o.total_amount_tax_incl,
+                    o.shipping_cost_tax_incl,
+                    o.status,
+                    o.shipping_address_text,
+                    o.billing_address_text,
+                    dm.name AS delivery_method,
+                    pm.name AS payment_method,
+                    u.first_name AS customer_first_name,
+                    u.last_name  AS customer_last_name,
+                    u.email      AS customer_email
+                FROM orders o
+                LEFT JOIN delivery_methods dm ON dm.id = o.delivery_method_id
+                LEFT JOIN payment_methods pm  ON pm.id = o.payment_method_id
+                LEFT JOIN users u             ON u.id = o.user_id
+                WHERE o.id = :id
+                LIMIT 1";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+
+        $order = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $order ?: null;
+    }
+
+    /**
+     * Récupère les articles d'une commande.
+     */
+    public function getItemsByOrderId(int $orderId): array
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT
+                    oi.product_id,
+                    oi.quantity,
+                    oi.unit_price_tax_incl,
+                    p.name AS product_name,
+                    p.main_image_url
+                FROM order_items oi
+                LEFT JOIN products p ON p.id = oi.product_id
+                WHERE oi.order_id = :order_id";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['order_id' => $orderId]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

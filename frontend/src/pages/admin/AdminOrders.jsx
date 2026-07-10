@@ -8,6 +8,15 @@ import toast from 'react-hot-toast';
 
 const STATUS_FILTERS = ['all', 'pending', 'paid', 'shipped', 'delivered', 'cancelled'];
 
+const STATUS_FILTER_LABELS = {
+  all: 'Toutes',
+  pending: 'En attente',
+  paid: 'Payée',
+  shipped: 'Expédiée',
+  delivered: 'Livrée',
+  cancelled: 'Annulée',
+};
+
 export default function AdminOrders() {
   const { data, loading, request, setData } = useApi();
   const { loading: statusLoading, request: statusRequest } = useApi();
@@ -71,7 +80,7 @@ export default function AdminOrders() {
                 : 'bg-jardinerie-bg text-jardinerie-text hover:bg-gray-200'
             }`}
           >
-            {status === 'all' ? 'Toutes' : status}
+            {STATUS_FILTER_LABELS[status]}
           </button>
         ))}
       </div>
@@ -88,7 +97,7 @@ export default function AdminOrders() {
             type="button"
             disabled={!pagination.has_prev}
             onClick={() => setPage(p => p - 1)}
-            className="rounded-lg px-4 py-2 text-sm font-medium bg-jardinerie-bg text-jardinerie-text disabled:opacity-40"
+            className="rounded-lg px-4 py-2 text-sm font-medium bg-jardinerie-primary text-white hover:bg-green-700 transition-colors disabled:opacity-40 disabled:hover:bg-jardinerie-primary"
           >
             Précédent
           </button>
@@ -99,7 +108,7 @@ export default function AdminOrders() {
             type="button"
             disabled={!pagination.has_next}
             onClick={() => setPage(p => p + 1)}
-            className="rounded-lg px-4 py-2 text-sm font-medium bg-jardinerie-bg text-jardinerie-text disabled:opacity-40"
+            className="rounded-lg px-4 py-2 text-sm font-medium bg-jardinerie-primary text-white hover:bg-green-700 transition-colors disabled:opacity-40 disabled:hover:bg-jardinerie-primary"
           >
             Suivant
           </button>
