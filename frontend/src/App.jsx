@@ -23,6 +23,8 @@ import CustomerRgpd from './pages/customer/CustomerRgpd';
 import AdminProductForm from './pages/admin/AdminProductForm';
 import AdminCatalog      from './pages/admin/AdminCatalog';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminOrders from './pages/admin/AdminOrders';
+
 
 // ==========================================
 // 1. PLACEHOLDERS (Composants temporaires)
@@ -30,7 +32,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 
 const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
 // const AdminDashboard = () => <div className="p-10 text-center">Dashboard et Alertes Stocks</div>;
-const AdminOrders = () => <div className="p-10 text-center">Gestion des Commandes Clients</div>;
+// const AdminOrders = () => <div className="p-10 text-center">Gestion des Commandes Clients</div>;
 
 
 // ==========================================
