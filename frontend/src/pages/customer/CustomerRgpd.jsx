@@ -45,6 +45,39 @@ export default function CustomerRgpd() {
       <h1 className="text-2xl font-bold text-jardinerie-text">
         Confidentialité & RGPD
       </h1>
+      <p className="text-sm text-gray-500 -mt-4">
+        Votre confiance est le terreau de notre relation.
+      </p>
+
+      {/* ── Vos droits fondamentaux ── */}
+      <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <h2 className="text-lg font-bold text-jardinerie-text mb-4">
+          Vos droits fondamentaux
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <a href="#mes-donnees" className="rounded-lg border border-gray-100 p-4 hover:border-jardinerie-primary transition-colors">
+            <span className="text-2xl">👁️</span>
+            <p className="font-medium text-jardinerie-text mt-2">Accès</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Consultez l'intégralité de vos données personnelles ci-dessous.
+            </p>
+          </a>
+          <a href="/compte/parametres" className="rounded-lg border border-gray-100 p-4 hover:border-jardinerie-primary transition-colors">
+            <span className="text-2xl">✏️</span>
+            <p className="font-medium text-jardinerie-text mt-2">Rectification</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Modifiez vos informations à tout moment depuis votre profil.
+            </p>
+          </a>
+          <a href="#suppression-compte" className="rounded-lg border border-gray-100 p-4 hover:border-jardinerie-primary transition-colors">
+            <span className="text-2xl">🗑️</span>
+            <p className="font-medium text-jardinerie-text mt-2">Droit à l'oubli</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Demandez la suppression définitive de votre compte en toute simplicité.
+            </p>
+          </a>
+        </div>
+      </section>
 
       {/* ── Consentements ── */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-3">
@@ -70,7 +103,7 @@ export default function CustomerRgpd() {
       </section>
 
       {/* ── Données personnelles ── */}
-      <section className="rounded-xl border border-gray-200 bg-white p-6">
+      <section id="mes-donnees" className="rounded-xl border border-gray-200 bg-white p-6">
         <h2 className="text-lg font-bold text-jardinerie-text mb-4">
           Mes données personnelles
         </h2>
@@ -96,6 +129,7 @@ export default function CustomerRgpd() {
       </section>
 
       {/* ── Droit à l'oubli ── */}
+      <div id="suppression-compte">
       <DangerZone
         title="Droit à l'oubli — Supprimer mon compte"
         description="Conformément au RGPD (Article 17), vous pouvez demander la suppression de vos données personnelles. Vos informations seront anonymisées immédiatement. Cette action est irréversible."
@@ -107,6 +141,7 @@ export default function CustomerRgpd() {
         onConfirm={handleDeleteAccount}
         loading={loading}
       />
+      </div>
     </div>
   );
 }

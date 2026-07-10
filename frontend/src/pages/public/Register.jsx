@@ -188,7 +188,14 @@ export default function Register() {
 
               />
               <label htmlFor="gdpr_consent" className="text-sm text-gray-700">
-                  J'accepte les Conditions Générales de Vente et la politique de confidentialité.
+                  J'accepte les{' '}
+                  <Link to="/cgv" target="_blank" className="text-jardinerie-primary underline">
+                    Conditions Générales de Vente
+                  </Link>{' '}
+                  et la{' '}
+                  <Link to="/politique-confidentialite" target="_blank" className="text-jardinerie-primary underline">
+                    politique de confidentialité
+                  </Link>.
               </label>
 
             </div>

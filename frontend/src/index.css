@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .legal-heading {
+    @apply text-xl font-bold text-jardinerie-text mt-8 mb-3;
+  }
+  .legal-paragraph {
+    @apply text-sm text-gray-700 leading-relaxed;
+  }
+  .legal-list {
+    @apply list-disc list-inside text-sm text-gray-700 space-y-1;
+  }
+}
