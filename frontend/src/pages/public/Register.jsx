@@ -14,7 +14,8 @@ export default function Register() {
     last_name: '',
     email: '',
     password: '',
-    confirm_password: ''
+    confirm_password: '',
+    gdpr_consent: false
   });
 
   const { loading, request } = useApi();
@@ -46,7 +47,8 @@ export default function Register() {
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        gdpr_consent: formData.gdpr_consent
         }
       })
     );
@@ -169,6 +171,33 @@ export default function Register() {
                 onChange={handleChange}
                 className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-jardinerie-primary focus:border-jardinerie-primary sm:text-sm bg-white/95 transition-colors"
               />
+            </div>
+
+            {/* Consentement RGPD*/}
+            <div className='flex items-start gap-2'>
+              <input
+                id="gdpr_consent"
+                name="gdpr_consent"
+                type="checkbox"
+                required
+                checked={formData.gdpr_consent}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, gdpr_consent: e.target.checked }))
+                }
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-jardinerie-primary focus:ring-jardinerie-primary"
+
+              />
+              <label htmlFor="gdpr_consent" className="text-sm text-gray-700">
+                  J'accepte les{' '}
+                  <Link to="/cgv" target="_blank" className="text-jardinerie-primary underline">
+                    Conditions Générales de Vente
+                  </Link>{' '}
+                  et la{' '}
+                  <Link to="/politique-confidentialite" target="_blank" className="text-jardinerie-primary underline">
+                    politique de confidentialité
+                  </Link>.
+              </label>
+
             </div>
 
             {/* Bouton de soumission */}

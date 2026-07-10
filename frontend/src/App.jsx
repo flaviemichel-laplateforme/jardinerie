@@ -24,6 +24,9 @@ import AdminProductForm from './pages/admin/AdminProductForm';
 import AdminCatalog      from './pages/admin/AdminCatalog';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminOrders from './pages/admin/AdminOrders';
+import MentionsLegales from './pages/public/MentionsLegales';
+import Cgv from './pages/public/Cgv';
+import PolitiqueConfidentialite from './pages/public/PolitiqueConfidentialite';
 
 
 // ==========================================
@@ -51,7 +54,12 @@ const router = createBrowserRouter([
       { path: 'vegetaux', element: <Vegetaux /> },
       { path: 'produit/:id', element: <ProductDetail /> },
       { path: 'jardinage', element: <Jardinage /> },
-      
+
+      // ⚫ PAGES LÉGALES (Accès libre)
+      { path: 'mentions-legales', element: <MentionsLegales /> },
+      { path: 'cgv', element: <Cgv /> },
+      { path: 'politique-confidentialite', element: <PolitiqueConfidentialite /> },
+
       // 🟠 AUTHENTIFICATION (Accès libre)
       { path: 'connexion', element: <Login /> },
       { path: 'inscription', element: <Register /> },

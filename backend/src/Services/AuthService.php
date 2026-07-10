@@ -23,15 +23,28 @@ class AuthService
                 ];
             }
 
+            // 1. Règle métier : le consentement RGPD (CGV + politique de confidentialité) est-il donné ?
+            if (empty($data['gdpr_consent'])) {
+                return [
+                    'success' => false,
+                    'code' => 400,
+                    'message' => "Vous devez accepter les CGV et la politique de confidentialité."
+                ];
+            }
+
             // 2. Hachage du mot de passe
             $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+
+            // Horodatage du consentement : sert de preuve RGPD (date exacte), pas juste un booléen
+            $consentTimestamp = date('Y-m-d H:i:s');
 
             // 3. Appel au modèle pour l'insertion (Attention à l'ordre de vos paramètres !)
             $userId = $this->userModel->create(
                 $data['last_name'],
                 $data['first_name'],
                 $data['email'],
-                $hashedPassword
+                $hashedPassword,
+                $consentTimestamp
             );
 
 
@@ -49,7 +62,8 @@ class AuthService
                         'id' => $userId,
                         'first_name' => $data['first_name'],
                         'last_name' => $data['last_name'],
-                        'email' => $data['email']
+                        'email' => $data['email'],
+                        'grpd_consent_key' => $consentTimestamp
                     ]
                 ]
             ];
