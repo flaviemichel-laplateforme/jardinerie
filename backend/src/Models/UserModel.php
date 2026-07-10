@@ -55,7 +55,7 @@ class UserModel
             ':last_name' => $lastName,
             ':email' => $email,
             ':password' => $hashedPassword,
-            ':gpdr_consent_key' => $consentTimesTamp
+            ':gdpr_consent_key' => $consentTimesTamp
         ]);
 
         return (int)$db->lastInsertId();

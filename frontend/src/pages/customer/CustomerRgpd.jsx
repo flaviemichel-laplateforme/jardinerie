@@ -18,6 +18,12 @@ export default function CustomerRgpd() {
       })
     : '—';
 
+  const consentDate = user?.gdpr_consent_key
+    ? new Date(user.gdpr_consent_key).toLocaleDateString('fr-FR', {
+        day: '2-digit', month: 'long', year: 'numeric',
+      })
+    : null;
+
   const handleDeleteAccount = async () => {
     const result = await request(
       userService.buildDeleteUrl(),
@@ -45,14 +51,22 @@ export default function CustomerRgpd() {
         <h2 className="text-lg font-bold text-jardinerie-text">
           Mes consentements
         </h2>
-        <ConsentBadge
-          label="Conditions Générales de Vente acceptées"
-          date={registrationDate}
-        />
-        <ConsentBadge
-          label="Politique de confidentialité acceptée"
-          date={registrationDate}
-        />
+        {consentDate ? (
+          <>
+            <ConsentBadge
+              label="Conditions Générales de Vente acceptées"
+              date={consentDate}
+            />
+            <ConsentBadge
+              label="Politique de confidentialité acceptée"
+              date={consentDate}
+            />
+          </>
+        ) : (
+          <p className="text-sm text-gray-500 italic">
+            Aucun consentement enregistré pour ce compte.
+          </p>
+        )}
       </section>
 
       {/* ── Données personnelles ── */}
