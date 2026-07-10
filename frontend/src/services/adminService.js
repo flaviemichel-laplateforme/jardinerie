@@ -14,6 +14,7 @@ export const adminService = {
   `${ADMIN_ENDPOINT}/orders?status=${status}&page=${page}&limit=${limit}`,
 
 buildOrderStatusUpdateUrl: (id) => `${ADMIN_ENDPOINT}/orders/${id}/status`,
+buildOrderDetailUrl: (id) => `${ADMIN_ENDPOINT}/orders/${id}`,
 
 
   // --- Constructeurs d'URL (Dashboard) — utilisés avec le hook useApi ---

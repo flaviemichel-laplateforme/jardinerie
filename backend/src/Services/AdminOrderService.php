@@ -105,4 +105,40 @@ class AdminOrderService
             ];
         }
     }
+
+    /**
+     * Récupère le détail complet d'une commande (infos client, articles, etc.).
+     */
+    public function getOrderDetails(int $id): array
+    {
+        try {
+            $order = $this->model->getById($id);
+
+            if (!$order) {
+                return [
+                    'success' => false,
+                    'code'    => 404,
+                    'message' => "Commande introuvable."
+                ];
+            }
+
+            $items = $this->model->getItemsByOrderId($id);
+
+            return [
+                'success' => true,
+                'code'    => 200,
+                'data'    => [
+                    'order' => $order,
+                    'items' => $items,
+                ]
+            ];
+        } catch (\Exception $e) {
+            error_log("Erreur dans AdminOrderService::getOrderDetails : " . $e->getMessage());
+            return [
+                'success' => false,
+                'code'    => 500,
+                'message' => "Impossible de récupérer le détail de la commande."
+            ];
+        }
+    }
 }

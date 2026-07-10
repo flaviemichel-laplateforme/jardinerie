@@ -64,4 +64,24 @@ class AdminOrderController
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * Point de terminaison : GET /api/admin/orders/{id}
+     */
+    public function show(int $id): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        AdminMiddleware::authenticate();
+
+        $result = $this->service->getOrderDetails($id);
+
+        http_response_code($result['code']);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
 }
