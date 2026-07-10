@@ -43,18 +43,19 @@ class UserModel
      * Enregistre un nouvel utilisateur en base de données
      * * @return int L'ID du nouvel utilisateur inséré
      */
-    public function create(string $lastName, string $firstName, string $email, string $hashedPassword): int
+    public function create(string $lastName, string $firstName, string $email, string $hashedPassword, string $consentTimesTamp): int
     {
         $db = Database::getConnection();
 
-        $sql = "INSERT INTO users (first_name, last_name, email, password, role)
-                VALUES (:first_name, :last_name, :email, :password, 'customer')";
+        $sql = "INSERT INTO users (first_name, last_name, email, password, role, gdpr_consent_key)
+                VALUES (:first_name, :last_name, :email, :password, 'customer', :gdpr_consent_key)";
         $stmt = $db->prepare($sql);
         $stmt->execute([
             ':first_name' => $firstName,
             ':last_name' => $lastName,
             ':email' => $email,
-            ':password' => $hashedPassword
+            ':password' => $hashedPassword,
+            ':gpdr_consent_key' => $consentTimesTamp
         ]);
 
         return (int)$db->lastInsertId();
