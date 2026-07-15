@@ -24,6 +24,7 @@ TRUNCATE TABLE `products`;
 TRUNCATE TABLE `subcategories`;
 TRUNCATE TABLE `categories`;
 TRUNCATE TABLE `departments`;
+TRUNCATE TABLE `account_tokens`;
 TRUNCATE TABLE `addresses`;
 TRUNCATE TABLE `users`;
 TRUNCATE TABLE `taxes`;
