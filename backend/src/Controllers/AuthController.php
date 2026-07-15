@@ -214,4 +214,33 @@ class AuthController
             'message' => 'Déconnexion réussie.'
         ], JSON_UNESCAPED_UNICODE);
     }
+    
+    /**
+ * Point d'entrée pour la réinitialisation du mot de passe (POST /api/auth/reset-password)
+ */
+public function resetPassword(): void
+{
+    header("Content-Type: application/json; charset=UTF-8");
+
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        exit;
+    }
+
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    if (empty($data['token']) || empty($data['new_password'])) {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Le jeton et le nouveau mot de passe sont obligatoires."
+        ]);
+        return;
+    }
+
+    $result = $this->authService->resetPassword($data['token'], $data['new_password']);
+
+    http_response_code($result['code']);
+    echo json_encode($result, JSON_UNESCAPED_UNICODE);
 }
+

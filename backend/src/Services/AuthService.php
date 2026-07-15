@@ -7,7 +7,8 @@ use App\Models\UserModel;
 class AuthService
 {
     public function __construct(
-        private UserModel $userModel = new UserModel()
+        private UserModel $userModel = new UserModel(),
+        private \App\Models\AccountTokenModel $tokenModel = new \App\Models\AccountTokenModel()
     ) {}
 
     public function register(array $data): array
@@ -141,5 +142,47 @@ class AuthService
                 'user' => $user
             ]
         ];
+    }
+
+    /**
+     * Vérifie un jeton de réinitialisation et enregistre le nouveau mot de passe.
+     */
+    public function resetPassword(string $token, string $newPassword): array
+    {
+        $tokenData = $this->tokenModel->findValidToken($token, 'password_reset');
+
+        if (!$tokenData) {
+            return [
+                'success' => false,
+                'code'    => 400,
+                'message' => "Ce lien de réinitialisation est invalide ou a expiré."
+            ];
+        }
+
+        if (strlen($newPassword) < 8) {
+            return [
+                'success' => false,
+                'code'    => 400,
+                'message' => "Le mot de passe doit contenir au moins 8 caractères."
+            ];
+        }
+
+        try {
+            $this->userModel->updatePassword($tokenData['user_id'], $newPassword);
+            $this->tokenModel->markAsUsed($token);
+
+            return [
+                'success' => true,
+                'code'    => 200,
+                'message' => "Votre mot de passe a été réinitialisé avec succès."
+            ];
+        } catch (\Exception $e) {
+            error_log("Erreur dans AuthService::resetPassword : " . $e->getMessage());
+            return [
+                'success' => false,
+                'code'    => 500,
+                'message' => "Impossible de réinitialiser le mot de passe."
+            ];
+        }
     }
 }
