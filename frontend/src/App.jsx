@@ -27,6 +27,8 @@ import AdminOrders from './pages/admin/AdminOrders';
 import MentionsLegales from './pages/public/MentionsLegales';
 import Cgv from './pages/public/Cgv';
 import PolitiqueConfidentialite from './pages/public/PolitiqueConfidentialite';
+import AdminClients from './pages/admin/AdminClients';
+
 
 
 // ==========================================
@@ -100,6 +102,7 @@ const router = createBrowserRouter([
           { path: 'catalogue/nouveau',      element: <AdminProductForm /> },
           { path: 'catalogue/:id/modifier', element: <AdminProductForm /> },
           { path: 'commandes', element: <AdminOrders /> },
+          { path: 'clients', element: <AdminClients /> },
         ]
       },
     ],
