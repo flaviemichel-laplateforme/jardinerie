@@ -120,6 +120,8 @@ $router->map('POST', '/api/auth/register', 'AuthController#register', 'api_auth_
 $router->map('POST', '/api/auth/login', 'AuthController#login', 'api_auth_login');
 $router->map('GET', '/api/auth/me', 'AuthController#me', 'api_auth_me');
 $router->map('POST', '/api/auth/logout', 'AuthController#logout', 'api_auth_logout');
+$router->map('POST', '/api/auth/reset-password', 'AuthController#resetPassword', 'api_auth_reset_password');
+
 
 $router->map('GET', '/api/addresses', 'AddressController#index', 'api_addresses_list');
 $router->map('POST', '/api/addresses', 'AddressController#store', 'api_addresses_create');
@@ -162,6 +164,13 @@ $router->map('GET', '/api/admin/stock/alerts', 'AdminStockController#getAlerts',
 $router->map('GET', '/api/admin/orders', 'AdminOrderController#index', 'admin_orders_list');
 $router->map('GET', '/api/admin/orders/[i:id]', 'AdminOrderController#show', 'admin_orders_show');
 $router->map('PATCH', '/api/admin/orders/[i:id]/status', 'AdminOrderController#updateStatus', 'admin_orders_update_status');
+
+// ADMIN — GESTION DES CLIENTS
+$router->map('GET',   '/api/admin/clients',                        'AdminClientController#index',            'admin_clients_list');
+$router->map('GET',   '/api/admin/clients/[i:id]',                 'AdminClientController#show',              'admin_clients_show');
+$router->map('PATCH', '/api/admin/clients/[i:id]/role',             'AdminClientController#updateRole',        'admin_clients_update_role');
+$router->map('POST',  '/api/admin/clients/[i:id]/anonymize',        'AdminClientController#anonymize',         'admin_clients_anonymize');
+$router->map('POST',  '/api/admin/clients/[i:id]/password-reset',   'AdminClientController#sendPasswordReset', 'admin_clients_password_reset');
 
 
 

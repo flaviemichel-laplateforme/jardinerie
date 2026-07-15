@@ -15,6 +15,13 @@ export const adminService = {
 
 buildOrderStatusUpdateUrl: (id) => `${ADMIN_ENDPOINT}/orders/${id}/status`,
 buildOrderDetailUrl: (id) => `${ADMIN_ENDPOINT}/orders/${id}`,
+buildClientsListUrl: (search = '', role = 'tous', page = 1, limit = 10) =>
+  `${ADMIN_ENDPOINT}/clients?search=${encodeURIComponent(search)}&role=${role}&page=${page}&limit=${limit}`,
+
+buildClientDetailUrl: (id) => `${ADMIN_ENDPOINT}/clients/${id}`,
+buildClientRoleUrl: (id) => `${ADMIN_ENDPOINT}/clients/${id}/role`,
+buildClientAnonymizeUrl: (id) => `${ADMIN_ENDPOINT}/clients/${id}/anonymize`,
+buildClientPasswordResetUrl: (id) => `${ADMIN_ENDPOINT}/clients/${id}/password-reset`,
 
 
   // --- Constructeurs d'URL (Dashboard) — utilisés avec le hook useApi ---

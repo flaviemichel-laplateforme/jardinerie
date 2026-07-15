@@ -39,20 +39,23 @@ class AdminOrderModel
     {
         $db = Database::getConnection();
 
-        $sql = "SELECT 
-                    id, 
-                    order_reference, 
-                    total_amount_tax_incl, 
-                    status, 
-                    order_date
-                FROM orders";
+        $sql = "SELECT
+                    o.id,
+                    o.order_reference,
+                    o.total_amount_tax_incl,
+                    o.status,
+                    o.order_date,
+                    u.first_name AS customer_first_name,
+                    u.last_name  AS customer_last_name
+                FROM orders o
+                LEFT JOIN users u ON u.id = o.user_id";
 
         if ($status && $status !== 'all') {
-            $sql .= " WHERE status = :status";
+            $sql .= " WHERE o.status = :status";
         }
 
         // Critère d'acceptation : Tri par date décroissante (les plus récentes d'abord)
-        $sql .= " ORDER BY order_date DESC LIMIT :limit OFFSET :offset";
+        $sql .= " ORDER BY o.order_date DESC LIMIT :limit OFFSET :offset";
 
         $stmt = $db->prepare($sql);
 

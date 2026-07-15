@@ -374,6 +374,27 @@ CREATE TABLE IF NOT EXISTS `jardinerie_db`.`invoices` (
     ON DELETE RESTRICT)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `jardinerie_db`.`account_tokens`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `jardinerie_db`.`account_tokens` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NOT NULL,
+  `token` VARCHAR(255) NOT NULL,
+  `purpose` ENUM('password_reset', 'email_verification') NOT NULL DEFAULT 'password_reset',
+  `expires_at` DATETIME NOT NULL,
+  `used_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `token_UNIQUE` (`token` ASC) VISIBLE,
+  INDEX `fk_account_tokens_users_idx` (`user_id` ASC) VISIBLE,
+  CONSTRAINT `fk_account_tokens_users`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `jardinerie_db`.`users` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

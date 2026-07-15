@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
 import { buildRequestOptions } from '../../services/apiClient';
@@ -29,6 +30,7 @@ const formatAmount = (amount) =>
   `${parseFloat(amount).toFixed(2).replace('.', ',')} €`;
 
 export default function AdminOrdersTable({ orders, onStatusChange, statusLoading }) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewingOrderId, setViewingOrderId] = useState(null);
   const { data: detailData, loading: detailLoading, request: detailRequest } = useApi();
 
@@ -36,6 +38,16 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
     setViewingOrderId(orderId);
     detailRequest(adminService.buildOrderDetailUrl(orderId), buildRequestOptions());
   };
+
+  useEffect(() => {
+    const orderId = searchParams.get('orderId');
+    if (orderId) {
+      handleViewDetails(Number(orderId));
+      searchParams.delete('orderId');
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const order = detailData?.order;
   const items = detailData?.items ?? [];
@@ -47,6 +59,7 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
           <thead className="bg-jardinerie-bg border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Référence</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Client</th>
               <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide hidden md:table-cell">Date</th>
               <th className="text-right px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Montant TTC</th>
               <th className="text-center px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Statut</th>
@@ -56,12 +69,20 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
           <tbody className="divide-y divide-gray-100">
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-12 text-gray-400 italic">Aucune commande trouvée.</td>
+                <td colSpan={6} className="text-center py-12 text-gray-400 italic">Aucune commande trouvée.</td>
               </tr>
             ) : (
               orders.map(o => (
-                <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={o.id}
+                  className={`transition-colors ${
+                    o.id === viewingOrderId
+                      ? 'bg-jardinerie-primary/10 border-l-4 border-jardinerie-primary'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
                   <td className="px-4 py-3 font-medium text-jardinerie-text">{o.order_reference}</td>
+                  <td className="px-4 py-3 text-jardinerie-text">{o.customer_first_name} {o.customer_last_name}</td>
                   <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{formatDate(o.order_date)}</td>
                   <td className="px-4 py-3 text-right font-bold text-jardinerie-primary">{formatAmount(o.total_amount_tax_incl)}</td>
                   <td className="px-4 py-3 text-center">

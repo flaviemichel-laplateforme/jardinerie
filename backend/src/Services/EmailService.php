@@ -55,6 +55,29 @@ class EmailService
     }
 
     /**
+     * Envoie un email contenant un lien de réinitialisation de mot de passe.
+     */
+    public function sendPasswordResetLink(string $toEmail, string $firstName, string $resetUrl): bool
+    {
+        try {
+            $html = $this->buildPasswordResetEmail($firstName, $resetUrl);
+
+            $this->client->emails->send([
+                'from'    => "La Jardinerie <{$this->fromEmail}>",
+                'to'      => [$toEmail],
+                'subject' => "Réinitialisation de votre mot de passe — La Jardinerie",
+                'html'    => $html,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            error_log("EMAIL ERROR [password_reset]: " . $e->getMessage());
+            return false;
+        }
+    }
+
+
+    /**
      * Construit le HTML de l'email de confirmation.
      * Template simple mais professionnel, aux couleurs de la jardinerie.
      */
@@ -175,5 +198,43 @@ class EmailService
         </body>
         </html>
         ";
+    }
+
+    /**
+     * Construit le HTML de l'email de réinitialisation de mot de passe.
+     */
+    private function buildPasswordResetEmail(string $firstName, string $resetUrl): string
+    {
+        return "
+    <!DOCTYPE html>
+    <html lang='fr'>
+    <head>
+        <meta charset='UTF-8'>
+    </head>
+    <body style='margin: 0; padding: 0; background-color: #f5f5f0; font-family: Arial, sans-serif;'>
+        <div style='max-width: 600px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <div style='background-color: #027148; padding: 32px; text-align: center;'>
+                <h1 style='color: white; margin: 0; font-size: 24px;'>La Jardinerie</h1>
+            </div>
+            <div style='padding: 32px;'>
+                <h2 style='color: #1a2e1a; margin-top: 0;'>Bonjour {$firstName},</h2>
+                <p style='color: #555; line-height: 1.6;'>
+                    Un administrateur a initié une réinitialisation de votre mot de passe.
+                    Cliquez sur le bouton ci-dessous pour en choisir un nouveau. Ce lien est valable 1 heure.
+                </p>
+                <div style='text-align: center; margin: 32px 0;'>
+                    <a href='{$resetUrl}' style='background-color: #027148; color: white; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-weight: bold;'>
+                        Choisir un nouveau mot de passe
+                    </a>
+                </div>
+                <p style='color: #888; font-size: 12px; line-height: 1.6;'>
+                    Si vous n'êtes pas à l'origine de cette demande, ignorez cet email —
+                    votre mot de passe actuel restera inchangé.
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
     }
 }
