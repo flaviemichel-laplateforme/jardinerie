@@ -28,6 +28,8 @@ import MentionsLegales from './pages/public/MentionsLegales';
 import Cgv from './pages/public/Cgv';
 import PolitiqueConfidentialite from './pages/public/PolitiqueConfidentialite';
 import AdminClients from './pages/admin/AdminClients';
+import ResetPassword from './pages/public/ResetPassword';
+
 
 
 
@@ -65,6 +67,8 @@ const router = createBrowserRouter([
       // 🟠 AUTHENTIFICATION (Accès libre)
       { path: 'connexion', element: <Login /> },
       { path: 'inscription', element: <Register /> },
+      { path: 'reinitialiser-mot-de-passe', element: <ResetPassword /> },
+
       
       // 🟢 TUNNEL D'ACHAT (Accès libre pour l'instant)
       { path: 'panier', element: <Cart /> },

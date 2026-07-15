@@ -39,7 +39,7 @@ export default function AdminClients() {
     return () => controller.abort();
   }, [request, debouncedSearch, roleFilter, page]);
 
-  if (loading) return <Spinner message="Chargement des clients..." />;
+  if (loading && !data) return <Spinner message="Chargement des clients..." />;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

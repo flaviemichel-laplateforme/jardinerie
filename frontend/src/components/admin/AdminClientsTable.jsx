@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
 import { buildRequestOptions } from '../../services/apiClient';
@@ -26,6 +27,7 @@ const formatDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 
 export default function AdminClientsTable({ clients }) {
+  const navigate = useNavigate();
   const [viewingClientId, setViewingClientId] = useState(null);
   const { data: detailData, loading: detailLoading, request: detailRequest } = useApi();
   const { loading: roleLoading, request: roleRequest } = useApi();
@@ -184,11 +186,17 @@ export default function AdminClientsTable({ clients }) {
                 ) : (
                   <ul className="divide-y divide-gray-100">
                     {orders.map(o => (
-                      <li key={o.id} className="flex justify-between items-center py-2 text-sm">
-                        <span className="text-jardinerie-text">{o.order_reference}</span>
-                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[o.status]}`}>
-                          {STATUS_LABELS[o.status] ?? o.status}
-                        </span>
+                      <li key={o.id}>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/commandes?orderId=${o.id}`)}
+                          className="w-full flex justify-between items-center py-2 text-sm hover:bg-gray-50 rounded transition-colors"
+                        >
+                          <span className="text-jardinerie-text underline decoration-dotted">{o.order_reference}</span>
+                          <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[o.status]}`}>
+                            {STATUS_LABELS[o.status] ?? o.status}
+                          </span>
+                        </button>
                       </li>
                     ))}
                   </ul>
