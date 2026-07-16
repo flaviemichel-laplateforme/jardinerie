@@ -128,4 +128,15 @@ class UserModel
 
         return $stmt->rowCount() > 0;
     }
+
+    /**
+     * Marque l'email d'un utilisateur comme vérifié.
+     */
+    public function markEmailVerified(int $id): void
+    {
+        $db = Database::getConnection();
+        $sql = "UPDATE users SET email_verified_at = NOW() WHERE id = :id";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+    }
 }
