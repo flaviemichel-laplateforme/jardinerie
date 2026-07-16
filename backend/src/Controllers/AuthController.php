@@ -56,35 +56,10 @@ class AuthController
 
         $result = $this->authService->register($data);
 
-        if (!$result['success']) {
-            http_response_code($result['code']);
-            echo json_encode([
-                "success" => false,
-                "message" => $result['message']
-            ]);
-            return;
-        }
-
-        $cookieOptions = [
-            'expires' => time() + (3600 * 24 * 7),
-            'path' => '/',
-            'domain' => 'localhost',
-            'secure' => false, // Passer à true en HTTPS
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ];
-
-        setcookie('jardinerie_session', $result['data']['token'], $cookieOptions);
-
         http_response_code($result['code']);
-        echo json_encode([
-            "success" => true,
-            "message" => "Compte créé avec succès.",
-            "data" => [
-                "user" => $result['data']['user']
-            ]
-        ]);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
+
 
     /**
      * Point d'entrée pour la connexion (POST /api/auth/login)
@@ -239,6 +214,35 @@ class AuthController
         }
 
         $result = $this->authService->resetPassword($data['token'], $data['new_password']);
+
+        http_response_code($result['code']);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Point d'entrée pour la vérification d'email (GET /api/auth/verify-email?token=...)
+     */
+    public function verifyEmail(): void
+    {
+        header("Content-Type: application/json; charset=UTF-8");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        $token = $_GET['token'] ?? null;
+
+        if (empty($token)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Le jeton de vérification est manquant."
+            ]);
+            return;
+        }
+
+        $result = $this->authService->verifyEmail($token);
 
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
