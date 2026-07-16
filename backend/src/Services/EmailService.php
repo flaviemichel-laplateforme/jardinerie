@@ -76,6 +76,29 @@ class EmailService
         }
     }
 
+    /**
+     * Envoie un email contenant un lien de vérification d'adresse email.
+     */
+    public function sendVerificationEmail(string $toEmail, string $firstName, string $verifyUrl): bool
+    {
+        try {
+            $html = $this->buildVerificationEmail($firstName, $verifyUrl);
+
+            $this->client->emails->send([
+                'from'    => "La Jardinerie <{$this->fromEmail}>",
+                'to'      => [$toEmail],
+                'subject' => "Confirmez votre adresse email — La Jardinerie",
+                'html'    => $html,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            error_log("EMAIL ERROR [email_verification]: " . $e->getMessage());
+            return false;
+        }
+    }
+
+
 
     /**
      * Construit le HTML de l'email de confirmation.
@@ -230,6 +253,43 @@ class EmailService
                 <p style='color: #888; font-size: 12px; line-height: 1.6;'>
                     Si vous n'êtes pas à l'origine de cette demande, ignorez cet email —
                     votre mot de passe actuel restera inchangé.
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+    }
+
+    /**
+     * Construit le HTML de l'email de vérification d'adresse.
+     */
+    private function buildVerificationEmail(string $firstName, string $verifyUrl): string
+    {
+        return "
+    <!DOCTYPE html>
+    <html lang='fr'>
+    <head>
+        <meta charset='UTF-8'>
+    </head>
+    <body style='margin: 0; padding: 0; background-color: #f5f5f0; font-family: Arial, sans-serif;'>
+        <div style='max-width: 600px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <div style='background-color: #027148; padding: 32px; text-align: center;'>
+                <h1 style='color: white; margin: 0; font-size: 24px;'>La Jardinerie</h1>
+            </div>
+            <div style='padding: 32px;'>
+                <h2 style='color: #1a2e1a; margin-top: 0;'>Bienvenue {$firstName} ! 🌱</h2>
+                <p style='color: #555; line-height: 1.6;'>
+                    Merci de votre inscription. Cliquez sur le bouton ci-dessous pour confirmer
+                    votre adresse email et activer votre compte. Ce lien est valable 24 heures.
+                </p>
+                <div style='text-align: center; margin: 32px 0;'>
+                    <a href='{$verifyUrl}' style='background-color: #027148; color: white; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-weight: bold;'>
+                        Confirmer mon adresse email
+                    </a>
+                </div>
+                <p style='color: #888; font-size: 12px; line-height: 1.6;'>
+                    Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet email.
                 </p>
             </div>
         </div>

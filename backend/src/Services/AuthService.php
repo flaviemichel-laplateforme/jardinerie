@@ -8,7 +8,8 @@ class AuthService
 {
     public function __construct(
         private UserModel $userModel = new UserModel(),
-        private \App\Models\AccountTokenModel $tokenModel = new \App\Models\AccountTokenModel()
+        private \App\Models\AccountTokenModel $tokenModel = new \App\Models\AccountTokenModel(),
+        private EmailService $emailService = new EmailService()
     ) {}
 
     public function register(array $data): array
@@ -39,7 +40,7 @@ class AuthService
             // Horodatage du consentement : sert de preuve RGPD (date exacte), pas juste un booléen
             $consentTimestamp = date('Y-m-d H:i:s');
 
-            // 3. Appel au modèle pour l'insertion (Attention à l'ordre de vos paramètres !)
+            // 3. Appel au modèle pour l'insertion
             $userId = $this->userModel->create(
                 $data['last_name'],
                 $data['first_name'],
@@ -48,34 +49,29 @@ class AuthService
                 $consentTimestamp
             );
 
+            // 4. Génère un jeton de vérification et envoie l'email
+            $token = $this->tokenModel->create($userId, 'email_verification', 1440);
 
-            // 5. LE FAMEUX RETOUR STRUCTURÉ (Pattern Result attendu par le Contrôleur)
+            $frontendUrl = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
+            $verifyUrl   = "{$frontendUrl}/verifier-email?token={$token}";
+
+            $this->emailService->sendVerificationEmail($data['email'], $data['first_name'], $verifyUrl);
+
             return [
                 'success' => true,
-                'code' => 201,
-                'data' => [
-                    'token' => \App\Core\JwtHelper::generate(
-                        ['id' => $userId, 'role' => 'customer'],
-                        $_ENV['JWT_SECRET'] ?? 'default_secret',
-                        86400
-                    ),
-                    'user' => [
-                        'id' => $userId,
-                        'first_name' => $data['first_name'],
-                        'last_name' => $data['last_name'],
-                        'email' => $data['email'],
-                        'grpd_consent_key' => $consentTimestamp
-                    ]
-                ]
+                'code'    => 201,
+                'message' => "Compte créé avec succès. Vérifiez votre boîte mail pour activer votre compte."
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
                 'code' => 500,
-                'message' => "Erreur interne technique." // Enlevez $e->getMessage() en prod
+                'message' => "Erreur interne technique."
             ];
         }
     }
+
+
 
     /**
      * Logique de connexion et génération du JWT
@@ -92,6 +88,14 @@ class AuthService
                 'code' => 401,
                 'message' => 'Identifiants incorrects.'
 
+            ];
+        }
+
+        if (!$user['email_verified_at']) {
+            return [
+                'success' => false,
+                'code'  => 403,
+                'message'   => "Veuillez vérifier votre adresse email aveant de vous connecter. Un email de vérification vous a été envoyé à l'inscription."
             ];
         }
 
@@ -182,6 +186,40 @@ class AuthService
                 'success' => false,
                 'code'    => 500,
                 'message' => "Impossible de réinitialiser le mot de passe."
+            ];
+        }
+    }
+
+    /**
+     * Vérifie un jeton de vérification et active le compte.
+     */
+    public function verifyEmail(string $token): array
+    {
+        $tokenData = $this->tokenModel->findValidToken($token, 'email_verification');
+
+        if (!$tokenData) {
+            return [
+                'success' => false,
+                'code'    => 400,
+                'message' => "Ce lien de vérification est invalide ou a expiré."
+            ];
+        }
+
+        try {
+            $this->userModel->markEmailVerified($tokenData['user_id']);
+            $this->tokenModel->markAsUsed($token);
+
+            return [
+                'success' => true,
+                'code'    => 200,
+                'message' => "Votre email a été vérifié avec succès. Vous pouvez maintenant vous connecter."
+            ];
+        } catch (\Exception $e) {
+            error_log("Erreur dans AuthService::verifyEmail : " . $e->getMessage());
+            return [
+                'success' => false,
+                'code'    => 500,
+                'message' => "Impossible de vérifier l'email."
             ];
         }
     }
