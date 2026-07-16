@@ -95,7 +95,7 @@ class AuthService
             return [
                 'success' => false,
                 'code'  => 403,
-                'message'   => "Veuillez vérifier votre adresse email aveant de vous connecter. Un email de vérification vous a été envoyé à l'inscription."
+                'message'   => "Veuillez vérifier votre adresse email avant de vous connecter. Un email de vérification vous a été envoyé à l'inscription."
             ];
         }
 
