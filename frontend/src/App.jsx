@@ -29,7 +29,7 @@ import Cgv from './pages/public/Cgv';
 import PolitiqueConfidentialite from './pages/public/PolitiqueConfidentialite';
 import AdminClients from './pages/admin/AdminClients';
 import ResetPassword from './pages/public/ResetPassword';
-
+import VerifyEmail from './pages/public/VerifyEmail';
 
 
 // ==========================================
@@ -58,6 +58,7 @@ const router = createBrowserRouter([
       { path: 'connexion', element: <Login /> },
       { path: 'inscription', element: <Register /> },
       { path: 'reinitialiser-mot-de-passe', element: <ResetPassword /> },
+      { path: 'verifier-email', element: <VerifyEmail /> },
 
       
       // 🟢 TUNNEL D'ACHAT (Accès libre pour l'instant)

@@ -22,6 +22,11 @@ export const authService = {
 
     buildResetPasswordUrl() {
     return `${AUTH_ENDPOINT}/reset-password`;
-},
+    },
+
+    buildVerifyEmailUrl(token) {
+    return `${AUTH_ENDPOINT}/verify-email?token=${encodeURIComponent(token)}`;
+    },
+  
 
 }
