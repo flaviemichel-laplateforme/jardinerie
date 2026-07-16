@@ -128,7 +128,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
       )
     },
     {
-      name: 'CLIENTS',
+      name: 'GESTION DES CLIENTS',
       path: '/admin/clients',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -136,17 +136,8 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
           <path d="M4 20C4 16.134 7.13401 13 11 13H13C16.866 13 20 16.134 20 20" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
         </svg>
       )
-    },
-    {
-      name: 'PARAMÈTRES',
-      path: '/admin/settings',
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="3" fill="#7DCEB2" stroke="#2B3A67" strokeWidth="2"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#2B3A67" strokeWidth="2"/>
-        </svg>
-      )
     }
+    
   ];
 
   return (
@@ -185,7 +176,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
             <Link
               key={link.name}
               to={link.path}
-              target={link.target || '_self'} // 👉 Gestion dynamique de l'ouverture d'onglet
+              target={link.target || '_self'} //Gestion dynamique de l'ouverture d'onglet
               rel={link.target === '_blank' ? 'noopener noreferrer' : undefined} // Sécurité standard
               title={isCollapsed ? link.name : undefined}
               className={`py-3.5 text-xs tracking-wider flex items-center transition-all duration-200 uppercase ${isActive

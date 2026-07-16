@@ -32,16 +32,6 @@ import ResetPassword from './pages/public/ResetPassword';
 
 
 
-
-// ==========================================
-// 1. PLACEHOLDERS (Composants temporaires)
-// ==========================================
-
-const CustomerTickets = () => <div className="p-10 text-center">Mes Tickets (SAV)</div>;
-// const AdminDashboard = () => <div className="p-10 text-center">Dashboard et Alertes Stocks</div>;
-// const AdminOrders = () => <div className="p-10 text-center">Gestion des Commandes Clients</div>;
-
-
 // ==========================================
 // 2. CONFIGURATION DU ROUTEUR (SITEMAP)
 // ==========================================
@@ -90,7 +80,6 @@ const router = createBrowserRouter([
           { path: 'commandes', element: <CustomerOrders /> },
           { path: 'adresses', element: <CustomerAddresses /> },
           { path: 'commandes/:id', element: <CustomerOrderDetail /> },
-          { path: 'tickets', element: <CustomerTickets /> },
           { path: 'parametres', element: <CustomerProfile /> },
           { path: 'rgpd', element: <CustomerRgpd /> },
         ]
