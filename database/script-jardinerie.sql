@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS `jardinerie_db`.`users` (
   `role` ENUM('admin', 'customer') NULL DEFAULT 'customer',
   `registration_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `gdpr_consent_key` VARCHAR(255) NULL DEFAULT NULL,
+  `email_verified_at` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX (`email` ASC) VISIBLE,
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE)
