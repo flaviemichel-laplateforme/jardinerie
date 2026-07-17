@@ -100,7 +100,7 @@ class AuthService
         }
 
         // 3. Création du Payload pour le JWT
-        $secret = $_ENV['JWT_SECRET'] ?? 'default_secret';
+        $secret = $_ENV['JWT_SECRET'] ?? throw new \RuntimeException('JWT_SECRET manquant dans les variables d\'environnement.');
         $payload = [
             'id' => $user['id'],
             'role' => $user['role'] ?? 'customer'
