@@ -73,12 +73,23 @@ class OrderModel
                     VALUES (:order_id, :product_id, :quantity, :unit_price)";
             $itemStmt = $db->prepare($itemSql);
 
+            // Décrémentation atomique du stock : le calcul se fait dans la requête SQL
+            // (stock_quantity - X) pour éviter toute race condition entre deux commandes
+            // concurrentes sur le même produit. GREATEST empêche un stock négatif.
+            $stockSql = "UPDATE products SET stock_quantity = GREATEST(stock_quantity - :quantity, 0) WHERE id = :product_id";
+            $stockStmt = $db->prepare($stockSql);
+
             foreach ($cart['items'] as $item) {
                 $itemStmt->execute([
                     ':order_id'   => $orderId,
                     ':product_id' => $item['product_id'],
                     ':quantity'   => $item['quantity'],
                     ':unit_price' => $item['unit_price'],
+                ]);
+
+                $stockStmt->execute([
+                    ':quantity'   => $item['quantity'],
+                    ':product_id' => $item['product_id'],
                 ]);
             }
 
