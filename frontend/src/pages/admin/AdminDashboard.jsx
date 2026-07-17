@@ -25,14 +25,14 @@ export default function AdminDashboard() {
     requestDay(adminService.buildSalesKpiUrl('day'), options);
     requestWeek(adminService.buildSalesKpiUrl('week'), options);
     requestMonth(adminService.buildSalesKpiUrl('month'), options);
-    requestOrders(adminService.buildOrdersByStatusUrl('pending'), options);
+    requestOrders(adminService.buildOrdersByStatusUrl('paid'), options);
     requestStock(adminService.buildStockAlertsUrl(), options);
 
     return () => controller.abort();
   }, [requestDay, requestWeek, requestMonth, requestOrders, requestStock]);
 
-  const pendingOrdersCount = ordersData?.pagination?.total_items || 0;
-  const pendingOrdersItems = ordersData?.items || [];
+  const ordersToShipCount = ordersData?.pagination?.total_items || 0;
+  const ordersToShipItems = ordersData?.items || [];
   const stockAlertsCount = stockData?.alerts_count || 0;
   const stockAlertsItems = stockData?.items || [];
 
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
             ) : (
               <>
                 <div className="text-3xl font-extrabold text-slate-700 tracking-tight">
-                  {pendingOrdersCount}
+                  {ordersToShipCount}
                 </div>
                 <div className="text-xs text-blue-600 mt-2 font-semibold flex items-center group-hover:text-blue-700 transition-colors">
                   Traiter les expéditions
@@ -187,9 +187,9 @@ export default function AdminDashboard() {
                   </svg>
                 </div>
 
-                {pendingOrdersItems.length > 0 && (
+                {ordersToShipItems.length > 0 && (
                   <ul className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
-                    {pendingOrdersItems.slice(0, 3).map(order => (
+                    {ordersToShipItems.slice(0, 3).map(order => (
                       <li key={order.id} className="flex items-center justify-between gap-2 text-xs text-slate-500">
                         <span className="truncate">{order.order_reference}</span>
                         <span className="font-bold text-slate-600 shrink-0">
