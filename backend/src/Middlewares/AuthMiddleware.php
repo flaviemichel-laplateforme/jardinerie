@@ -19,7 +19,7 @@ class AuthMiddleware
             self::reject('Non authentifié.');
         }
 
-        $secret = $_ENV['JWT_SECRET'] ?? 'default_secret';
+        $secret = $_ENV['JWT_SECRET'] ?? throw new \RuntimeException('JWT_SECRET manquant dans les variables d\'environnement.');
         $payload = JwtHelper::verify($token, $secret);
 
         if (!$payload) {
