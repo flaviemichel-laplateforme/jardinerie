@@ -168,6 +168,7 @@ class ProductModel
                     p.price_tax_incl,
                     p.stock_quantity,
                     p.main_image_url,
+                    p.secondary_image_url,
                     pl.id AS plant_id,
                     pl.common_name,
                     pl.latin_name,

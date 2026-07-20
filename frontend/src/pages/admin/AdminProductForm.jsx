@@ -27,6 +27,7 @@ const emptyForm = {
   subcategory_id:          '',
   is_active:               true, 
   main_image_url:          '',
+  secondary_image_url:     '',
   plant: {
     common_name:       '',
     latin_name:        '',
@@ -51,12 +52,15 @@ export default function AdminProductForm() {
 
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile,    setImageFile]    = useState(null);
+  const [secondaryImagePreview, setSecondaryImagePreview] = useState(null);
+  const [secondaryImageFile,    setSecondaryImageFile]    = useState(null);
   const [tree,  setTree]  = useState([]);
   const [taxes, setTaxes] = useState([]);
 
   const { loading: loadingMeta,    request: requestMeta }    = useApi();
   const { loading: loadingProduct, request: requestProduct } = useApi();
   const { loading: uploading,      request: uploadRequest }  = useApi();
+  const { loading: secondaryUploading, request: secondaryUploadRequest } = useApi();
   const { request: saveRequest } = useApi();
 
   // 1. Chargement des métadonnées (Catégories et Taxes)
@@ -118,6 +122,7 @@ export default function AdminProductForm() {
         category_id:             foundCatId,  
         is_active:               parseInt(p.is_active) === 1,
         main_image_url:          p.main_image_url ?? '',
+        secondary_image_url:     p.secondary_image_url ?? '',
         plant: {
           common_name:       p.common_name ?? '',
           latin_name:        p.latin_name ?? '',
@@ -129,6 +134,7 @@ export default function AdminProductForm() {
       });
 
       if (p.main_image_url) setImagePreview(resolveAssetUrl(p.main_image_url));
+      if (p.secondary_image_url) setSecondaryImagePreview(resolveAssetUrl(p.secondary_image_url));
     };
 
     // On attend que l'arbre soit chargé avant de lancer le détective
@@ -144,6 +150,13 @@ export default function AdminProductForm() {
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handleSecondaryImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSecondaryImageFile(file);
+    setSecondaryImagePreview(URL.createObjectURL(file));
+  };
+
   const uploadImage = async () => {
     if (!imageFile) return null;
     const formData = new FormData();
@@ -157,13 +170,30 @@ export default function AdminProductForm() {
     return result.success ? result.data.url : null;
   };
 
+  const uploadSecondaryImage = async () => {
+    if (!secondaryImageFile) return null;
+    const formData = new FormData();
+    formData.append('image', secondaryImageFile);
+
+    const result = await secondaryUploadRequest(
+      adminService.buildUploadUrl(),
+      { method: 'POST', credentials: 'include', body: formData },
+      false
+    );
+    return result.success ? result.data.url : null;
+  };
+
   const onSubmit = async (data) => {
-    const imageUrl = await uploadImage();
+    const [imageUrl, secondaryImageUrl] = await Promise.all([
+      uploadImage(),
+      uploadSecondaryImage(),
+    ]);
 
     const payload = {
       ...data,
       is_active: data.is_active ? 1 : 0,
       main_image_url: imageUrl || data.main_image_url,
+      secondary_image_url: secondaryImageUrl || data.secondary_image_url,
       plant: String(watchDeptId) === '1' ? data.plant : undefined,
     };
 
@@ -205,11 +235,14 @@ export default function AdminProductForm() {
           <GeneralInfoSection />
           <CategoryCascadeSection tree={tree} />
           <PriceAndStockSection taxes={taxes} />
-          <ImageUploadSection 
-            imagePreview={imagePreview} 
-            placeholderImg={placeholderImg} 
-            handleImageChange={handleImageChange} 
-            uploading={uploading} 
+          <ImageUploadSection
+            imagePreview={imagePreview}
+            placeholderImg={placeholderImg}
+            handleImageChange={handleImageChange}
+            uploading={uploading}
+            secondaryImagePreview={secondaryImagePreview}
+            handleSecondaryImageChange={handleSecondaryImageChange}
+            secondaryUploading={secondaryUploading}
           />
 
           {String(watchDeptId) === '1' && <BotanicalDataSection />}
