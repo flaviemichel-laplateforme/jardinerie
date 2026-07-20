@@ -23,9 +23,11 @@ class AdminKpiService
 
             // Calcul du total
             $totalSales = 0.0;
+            $totalOrders = 0;
             foreach ($breakdown as &$row) {
                 $row['total'] = (float) $row['total'];
                 $totalSales += $row['total'];
+                $totalOrders += (int) $row['order_count'];
             }
 
             return [
@@ -34,6 +36,7 @@ class AdminKpiService
                 'data'      => [
                     'range'         => $safeRange,
                     'total_sales'   => round($totalSales, 2),
+                    'total_orders'  => $totalOrders,
                     'breakdown'     => $breakdown
                 ]
             ];
