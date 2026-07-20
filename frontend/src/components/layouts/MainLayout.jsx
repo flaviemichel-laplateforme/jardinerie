@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
+import BackToTop from '../ui/BackToTop';
 
 export default function MainLayout() {
   const location = useLocation();
@@ -43,6 +44,7 @@ export default function MainLayout() {
         
         {/* Zone de contenu principal (Outlet) */}
         <main className="flex-grow p-6 md:p-8 bg-jardinerie-bg/10">
+          <BackToTop />
           <Outlet />
         </main>
       </div>
