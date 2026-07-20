@@ -133,8 +133,7 @@ export default function CustomerRgpd() {
       <DangerZone
         title="Droit à l'oubli — Supprimer mon compte"
         description="Conformément au RGPD (Article 17), vous pouvez demander la suppression de vos données personnelles. Vos informations seront anonymisées immédiatement. Cette action est irréversible."
-        warning="Note : l'historique de vos commandes sera conservé à des fins comptables légales, mais ne contiendra plus aucune donnée vous identifiant."
-        buttonLabel="Supprimer mon compte"
+        warning="Note : vos adresses enregistrées seront supprimées. L'historique de vos commandes sera conservé à des fins comptables légales et continuera d'afficher l'adresse de livraison/facturation telle qu'elle était au moment de l'achat, mais ne sera plus rattaché à votre identité (nom, email)."
         confirmTitle="Confirmer la suppression de votre compte"
         confirmMessage="Êtes-vous sûr(e) de vouloir supprimer votre compte ? Toutes vos données personnelles seront effacées immédiatement. Cette action est irréversible."
         confirmLabel="Oui, supprimer mon compte"

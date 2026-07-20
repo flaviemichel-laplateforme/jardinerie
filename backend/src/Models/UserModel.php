@@ -111,8 +111,11 @@ class UserModel
     public function anonymize(int $id): bool
     {
         $db = Database::getConnection();
+        $db->beginTransaction();
 
-        $sql = "UPDATE users SET
+        try {
+
+            $sql = "UPDATE users SET
                 first_name       = 'Compte',
                 last_name        = 'Supprimé',
                 email            = CONCAT('anonymized_', :id_email, '@deleted.local'),
@@ -120,14 +123,23 @@ class UserModel
                 gdpr_consent_key = NULL
             WHERE id = :id";
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':id_email' => $id,
-            ':id'       => $id,
-        ]);
+            $stmt = $db->prepare($sql);
+            $stmt->execute([
+                ':id_email' => $id,
+                ':id'       => $id,
+            ]);
 
-        return $stmt->rowCount() > 0;
+
+
+            $db->prepare("DELETE FROM addresses WHERE user_id = :id")->execute([':id' => $id]);
+            $db->commit();
+            return $stmt->rowCount() > 0;
+        } catch (\Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
     }
+
 
     /**
      * Marque l'email d'un utilisateur comme vérifié.
