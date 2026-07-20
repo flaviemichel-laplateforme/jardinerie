@@ -18,7 +18,7 @@ class AdminKpiModel
                 // Aujourd'hui : on groupe strictement par l'alias 'label'
                 $sql = "SELECT
                             DATE_FORMAT(order_date, '%H:00') AS label,
-                            COALESCE(SUM(total_amount_tax_incl), 0) AS total,
+                            COALESCE(SUM(total_amount_tax_incl + shipping_cost_tax_incl), 0) AS total,
                             COUNT(*) AS order_count 
                         FROM orders
                         WHERE order_date >= CURDATE()
@@ -31,7 +31,7 @@ class AdminKpiModel
                 // 7 derniers jours : on groupe strictement par l'alias 'label'
                 $sql = "SELECT
                             DATE_FORMAT(order_date, '%Y-%m-%d') AS label,
-                            COALESCE(SUM(total_amount_tax_incl), 0) AS total,
+                            COALESCE(SUM(total_amount_tax_incl + shipping_cost_tax_incl), 0) AS total,
                             COUNT(*) AS order_count 
                         FROM orders
                         WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
@@ -45,7 +45,7 @@ class AdminKpiModel
                 // 30 derniers jours : on groupe strictement par l'alias 'label'
                 $sql = "SELECT
                             DATE_FORMAT(order_date, '%Y-%m-%d') AS label,
-                            COALESCE(SUM(total_amount_tax_incl), 0) AS total,
+                            COALESCE(SUM(total_amount_tax_incl + shipping_cost_tax_incl), 0) AS total,
                             COUNT(*) AS order_count 
                         FROM orders
                         WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
