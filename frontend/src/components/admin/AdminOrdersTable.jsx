@@ -84,7 +84,7 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
                   <td className="px-4 py-3 font-medium text-jardinerie-text">{o.order_reference}</td>
                   <td className="px-4 py-3 text-jardinerie-text">{o.customer_first_name} {o.customer_last_name}</td>
                   <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{formatDate(o.order_date)}</td>
-                  <td className="px-4 py-3 text-right font-bold text-jardinerie-primary">{formatAmount(o.total_amount_tax_incl)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-jardinerie-primary">{formatAmount(parseFloat(o.total_amount_tax_incl) + parseFloat(o.shipping_cost_tax_incl))}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[o.status]}`}>
                       {STATUS_LABELS[o.status] ?? o.status}
@@ -144,7 +144,7 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-gray-500">Montant TTC</dt>
-                    <dd className="font-medium text-jardinerie-text">{formatAmount(order.total_amount_tax_incl)}</dd>
+                    <dd className="font-medium text-jardinerie-text">{formatAmount(parseFloat(order.total_amount_tax_incl) + parseFloat(order.shipping_cost_tax_incl))}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-gray-500">Statut</dt>

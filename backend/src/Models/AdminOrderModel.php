@@ -43,6 +43,7 @@ class AdminOrderModel
                     o.id,
                     o.order_reference,
                     o.total_amount_tax_incl,
+                    o.shipping_cost_tax_incl,
                     o.status,
                     o.order_date,
                     u.first_name AS customer_first_name,
