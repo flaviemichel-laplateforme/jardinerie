@@ -58,7 +58,7 @@ export default function SearchBar() {
   };
 
   return (
-    <div ref={wrapperRef} className="relative flex-grow max-w-xl mx-12">
+    <div ref={wrapperRef} className="relative flex-grow max-w-xl mx-0 md:mx-12">
       <form onSubmit={handleSearch}>
         <div className="flex items-center border border-jardinerie-primary rounded-lg bg-[#EAECE1] overflow-hidden h-12 shadow-sm focus-within:ring-2 focus-within:ring-jardinerie-primary/50 transition-all">
           

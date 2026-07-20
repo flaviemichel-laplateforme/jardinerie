@@ -9,7 +9,7 @@ import BackToTop from '../ui/BackToTop';
 export default function MainLayout() {
   const location = useLocation();
   const { user } = useAuth();
-  
+
   // 1. Détection des espaces privés (Admin et Compte client)
   const isPrivateSpace = location.pathname.startsWith('/admin') || location.pathname.startsWith('/compte');
   
@@ -39,11 +39,12 @@ export default function MainLayout() {
       <Header />
       
       <div className="flex flex-grow">
-        {/* La barre latérale s'affiche sur les espaces privés (Admin et Client) */}
+        {/* La barre latérale s'affiche sur les espaces privés (Admin et Client) :
+            barre fixe en bas (mobile), rail d'icônes (tablette), sidebar complète (desktop) */}
         {isPrivateSpace && <Sidebar userRole={userRole} userName={userName} />}
-        
+
         {/* Zone de contenu principal (Outlet) */}
-        <main className="flex-grow p-6 md:p-8 bg-jardinerie-bg/10">
+        <main className={`flex-grow p-6 md:p-8 bg-jardinerie-bg/10 ${isPrivateSpace ? 'pb-24 md:pb-8' : ''}`}>
           <BackToTop />
           <Outlet />
         </main>
