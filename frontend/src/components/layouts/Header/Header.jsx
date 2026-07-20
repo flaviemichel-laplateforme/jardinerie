@@ -46,7 +46,7 @@ export default function Header() {
   const dashboardLabel = user?.role === 'admin' ? 'Tableau de bord administration' : 'Mon espace client';
 
   return (
-    <header className="w-full shadow-md font-sans">
+    <header className="sticky top-0 z-40 w-full shadow-md font-sans">
       {/* Barre supérieure */}
       <div className="bg-jardinerie-bg flex items-center justify-between px-6 py-4">
 
