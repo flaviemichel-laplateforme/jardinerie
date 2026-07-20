@@ -75,7 +75,7 @@ class AdminOrderModel
     /**
      * Vérifie qu'une commande existe et récupère son statut actuel
      */
-    public function findById(int $id): array
+    public function findById(int $id): ?array
     {
         $db = Database::getConnection();
 
