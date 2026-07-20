@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Sun, CloudSun, Cloud } from 'lucide-react';
 import StockBadge from '../ui/StockBadge';
 // IMPORT 1 : On importe l'outil de résolution d'URL (Vérifiez bien le chemin de l'import selon votre dossier)
 import { resolveAssetUrl } from '../../services/apiClient'; 
@@ -14,12 +15,19 @@ export default function ProductCard({ product }) {
     price_tax_incl,
     main_image_url,
     stock_quantity = 0,
-    sun_exposure = 'sun', 
-    packaging_options = 2 
+    sun_exposure,
+    packaging_options = 2
   } = product;
 
   // 3. MAGIE : On construit la vraie URL de l'image (PHP) ou on garde le placeholder
   const finalImageUrl = main_image_url ? resolveAssetUrl(main_image_url) : placeholderImg;
+
+  const EXPOSURE_ICONS = {
+    'Sun': { Icon: Sun, color: '#F4A261' },
+    'Partial Shade': { Icon: CloudSun, color: '#A98A7D' },
+    'Shade': { Icon: Cloud, color: '#505F40' },
+  };
+  const exposureIcon = EXPOSURE_ICONS[sun_exposure];
 
   return (
     <div className="group flex h-full w-full flex-col overflow-hidden rounded-[20px] bg-jardinerie-bg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
@@ -43,14 +51,11 @@ export default function ProductCard({ product }) {
         />
 
         {/* Icône d'exposition (Haut Droite) */}
-        <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
-          {sun_exposure === 'sun' && (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="5" fill="#F4A261"/>
-              <path d="M12 2V4M12 20V22M4 12H2M22 12H20M4.92893 4.92893L6.34315 6.34315M17.6569 17.6569L19.0711 19.0711M4.92893 19.0711L6.34315 17.6569M17.6569 6.34315L19.0711 4.92893" stroke="#F4A261" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          )}
-        </div>
+        {exposureIcon && (
+          <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+            <exposureIcon.Icon size={18} color={exposureIcon.color} />
+          </div>
+        )}
 
         {/* Badge de Stock Dynamique (Bas Gauche) */}
         <div className="absolute bottom-3 left-3 shadow-sm">
