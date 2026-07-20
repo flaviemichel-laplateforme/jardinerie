@@ -4,6 +4,7 @@ import SearchBar from './SearchBar';
 import logoImage from '../../../assets/img/Logo.png';
 import jardinierIcon from '../../../assets/img/icone-jardinier.svg';
 import panierIcon from '../../../assets/img/icone-panier.svg';
+import loupeIcon from '../../../assets/img/icone-loupe.svg';
 import { useCart } from '../../../contexts/CartContext';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -14,6 +15,7 @@ export default function Header() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const profileMenuRef = useRef(null);
 
@@ -48,21 +50,34 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full shadow-md font-sans">
       {/* Barre supérieure */}
-      <div className="bg-jardinerie-bg flex items-center justify-between px-6 py-4">
+      <div className="bg-jardinerie-bg flex items-center justify-between px-4 md:px-6 py-4">
 
         {/* Logo */}
         <Link to="/" className="flex items-center">
           <img
             src={logoImage}
             alt="La Jardinerie"
-            className="h-24 w-70 rounded-full border border-jardinerie-primary bg-white object-cover shadow-sm scale-110"
+            className="h-16 w-auto md:h-24 md:w-70 rounded-full border border-jardinerie-primary bg-white object-cover shadow-sm scale-110"
           />
         </Link>
 
-        <SearchBar />
+        {/* Recherche desktop : toujours visible à partir de md */}
+        <div className="hidden md:block md:flex-grow">
+          <SearchBar />
+        </div>
+
+        {/* Icône loupe mobile : bascule l'affichage de la recherche repliable */}
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
+          className="md:hidden flex items-center justify-center hover:opacity-80 transition-opacity"
+          aria-label="Rechercher"
+        >
+          <img src={loupeIcon} alt="" className="h-10 w-10 object-contain" aria-hidden="true" />
+        </button>
 
         {/* Icônes utilisateur & panier */}
-        <div className="flex items-center space-x-12 mr-10">
+        <div className="flex items-center space-x-4 md:space-x-12 mr-2 md:mr-10">
 
           {/* Zone profil — connecté ou non */}
           <div className="relative" ref={profileMenuRef}>
@@ -170,14 +185,21 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Ligne de recherche mobile, repliable (affichée uniquement si isSearchOpen) */}
+      {isSearchOpen && (
+        <div className="md:hidden bg-jardinerie-bg px-4 pb-4">
+          <SearchBar />
+        </div>
+      )}
+
       {/* Barre de navigation principale (Inchangée) */}
       <nav className="bg-jardinerie-primary text-jardinerie-light px-6 py-3">
         <ul className="flex items-center space-x-12 text-sm uppercase tracking-wider">
-          <li>
+          <li className="md:hidden">
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
-              className="flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               aria-label="Ouvrir le menu"
             >
               <span className="flex flex-col gap-1.5">
@@ -185,11 +207,12 @@ export default function Header() {
                 <span className="block h-0.5 w-7 rounded-full bg-jardinerie-light" />
                 <span className="block h-0.5 w-7 rounded-full bg-jardinerie-light" />
               </span>
+              <span className="text-sm font-semibold">Menu</span>
             </button>
           </li>
-          <li><NavLink to="/vegetaux"  className={getNavClass}>Nos végétaux</NavLink></li>
-          <li><NavLink to="/jardinage" className={getNavClass}>Nos produits de jardinage</NavLink></li>
-          <li><NavLink to="/produits"  className={getNavClass}>Tous nos produits</NavLink></li>
+          <li className="hidden md:list-item"><NavLink to="/vegetaux"  className={getNavClass}>Nos végétaux</NavLink></li>
+          <li className="hidden md:list-item"><NavLink to="/jardinage" className={getNavClass}>Nos produits de jardinage</NavLink></li>
+          <li className="hidden md:list-item"><NavLink to="/produits"  className={getNavClass}>Tous nos produits</NavLink></li>
         </ul>
       </nav>
 
