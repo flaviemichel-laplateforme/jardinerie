@@ -66,6 +66,11 @@ class ProductController
             $filters['limit'] = max(1, (int) $_GET['limit']);
         }
 
+        // Page demandée (utilisée uniquement si "limit" est aussi présent)
+        if (isset($_GET['page']) && is_numeric($_GET['page'])) {
+            $filters['page'] = max(1, (int) $_GET['page']);
+        }
+
         // 2. Appel à la couche métier (Service)
         $result = $this->productService->getCatalog($filters);
 
@@ -83,13 +88,19 @@ class ProductController
         // 4. Gestion du succès
         $products = $result['data'] ?? [];
 
-        http_response_code(200);
-        echo json_encode([
+        $payload = [
             'success' => true,
             'status' => 200,
             'results' => count($products),
             'data' => $products
-        ], JSON_UNESCAPED_UNICODE);
+        ];
+
+        if (isset($result['pagination'])) {
+            $payload['pagination'] = $result['pagination'];
+        }
+
+        http_response_code(200);
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
         return;
     }
 

@@ -37,6 +37,7 @@ export default function ProductCard({ product }) {
       {/* ========================================= */}
       <div className="relative h-[240px] w-full overflow-hidden bg-white/50">
         <img 
+          loading="lazy"
           // 4. On utilise notre variable calculée qui contient le bon chemin du serveur
           src={finalImageUrl} 
           

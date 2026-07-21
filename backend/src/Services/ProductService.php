@@ -20,12 +20,33 @@ class ProductService
     public function getCatalog(array $filters = []): array
     {
         try {
+            $page = max(1, (int) ($filters['page'] ?? 1));
+
+            if (!empty($filters['limit'])) {
+                $filters['offset'] = ($page - 1) * $filters['limit'];
+            }
+
             $products = $this->productModel->findWithFilters($filters);
 
-            return [
+            $response = [
                 'success' => true,
                 'data' => $products
             ];
+
+            if (!empty($filters['limit'])) {
+                $totalItems = $this->productModel->countWithFilters($filters);
+                $totalPages = $totalItems > 0 ? (int) ceil($totalItems / $filters['limit']) : 1;
+
+                $response['pagination'] = [
+                    'current_page' => $page,
+                    'per_page'     => (int) $filters['limit'],
+                    'total_items'  => $totalItems,
+                    'total_pages'  => $totalPages,
+                    'has_next'     => $page < $totalPages,
+                ];
+            }
+
+            return $response;
         } catch (\Exception $e) {
             // 1. On loggue l'erreur technique "brute" pour le développeur (dans les logs du serveur)
             error_log("Erreur critique dans ProductService : " . $e->getMessage());

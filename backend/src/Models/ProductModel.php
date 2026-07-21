@@ -16,11 +16,11 @@ class ProductModel
         try {
             $db = Database::getConnection();
 
-            $sql = "SELECT 
-                        p.id, 
-                        p.name AS product_name, 
-                        p.price_tax_incl, 
-                        p.stock_quantity, 
+            $sql = "SELECT
+                        p.id,
+                        p.name AS product_name,
+                        p.price_tax_incl,
+                        p.stock_quantity,
                         p.main_image_url,
                         s.name AS subcategory_name,
                         c.id AS category_id,
@@ -124,8 +124,8 @@ class ProductModel
                     $params[$paramName] = (int) $id;
                 }
                 $conditions[] = "EXISTS (
-                    SELECT 1 FROM plant_criterion pc 
-                    WHERE pc.plant_id = pl.id 
+                    SELECT 1 FROM plant_criterion pc
+                    WHERE pc.plant_id = pl.id
                     AND pc.criterion_id IN (" . implode(',', $critPlaceholders) . ")
                 )";
             }
@@ -141,16 +141,150 @@ class ProductModel
             }
 
             if (isset($filters['limit']) && $filters['limit'] > 0) {
-                $sql .= " LIMIT " . (int) $filters['limit'];
+                $sql .= " LIMIT :limit OFFSET :offset";
             }
 
             $stmt = $db->prepare($sql);
-            $stmt->execute($params);
+
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
+
+            if (isset($filters['limit']) && $filters['limit'] > 0) {
+                $stmt->bindValue(':limit', (int) $filters['limit'], PDO::PARAM_INT);
+                $stmt->bindValue(':offset', (int) ($filters['offset'] ?? 0), PDO::PARAM_INT);
+            }
+
+            $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
             error_log("SQL Error in findWithFilters: " . $e->getMessage() . " | SQL: " . $sql);
             throw new \Exception("Erreur lors de la récupération du catalogue.");
+        }
+    }
+
+    /**
+     * Compte le nombre total de produits correspondant aux filtres (sans LIMIT),
+     * pour calculer la pagination côté service. Reprend volontairement la même
+     * construction de filtres que findWithFilters(), sans partage de code entre
+     * les deux — chaque méthode reste autonome et lisible d'un bloc.
+     */
+    public function countWithFilters(array $filters = []): int
+    {
+        try {
+            $db = Database::getConnection();
+
+            $sql = "SELECT COUNT(*)
+                    FROM products p
+                    INNER JOIN subcategories s ON p.subcategory_id = s.id
+                    INNER JOIN categories c ON s.category_id = c.id
+                    INNER JOIN departments d ON c.department_id = d.id";
+
+            if (isset($filters['type']) && $filters['type'] === 'vegetaux') {
+                $sql .= " INNER JOIN plants pl ON p.id = pl.product_id";
+            } else {
+                $sql .= " LEFT JOIN plants pl ON p.id = pl.product_id";
+            }
+
+            $sql .= " LEFT JOIN taxes t ON p.tax_id = t.id
+                      WHERE p.is_active = 1";
+
+            $conditions = [];
+            $params = [];
+
+            if (isset($filters['type']) && $filters['type'] === 'jardinage') {
+                $conditions[] = "pl.product_id IS NULL";
+            }
+
+            if (!empty($filters['search'])) {
+                $columnsToSearch = [
+                    'p.name',
+                    'pl.common_name',
+                    'pl.latin_name',
+                    'p.description',
+                    'pl.genus',
+                    'pl.species'
+                ];
+                $subConditions = [];
+                $searchTerm = '%' . $filters['search'] . '%';
+
+                foreach ($columnsToSearch as $index => $column) {
+                    $paramName = 'search_' . $index;
+                    $subConditions[] = "$column LIKE :$paramName";
+                    $params[$paramName] = $searchTerm;
+                }
+                $conditions[] = "(" . implode(' OR ', $subConditions) . ")";
+            }
+
+            if (!empty($filters['categories'])) {
+                $catIds = explode(',', $filters['categories']);
+                $catPlaceholders = [];
+                foreach ($catIds as $index => $id) {
+                    $paramName = 'cat' . $index;
+                    $catPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = (int) $id;
+                }
+                $conditions[] = "c.id IN (" . implode(',', $catPlaceholders) . ")";
+            }
+
+            if (!empty($filters['expositions'])) {
+                $exposures = explode(',', $filters['expositions']);
+                $expPlaceholders = [];
+                foreach ($exposures as $index => $exp) {
+                    $paramName = 'exp' . $index;
+                    $expPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = $exp;
+                }
+                $conditions[] = "pl.sun_exposure IN (" . implode(',', $expPlaceholders) . ")";
+            }
+
+            if (!empty($filters['water'])) {
+                $waterReqs = explode(',', $filters['water']);
+                $waterPlaceholders = [];
+                foreach ($waterReqs as $index => $water) {
+                    $paramName = 'water' . $index;
+                    $waterPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = $water;
+                }
+                $conditions[] = "pl.water_requirement IN (" . implode(',', $waterPlaceholders) . ")";
+            }
+
+            if (isset($filters['price_min']) && $filters['price_min'] !== '') {
+                $conditions[] = "p.price_tax_incl >= :price_min";
+                $params['price_min'] = $filters['price_min'];
+            }
+            if (isset($filters['price_max']) && $filters['price_max'] !== '') {
+                $conditions[] = "p.price_tax_incl <= :price_max";
+                $params['price_max'] = $filters['price_max'];
+            }
+
+            if (!empty($filters['criteria'])) {
+                $critIds = explode(',', $filters['criteria']);
+                $critPlaceholders = [];
+                foreach ($critIds as $index => $id) {
+                    $paramName = 'crit' . $index;
+                    $critPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = (int) $id;
+                }
+                $conditions[] = "EXISTS (
+                    SELECT 1 FROM plant_criterion pc
+                    WHERE pc.plant_id = pl.id
+                    AND pc.criterion_id IN (" . implode(',', $critPlaceholders) . ")
+                )";
+            }
+
+            if (!empty($conditions)) {
+                $sql .= " AND " . implode(" AND ", $conditions);
+            }
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+
+            return (int) $stmt->fetchColumn();
+        } catch (\Exception $e) {
+            error_log("SQL Error in countWithFilters: " . $e->getMessage());
+            throw new \Exception("Erreur lors du comptage du catalogue.");
         }
     }
 
