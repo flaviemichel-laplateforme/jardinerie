@@ -150,6 +150,30 @@ export default function AdminProductForm() {
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handleCategoryCreated  = (departmentId, newCategory) => {
+    setTree((prevTree) =>
+      prevTree.map((dept) =>
+        String(dept.id) === String(departmentId)
+          ? { ...dept, categories: [...dept.categories, newCategory] }
+          : dept
+      )
+    );
+  };
+
+  const handleSubcategoryCreated = (categoryId, newSubcategory) => {
+    setTree((prevTree) =>
+      prevTree.map((dept) => ({
+        ...dept,
+        categories: dept.categories.map((cat) =>
+          String(cat.id) === String(categoryId)
+            ? { ...cat, subcategories: [...cat.subcategories, newSubcategory] }
+            : cat
+        ),
+      }))
+    );
+  };
+
+
   const handleSecondaryImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -233,7 +257,11 @@ export default function AdminProductForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
           <GeneralInfoSection />
-          <CategoryCascadeSection tree={tree} />
+          <CategoryCascadeSection 
+            tree={tree}
+            onCategoryCreated={handleCategoryCreated}
+            onSubcategoryCreated={handleSubcategoryCreated}
+            />
           <PriceAndStockSection taxes={taxes} />
           <ImageUploadSection
             imagePreview={imagePreview}
