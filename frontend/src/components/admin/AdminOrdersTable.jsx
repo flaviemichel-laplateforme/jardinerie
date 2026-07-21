@@ -42,7 +42,9 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
   useEffect(() => {
     const orderId = searchParams.get('orderId');
     if (orderId) {
-      handleViewDetails(Number(orderId));
+      // Différé (setTimeout) pour éviter d'appeler setState de manière synchrone
+      // dans le corps de l'effet (react-hooks/set-state-in-effect).
+      setTimeout(() => handleViewDetails(Number(orderId)), 0);
       searchParams.delete('orderId');
       setSearchParams(searchParams, { replace: true });
     }
