@@ -11,7 +11,6 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 function PaymentForm() {
   const stripe = useStripe();
   const elements = useElements();
-  const { setClientSecret } = useCheckout();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -59,8 +58,12 @@ function PaymentForm() {
 }
 
 export default function CheckoutPayment() {
-  const { clientSecret, setClientSecret } = useCheckout();
+  const { clientSecret } = useCheckout();
   const navigate = useNavigate();
+
+  const { cartItems, cartTotal } = useCart();
+  const shippingCost = cartTotal >= 50 ? 0 : 7.90;
+  const grandTotal = cartTotal + shippingCost;
 
   // Si on arrive ici sans clientSecret (accès direct à l'URL ou après
   // une confirmation déjà traitée), on renvoie au début du tunnel.
@@ -80,6 +83,36 @@ export default function CheckoutPayment() {
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
       <h2 className="mb-6 text-lg font-bold text-jardinerie-text">Paiement sécurisé</h2>
+
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-jardinerie-text">
+          Récapitulatif de votre commande
+        </h3>
+
+        <ul className="space-y-2 text-sm">
+          {cartItems.map((item) => (
+            <li key={item.id} className="flex justify-between text-gray-600">
+              <span>{item.name} <span className="text-gray-400">× {item.quantity}</span></span>
+              <span>{(item.price * item.quantity).toFixed(2).replace('.', ',')} €</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm">
+          <div className="flex justify-between text-gray-600">
+            <span>Sous-total</span>
+            <span>{cartTotal.toFixed(2).replace('.', ',')} €</span>
+          </div>
+          <div className="flex justify-between text-gray-600">
+            <span>Livraison</span>
+            <span>{shippingCost === 0 ? 'Gratuite' : `${shippingCost.toFixed(2).replace('.', ',')} €`}</span>
+          </div>
+          <div className="flex justify-between pt-2 text-base font-bold text-jardinerie-text">
+            <span>Total à payer</span>
+            <span>{grandTotal.toFixed(2).replace('.', ',')} €</span>
+          </div>
+        </div>
+      </div>
 
       <Elements stripe={stripePromise} options={options}>
         <PaymentForm />
