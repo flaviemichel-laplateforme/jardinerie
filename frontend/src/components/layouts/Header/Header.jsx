@@ -7,6 +7,8 @@ import panierIcon from '../../../assets/img/icone-panier.svg';
 import loupeIcon from '../../../assets/img/icone-loupe.svg';
 import { useCart } from '../../../contexts/CartContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useApi } from '../../../hooks/useApi';
+import { filterService } from '../../../services/filterService';
 
 export default function Header() {
   const { cartCount } = useCart();
@@ -16,9 +18,18 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [openSection, setOpenSection] = useState(null);
 
   const profileMenuRef = useRef(null);
+  const {data: vegetauxFilters, request: requestVegetauxFilters } = useApi();
+  const { data: jardinageFilters, request: requestJardinageFilters } = useApi();
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    if (!vegetauxFilters) requestVegetauxFilters(filterService.buildFiltersUrl('vegetaux'), {}, false);
+    if (!jardinageFilters) requestJardinageFilters(filterService.buildFiltersUrl('jardinage'), {}, false);
+  }, [isMenuOpen, vegetauxFilters, jardinageFilters, requestJardinageFilters, requestVegetauxFilters]
+);
   // Fermeture du menu profil au clic extérieur
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -244,14 +255,67 @@ export default function Header() {
           <nav className="px-5 py-6">
             <ul className="space-y-4 text-jardinerie-text">
               <li>
-                <NavLink to="/vegetaux" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
-                  Nos végétaux
-                </NavLink>
+                <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-jardinerie-bg">
+                  <NavLink to="/vegetaux" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
+                    Nos végétaux
+                  </NavLink>
+                  <button
+                    type="button"
+                    onClick={() => setOpenSection(openSection === 'vegetaux' ? null : 'vegetaux')}
+                    aria-label="Déplier les catégories"
+                    aria-expanded={openSection === 'vegetaux'}
+                    className="p-1 text-jardinerie-primary"
+                  >
+                    {openSection === 'vegetaux' ? '−' : '+'}
+                  </button>
+                </div>
+                {openSection === 'vegetaux' && (
+                  <ul className="pl-6 mt-1 space-y-1">
+                    {(vegetauxFilters?.categories || []).map((cat) => (
+                      <li key={cat.id}>
+                        <Link
+                          to={`/vegetaux?categories=${cat.id}`}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="block rounded-lg px-3 py-1.5 text-sm text-jardinerie-text/70 hover:bg-jardinerie-bg hover:text-jardinerie-primary"
+                        >
+                          {cat.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
+
               <li>
-                <NavLink to="/jardinage" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
-                  Jardinage
-                </NavLink>
+                <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-jardinerie-bg">
+                  <NavLink to="/jardinage" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
+                    Jardinage
+                  </NavLink>
+                  <button
+                    type="button"
+                    onClick={() => setOpenSection(openSection === 'jardinage' ? null : 'jardinage')}
+                    aria-label="Déplier les catégories"
+                    aria-expanded={openSection === 'jardinage'}
+                    className="p-1 text-jardinerie-primary"
+                  >
+                    {openSection === 'jardinage' ? '−' : '+'}
+                  </button>
+                </div>
+                {openSection === 'jardinage' && (
+                  <ul className="pl-6 mt-1 space-y-1">
+                    {(jardinageFilters?.categories || []).map((cat) => (
+                      <li key={cat.id}>
+                        <Link
+                          to={`/jardinage?categories=${cat.id}`}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="block rounded-lg px-3 py-1.5 text-sm text-jardinerie-text/70 hover:bg-jardinerie-bg hover:text-jardinerie-primary"
+                        >
+                          {cat.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             </ul>
           </nav>
