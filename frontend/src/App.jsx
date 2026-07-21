@@ -29,6 +29,7 @@ import Cgv from './pages/public/Cgv';
 import PolitiqueConfidentialite from './pages/public/PolitiqueConfidentialite';
 import AdminClients from './pages/admin/AdminClients';
 import ResetPassword from './pages/public/ResetPassword';
+import ForgotPassword from './pages/public/ForgotPassword';
 import VerifyEmail from './pages/public/VerifyEmail';
 
 
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
       // 🟠 AUTHENTIFICATION (Accès libre)
       { path: 'connexion', element: <Login /> },
       { path: 'inscription', element: <Register /> },
+      { path: 'mot-de-passe-oublie', element: <ForgotPassword /> },
       { path: 'reinitialiser-mot-de-passe', element: <ResetPassword /> },
       { path: 'verifier-email', element: <VerifyEmail /> },
 
@@ -97,6 +99,7 @@ const router = createBrowserRouter([
           { path: 'catalogue/:id/modifier', element: <AdminProductForm /> },
           { path: 'commandes', element: <AdminOrders /> },
           { path: 'clients', element: <AdminClients /> },
+          { path: 'profil', element: <CustomerProfile /> },
         ]
       },
     ],

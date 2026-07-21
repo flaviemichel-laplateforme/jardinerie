@@ -20,6 +20,10 @@ export const authService = {
         return `${AUTH_ENDPOINT}/logout`;
     },
 
+    buildRequestPasswordResetUrl() {
+    return `${AUTH_ENDPOINT}/request-password-reset`;
+    },
+
     buildResetPasswordUrl() {
     return `${AUTH_ENDPOINT}/reset-password`;
     },

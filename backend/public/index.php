@@ -120,6 +120,7 @@ $router->map('POST', '/api/auth/register', 'AuthController#register', 'api_auth_
 $router->map('POST', '/api/auth/login', 'AuthController#login', 'api_auth_login');
 $router->map('GET', '/api/auth/me', 'AuthController#me', 'api_auth_me');
 $router->map('POST', '/api/auth/logout', 'AuthController#logout', 'api_auth_logout');
+$router->map('POST', '/api/auth/request-password-reset', 'AuthController#requestPasswordReset', 'api_auth_request_password_reset');
 $router->map('POST', '/api/auth/reset-password', 'AuthController#resetPassword', 'api_auth_reset_password');
 $router->map('GET', '/api/auth/verify-email', 'AuthController#verifyEmail', 'api_auth_verify_email');
 
