@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useApi } from '../../hooks/useApi';
+import { useInfiniteProducts } from '../../hooks/useInfiniteProducts';
 import Spinner from '../../components/ui/Spinner';
 import ProductCard from '../../components/catalog/ProductCard';
 import FilterSidebar from '../../components/catalog/FilterSidebar';
@@ -9,7 +8,8 @@ import { productService } from '../../services/productService';
 export default function Vegetaux() {
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: products, loading, error, request } = useApi();
+  const { items: products, loading, hasMore, total, error, sentinelRef } =
+    useInfiniteProducts(searchParams, productService.buildVegetauxUrl, 12);
 
   const searchQuery = searchParams.get('search') || '';
   const activeCategories = searchParams.get('categories') ? searchParams.get('categories').split(',') : [];
@@ -19,20 +19,6 @@ export default function Vegetaux() {
     min: searchParams.get('price_min') || '',
     max: searchParams.get('price_max') || ''
   };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    
-    const fetchProducts = async () => {
-      const url = productService.buildVegetauxUrl(searchParams);
-      await request(url, { signal: controller.signal }, false);
-    };
-
-    fetchProducts();
-
-    return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
   const updateFilters = (newFilters) => {
     const params = new URLSearchParams(searchParams); 
@@ -82,9 +68,9 @@ export default function Vegetaux() {
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
           {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos végétaux"}
         </h1>
-        {products && (
+        {products.length > 0 && (
           <span className="text-sm font-medium text-jardinerie-text/60">
-            {products.length} {products.length > 1 ? 'Végétaux' : 'Végétal'}
+            {total} {total > 1 ? 'Végétaux' : 'Végétal'}
           </span>
         )}
       </div>
@@ -103,16 +89,16 @@ export default function Vegetaux() {
 
         <main className="relative min-h-[400px] min-w-0 flex-1">
           
-          {loading && !products ? (
+          {loading && products.length === 0 ? (
             <div className="flex h-full w-full items-center justify-center pt-20">
               <Spinner message="Recherche des végétaux en cours..." />
             </div>
-          ) : error ? (
+          ) : error && products.length === 0 ? (
             <div className="py-20 text-center font-medium text-red-500">{error}</div>
-          ) : !products || products.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center opacity-70">
               <p className="text-lg font-medium text-jardinerie-text">Aucun végétal ne correspond à vos filtres.</p>
-              <button 
+              <button
                 onClick={resetFilters}
                 className="mt-4 text-jardinerie-primary underline"
               >
@@ -121,14 +107,19 @@ export default function Vegetaux() {
             </div>
           ) : (
             <>
-              {loading && (
-                <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>
-              )}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
+
+              {/* Sentinelle : déclenche le chargement de la page suivante quand elle devient visible */}
+              {hasMore && (
+                <div ref={sentinelRef} className="flex flex-col items-center gap-2 py-8">
+                  {loading && <Spinner message="Chargement des produits suivants..." />}
+                  {error && !loading && <p className="text-sm text-red-500">{error}</p>}
+                </div>
+              )}
             </>
           )}
 

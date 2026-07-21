@@ -51,4 +51,13 @@ export const productService = {
   buildAvailabilityUrl(id) {
     return `${PRODUCTS_ENDPOINT}/${id}/availability`;
   },
+
+  /**
+   * Récupère une page du catalogue et renvoie la réponse JSON complète
+   * (avec sa clé "pagination"), contrairement à useApi() qui ne garde que "data".
+   */
+  async fetchPage(url) {
+    const response = await fetch(url);
+    return response.json();
+  },
 };
