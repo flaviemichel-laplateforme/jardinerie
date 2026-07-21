@@ -149,6 +149,40 @@ class AuthService
     }
 
     /**
+     * Demande l'envoi d'un lien de réinitialisation de mot de passe.
+     * Répond toujours avec le même message générique, que l'email existe ou non
+     * dans la base, pour ne jamais révéler quelles adresses sont enregistrées
+     * (protection contre l'énumération d'utilisateurs).
+     */
+    public function requestPasswordReset(string $email): array
+    {
+        $genericResponse = [
+            'success' => true,
+            'code'    => 200,
+            'message' => "Si cette adresse email existe, un lien de réinitialisation vient de lui être envoyé."
+        ];
+
+        $user = $this->userModel->getUserByEmail($email);
+
+        if (!$user) {
+            return $genericResponse;
+        }
+
+        try {
+            $token = $this->tokenModel->create($user['id'], 'password_reset', 60);
+
+            $frontendUrl = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
+            $resetUrl    = "{$frontendUrl}/reinitialiser-mot-de-passe?token={$token}";
+
+            $this->emailService->sendPasswordResetLink($user['email'], $user['first_name'], $resetUrl);
+        } catch (\Exception $e) {
+            error_log("Erreur dans AuthService::requestPasswordReset : " . $e->getMessage());
+        }
+
+        return $genericResponse;
+    }
+
+    /**
      * Vérifie un jeton de réinitialisation et enregistre le nouveau mot de passe.
      */
     public function resetPassword(string $token, string $newPassword): array

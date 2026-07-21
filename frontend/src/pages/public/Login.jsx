@@ -86,8 +86,13 @@ export default function Login() {
               className="mt-2 w-full rounded-lg border border-gray-300 p-3 focus:border-jardinerie-primary focus:outline-none focus:ring-1 focus:ring-jardinerie-primary"
               required
             />
+            <div className="mt-2 text-right">
+              <Link to="/mot-de-passe-oublie" className="text-sm font-medium text-jardinerie-primary hover:underline">
+                Mot de passe oublié ?
+              </Link>
+            </div>
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
