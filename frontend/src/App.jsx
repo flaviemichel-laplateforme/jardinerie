@@ -97,6 +97,7 @@ const router = createBrowserRouter([
           { path: 'catalogue/:id/modifier', element: <AdminProductForm /> },
           { path: 'commandes', element: <AdminOrders /> },
           { path: 'clients', element: <AdminClients /> },
+          { path: 'profil', element: <CustomerProfile /> },
         ]
       },
     ],

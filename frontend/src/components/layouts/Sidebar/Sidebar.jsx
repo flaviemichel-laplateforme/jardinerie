@@ -136,6 +136,16 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
           <path d="M4 20C4 16.134 7.13401 13 11 13H13C16.866 13 20 16.134 20 20" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
         </svg>
       )
+    },
+    {
+      name: 'MON PROFIL',
+      path: '/admin/profil',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4" fill="#FFCDB2" stroke="#2B3A67" strokeWidth="2"/>
+          <path d="M4 20C4 16.134 7.13401 13 11 13H13C16.866 13 20 16.134 20 20" fill="#EDF0E2" stroke="#2B3A67" strokeWidth="2"/>
+        </svg>
+      )
     }
 
   ];
