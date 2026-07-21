@@ -21,14 +21,27 @@ export default function Header() {
   const [openSection, setOpenSection] = useState(null);
 
   const profileMenuRef = useRef(null);
+  const navMenuRef = useRef(null);
+
   const {data: vegetauxFilters, request: requestVegetauxFilters } = useApi();
   const { data: jardinageFilters, request: requestJardinageFilters } = useApi();
 
+  // Fermeture du menu de navigation au clic extérieur
   useEffect(() => {
-    if (!isMenuOpen) return;
+    const handleClickOutside = (e) => {
+      if (navMenuRef.current && !navMenuRef.current.contains(e.target)) {
+        setOpenSection(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    
     if (!vegetauxFilters) requestVegetauxFilters(filterService.buildFiltersUrl('vegetaux'), {}, false);
     if (!jardinageFilters) requestJardinageFilters(filterService.buildFiltersUrl('jardinage'), {}, false);
-  }, [isMenuOpen, vegetauxFilters, jardinageFilters, requestJardinageFilters, requestVegetauxFilters]
+  }, [vegetauxFilters, jardinageFilters, requestJardinageFilters, requestVegetauxFilters]
 );
   // Fermeture du menu profil au clic extérieur
   useEffect(() => {
@@ -205,7 +218,7 @@ export default function Header() {
 
       {/* Barre de navigation principale (Inchangée) */}
       <nav className="bg-jardinerie-primary text-jardinerie-light px-6 py-3">
-        <ul className="flex items-center space-x-12 text-sm uppercase tracking-wider">
+        <ul ref={navMenuRef} className="flex items-center space-x-12 text-sm uppercase tracking-wider">
           <li className="md:hidden">
             <button
               type="button"
@@ -221,8 +234,62 @@ export default function Header() {
               <span className="text-sm font-semibold">Menu</span>
             </button>
           </li>
-          <li className="hidden md:list-item"><NavLink to="/vegetaux"  className={getNavClass}>Nos végétaux</NavLink></li>
-          <li className="hidden md:list-item"><NavLink to="/jardinage" className={getNavClass}>Nos produits de jardinage</NavLink></li>
+          <li className="hidden md:list-item relative">
+            <div className="flex items-center gap-1">
+              <NavLink to="/vegetaux" className={getNavClass}>Nos végétaux</NavLink>
+              <button
+                type="button"
+                onClick={() => setOpenSection(openSection === 'vegetaux' ? null : 'vegetaux')}
+                aria-label="Afficher les catégories"
+                aria-expanded={openSection === 'vegetaux'}
+                className="hover:opacity-80"
+              >
+                <span className="text-[10px]">{openSection === 'vegetaux' ? '▲' : '▼'}</span>
+              </button>
+            </div>
+            {openSection === 'vegetaux' && (
+              <div className="absolute left-0 top-full mt-3 w-56 rounded-xl bg-white shadow-xl ring-1 ring-black/5 z-50 py-2 normal-case tracking-normal">
+                {(vegetauxFilters?.categories || []).map((cat) => (
+                  <Link
+                    key={cat.id}
+                    to={`/vegetaux?categories=${cat.id}`}
+                    onClick={() => setOpenSection(null)}
+                    className="block px-4 py-2 text-sm text-jardinerie-text hover:bg-jardinerie-bg hover:text-jardinerie-primary"
+                  >
+                    {cat.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </li>
+          <li className="hidden md:list-item relative">
+            <div className="flex items-center gap-1">
+              <NavLink to="/jardinage" className={getNavClass}>Nos produits de jardinage</NavLink>
+              <button
+                type="button"
+                onClick={() => setOpenSection(openSection === 'jardinage' ? null : 'jardinage')}
+                aria-label="Afficher les catégories"
+                aria-expanded={openSection === 'jardinage'}
+                className="hover:opacity-80"
+              >
+                <span className="text-[10px]">{openSection === 'jardinage' ? '▲' : '▼'}</span>
+              </button>
+            </div>
+            {openSection === 'jardinage' && (
+              <div className="absolute left-0 top-full mt-3 w-56 rounded-xl bg-white shadow-xl ring-1 ring-black/5 z-50 py-2 normal-case tracking-normal">
+                {(jardinageFilters?.categories || []).map((cat) => (
+                  <Link
+                    key={cat.id}
+                    to={`/jardinage?categories=${cat.id}`}
+                    onClick={() => setOpenSection(null)}
+                    className="block px-4 py-2 text-sm text-jardinerie-text hover:bg-jardinerie-bg hover:text-jardinerie-primary"
+                  >
+                    {cat.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </li>
           <li className="hidden md:list-item"><NavLink to="/produits"  className={getNavClass}>Tous nos produits</NavLink></li>
         </ul>
       </nav>
