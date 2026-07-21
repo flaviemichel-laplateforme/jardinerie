@@ -17,6 +17,7 @@
     "react-dom": "^19.2.6",
     "react-hook-form": "^7.81.0",
     "react-hot-toast": "^2.6.0",
+    "react-intersection-observer": "^10.1.0",
     "react-router-dom": "^7.17.0"
   },
   "devDependencies": {
