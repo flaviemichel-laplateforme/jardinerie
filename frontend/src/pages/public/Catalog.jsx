@@ -136,7 +136,7 @@ export default function Catalog() {
               {loading && (
                 <div className="absolute inset-0 z-10 rounded-2xl bg-white/50 backdrop-blur-[1px] transition-all"></div>
               )}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
