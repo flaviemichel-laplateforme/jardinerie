@@ -4,14 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { buildRequestOptions, BASE_URL } from '../../services/apiClient';
 import Spinner from '../../components/ui/Spinner';
 import { userService } from '../../services/userService';
-
-const statusConfig = {
-  paid:      { label: 'Payée',      color: 'bg-green-100 text-green-700' },
-  pending:   { label: 'En attente', color: 'bg-yellow-100 text-yellow-700' },
-  shipped:   { label: 'Expédiée',   color: 'bg-blue-100 text-blue-700' },
-  delivered: { label: 'Livrée',     color: 'bg-gray-100 text-gray-600' },
-  cancelled: { label: 'Annulée',    color: 'bg-red-100 text-red-600' },
-};
+import { ORDER_STATUS_CONFIG } from '../../constants/orderStatus';
 
 const quickLinks = [
   { label: 'Mes commandes', path: '/compte/commandes', icon: '📦' },
@@ -57,7 +50,7 @@ export default function CustomerDashboard() {
     : null;
 
   const lastOrderStatus = last_order
-    ? (statusConfig[last_order.status] ?? { label: last_order.status, color: 'bg-gray-100 text-gray-600' })
+    ? (ORDER_STATUS_CONFIG[last_order.status] ?? { label: last_order.status, color: 'bg-gray-100 text-gray-600' })
     : null;
 
   return (

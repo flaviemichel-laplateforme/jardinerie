@@ -4,14 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { orderService } from '../../services/orderService';
 import { buildRequestOptions } from '../../services/apiClient';
 import Spinner from '../../components/ui/Spinner';
-
-const statusConfig = {
-  paid:      { label: 'Payée',     color: 'bg-green-100 text-green-700' },
-  pending:   { label: 'En attente', color: 'bg-yellow-100 text-yellow-700' },
-  shipped:   { label: 'Expédiée',  color: 'bg-blue-100 text-blue-700' },
-  delivered: { label: 'Livrée',    color: 'bg-gray-100 text-gray-600' },
-  cancelled: { label: 'Annulée',   color: 'bg-red-100 text-red-600' },
-};
+import { ORDER_STATUS_CONFIG } from '../../constants/orderStatus';
 
 export default function CustomerOrders() {
   const { data, loading, error, request } = useApi();
@@ -56,7 +49,7 @@ export default function CustomerOrders() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => {
-            const status = statusConfig[order.status] ?? { label: order.status, color: 'bg-gray-100 text-gray-600' };
+            const status = ORDER_STATUS_CONFIG[order.status] ?? { label: order.status, color: 'bg-gray-100 text-gray-600' };
             const date = new Date(order.order_date).toLocaleDateString('fr-FR', {
               day: '2-digit', month: 'long', year: 'numeric'
             });
