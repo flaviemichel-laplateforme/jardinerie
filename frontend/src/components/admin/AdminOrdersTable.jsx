@@ -4,24 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
 import { buildRequestOptions } from '../../services/apiClient';
 import Spinner from '../ui/Spinner';
-
-const STATUS_OPTIONS = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
-
-const STATUS_LABELS = {
-  pending: 'En attente',
-  paid: 'Payée',
-  shipped: 'Expédiée',
-  delivered: 'Livrée',
-  cancelled: 'Annulée',
-};
-
-const STATUS_COLORS = {
-  pending: 'bg-amber-100 text-amber-700',
-  paid: 'bg-blue-100 text-blue-700',
-  shipped: 'bg-purple-100 text-purple-700',
-  delivered: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-};
+import { ORDER_STATUSES, ORDER_STATUS_CONFIG } from '../../constants/orderStatus';
 
 const formatDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -88,8 +71,8 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
                   <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{formatDate(o.order_date)}</td>
                   <td className="px-4 py-3 text-right font-bold text-jardinerie-primary">{formatAmount(parseFloat(o.total_amount_tax_incl) + parseFloat(o.shipping_cost_tax_incl))}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[o.status]}`}>
-                      {STATUS_LABELS[o.status] ?? o.status}
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${ORDER_STATUS_CONFIG[o.status]?.color}`}>
+                      {ORDER_STATUS_CONFIG[o.status]?.label ?? o.status}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -107,8 +90,8 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
                         onChange={(e) => onStatusChange(o.id, e.target.value)}
                         className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-medium text-jardinerie-text disabled:opacity-50"
                       >
-                        {STATUS_OPTIONS.map(status => (
-                          <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                        {ORDER_STATUSES.map(status => (
+                          <option key={status} value={status}>{ORDER_STATUS_CONFIG[status]?.label}</option>
                         ))}
                       </select>
                     </div>
@@ -150,8 +133,8 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-gray-500">Statut</dt>
-                    <dd className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[order.status]}`}>
-                      {STATUS_LABELS[order.status] ?? order.status}
+                    <dd className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${ORDER_STATUS_CONFIG[order.status]?.color}`}>
+                      {ORDER_STATUS_CONFIG[order.status]?.label ?? order.status}
                     </dd>
                   </div>
                 </dl>

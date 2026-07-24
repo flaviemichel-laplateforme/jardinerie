@@ -6,21 +6,12 @@ import { buildRequestOptions } from '../../services/apiClient';
 import Spinner from '../ui/Spinner';
 import DangerZone from '../ui/DangerZone';
 import toast from 'react-hot-toast';
+import { ORDER_STATUS_CONFIG } from '../../constants/orderStatus';
 
 const ROLE_LABELS = { customer: 'Client', admin: 'Administrateur' };
 const ROLE_COLORS = {
   customer: 'bg-blue-100 text-blue-700',
   admin: 'bg-purple-100 text-purple-700',
-};
-
-const STATUS_LABELS = {
-  pending: 'En attente', paid: 'Payée', shipped: 'Expédiée',
-  delivered: 'Livrée', cancelled: 'Annulée',
-};
-const STATUS_COLORS = {
-  pending: 'bg-amber-100 text-amber-700', paid: 'bg-blue-100 text-blue-700',
-  shipped: 'bg-purple-100 text-purple-700', delivered: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
 };
 
 const formatDate = (dateStr) =>
@@ -193,8 +184,8 @@ export default function AdminClientsTable({ clients }) {
                           className="w-full flex justify-between items-center py-2 text-sm hover:bg-gray-50 rounded transition-colors"
                         >
                           <span className="text-jardinerie-text underline decoration-dotted">{o.order_reference}</span>
-                          <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS_COLORS[o.status]}`}>
-                            {STATUS_LABELS[o.status] ?? o.status}
+                          <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${ORDER_STATUS_CONFIG[o.status]?.color}`}>
+                            {ORDER_STATUS_CONFIG[o.status]?.label ?? o.status}
                           </span>
                         </button>
                       </li>
