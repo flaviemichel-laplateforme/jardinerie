@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
-import { buildRequestOptions, BASE_URL } from '../../services/apiClient';
+import { buildRequestOptions } from '../../services/apiClient';
 import Spinner from '../../components/ui/Spinner';
 import { userService } from '../../services/userService';
 import { ORDER_STATUS_CONFIG } from '../../constants/orderStatus';

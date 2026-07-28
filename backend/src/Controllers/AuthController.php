@@ -25,12 +25,6 @@ class AuthController
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(["success" => false, "message" => "Méthode non autorisée, POST requis."]);
-            return;
-        }
-
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
@@ -71,12 +65,6 @@ class AuthController
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(200);
             exit;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(["success" => false, "message" => "Méthode non autorisée, POST requis."]);
-            return;
         }
 
         $rawInput = file_get_contents("php://input");
@@ -133,12 +121,6 @@ class AuthController
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(200);
             exit;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-            http_response_code(405);
-            echo json_encode(['success' => false, "message" => "Méthode non autorisée, GET requis."]);
-            return;
         }
 
         $payload = AuthMiddleware::authenticate();
