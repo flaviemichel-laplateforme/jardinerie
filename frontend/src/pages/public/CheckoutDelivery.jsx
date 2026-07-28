@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCheckout } from '../../contexts/CheckoutContext';
 import { useCart } from '../../contexts/CartContext';
 import { checkoutService } from '../../services/checkoutService';
+import CheckoutStepper from '../../components/checkout/CheckoutStepper';
 
 export default function CheckoutDelivery() {
   const { data: addressData, request, setData } = useApi();
@@ -82,6 +83,8 @@ export default function CheckoutDelivery() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <CheckoutStepper currentStep={2} />
+
       <h2 className="mb-4 text-lg font-bold text-jardinerie-text">Adresse de livraison</h2>
       <AddressPicker
         addresses={addresses}

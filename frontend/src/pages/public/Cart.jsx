@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Trash2, CreditCard, ShieldCheck, Smartphone } from 'lucide-react';
 import { resolveAssetUrl } from '../../services/apiClient';
 import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
+import CheckoutStepper from '../../components/checkout/CheckoutStepper';
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -56,25 +57,7 @@ export default function Cart() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
       
-      <div className="max-w-3xl mx-auto mb-12">
-        <div className="relative flex items-center justify-between">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 -z-10"></div>
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0 h-1 bg-jardinerie-primary -z-10 transition-all"></div>
-          
-          <div className="flex flex-col items-center bg-white px-2">
-            <div className="h-10 w-10 rounded-full bg-jardinerie-primary text-white flex items-center justify-center font-bold border-4 border-white shadow-sm">1</div>
-            <span className="text-xs font-bold text-jardinerie-primary mt-2">Panier</span>
-          </div>
-          <div className="flex flex-col items-center bg-white px-2">
-            <div className="h-10 w-10 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-bold border-4 border-white">2</div>
-            <span className="text-xs font-medium text-gray-400 mt-2">Livraison</span>
-          </div>
-          <div className="flex flex-col items-center bg-white px-2">
-            <div className="h-10 w-10 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-bold border-4 border-white">3</div>
-            <span className="text-xs font-medium text-gray-400 mt-2">Paiement</span>
-          </div>
-        </div>
-      </div>
+      <CheckoutStepper currentStep={1} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         

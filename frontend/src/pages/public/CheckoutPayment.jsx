@@ -5,6 +5,7 @@ import { useCheckout } from '../../contexts/CheckoutContext';
 import { useCart } from '../../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import CheckoutStepper from '../../components/checkout/CheckoutStepper';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -82,6 +83,8 @@ export default function CheckoutPayment() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
+      <CheckoutStepper currentStep={3} />
+
       <h2 className="mb-6 text-lg font-bold text-jardinerie-text">Paiement sécurisé</h2>
 
       <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useCheckout} from '../../contexts/CheckoutContext';
+import CheckoutStepper from '../../components/checkout/CheckoutStepper';
 
 export default function CheckoutConfirmation() {
   const [searchParams] = useSearchParams();
@@ -44,6 +45,8 @@ export default function CheckoutConfirmation() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+      <CheckoutStepper currentStep={4} />
+
       <div className="rounded-xl bg-jardinerie-bg border border-jardinerie-primary/20 p-10">
 
         {/* Icône de succès */}
