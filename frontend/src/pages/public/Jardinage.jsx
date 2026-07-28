@@ -55,7 +55,7 @@ export default function Jardinage() {
 
       <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
-          {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos produits de jardinage"}
+          {searchQuery ? `Résultats pour "${searchQuery}"` : "Jardinage"}
         </h1>
         {products.length > 0 && (
           <span className="text-sm font-medium text-jardinerie-text/60">

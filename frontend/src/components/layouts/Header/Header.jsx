@@ -267,7 +267,7 @@ export default function Header() {
           </li>
           <li className="hidden md:list-item relative">
             <div className="flex items-center gap-1">
-              <NavLink to="/jardinage" className={getNavClass}>Nos produits de jardinage</NavLink>
+              <NavLink to="/jardinage" className={getNavClass}>Jardinage</NavLink>
               <button
                 type="button"
                 onClick={() => setOpenSection(openSection === 'jardinage' ? null : 'jardinage')}
