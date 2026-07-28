@@ -234,6 +234,9 @@ export default function Header() {
               <span className="text-sm font-semibold">Menu</span>
             </button>
           </li>
+          <li className="hidden md:list-item">
+            <NavLink to="/" end className={getNavClass}>Accueil</NavLink>
+          </li>
           <li className="hidden md:list-item relative">
             <div className="flex items-center gap-1">
               <NavLink to="/vegetaux" className={getNavClass}>Nos végétaux</NavLink>
@@ -322,7 +325,12 @@ export default function Header() {
           <nav className="px-5 py-6">
             <ul className="space-y-4 text-jardinerie-text">
               <li>
-                <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-jardinerie-bg">
+                <NavLink to="/" end onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
+                  Accueil
+                </NavLink>
+              </li>
+              <li>
+                <div className="flex items-center justify-between">
                   <NavLink to="/vegetaux" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
                     Nos végétaux
                   </NavLink>
@@ -354,7 +362,7 @@ export default function Header() {
               </li>
 
               <li>
-                <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-jardinerie-bg">
+                <div className="flex items-center justify-between">
                   <NavLink to="/jardinage" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
                     Jardinage
                   </NavLink>
@@ -383,6 +391,12 @@ export default function Header() {
                     ))}
                   </ul>
                 )}
+              </li>
+
+              <li>
+                <NavLink to="/produits" onClick={() => setIsMenuOpen(false)} className={getMobileNavClass}>
+                  Tous nos produits
+                </NavLink>
               </li>
             </ul>
           </nav>
