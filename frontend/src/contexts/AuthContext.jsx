@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import Spinner from '../components/ui/Spinner';
+import { authService } from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -8,13 +9,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true); // Bloque l'affichage le temps de vérifier la session
 
   const isAuthenticated = !!user;
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
   // 1. SILENT LOGIN : Vérification au démarrage
   useEffect(() => {
     const verifySession = async () => {
       try {
-        const response = await fetch(`${baseUrl}/api/auth/me`, {
+        const response = await fetch(authService.buildMeUrl(), {
           method: 'GET',
           credentials: 'include', // INDISPENSABLE : Envoie le cookie HttpOnly au serveur PHP
           headers: {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
     };
 
     verifySession();
-  }, [baseUrl]);
+  }, []);
 
   // 2. Fonction de connexion (Appelée par votre formulaire de login)
   // Plus besoin de gérer le token ici, le navigateur s'en occupe tout seul !
@@ -52,9 +52,9 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     // Optionnel mais recommandé : appeler une route PHP /api/auth/logout pour détruire le cookie côté serveur
     try {
-      await fetch(`${baseUrl}/api/auth/logout`, { 
-        method: 'POST', 
-        credentials: 'include' 
+      await fetch(authService.buildLogoutUrl(), {
+        method: 'POST',
+        credentials: 'include'
       });
     } catch (error) {
       console.error("Erreur lors de la déconnexion", error);

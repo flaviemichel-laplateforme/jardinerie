@@ -14,9 +14,6 @@ const ROLE_COLORS = {
   admin: 'bg-purple-100 text-purple-700',
 };
 
-const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-
 export default function AdminClientsTable({ clients }) {
   const navigate = useNavigate();
   const [viewingClientId, setViewingClientId] = useState(null);
