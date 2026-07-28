@@ -16,15 +16,6 @@ class AdminOrderController
      */
     public function index(): void
     {
-        // 1. En-têtes HTTP de base pour le format JSON
-        header("Content-Type: application/json; charset=UTF-8");
-
-        // Gestion sécurisée des requêtes de pré-vérification CORS (OPTIONS)
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         // 2. Barrière de sécurité : L'utilisateur connecté possède-t-il le rôle 'admin' ?
         AdminMiddleware::authenticate();
 
@@ -46,13 +37,6 @@ class AdminOrderController
      */
     public function updateStatus(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         // Lecture du corps de la requête PATCH (ex: {"status": "shipped"})
@@ -70,13 +54,6 @@ class AdminOrderController
      */
     public function show(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $result = $this->service->getOrderDetails($id);

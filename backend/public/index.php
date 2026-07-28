@@ -31,6 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// Toutes les réponses de l'API sont en JSON — posé une seule fois ici
+// plutôt que répété dans chaque contrôleur.
+header("Content-Type: application/json; charset=UTF-8");
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 
