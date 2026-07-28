@@ -16,10 +16,9 @@ export default function ProductDetail() {
 
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [showFullBotanical, setShowFullBotanical] = useState(false);
   const [realTimeStock, setRealTimeStock] = useState(null);
 
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
 
   // Requête principale : récupère la fiche produit
   useEffect(() => {
@@ -58,7 +57,6 @@ export default function ProductDetail() {
     setCurrentId(id);
     setSelectedThumbnail(null);
     setQuantity(1);
-    setShowFullBotanical(false);
     setRealTimeStock(null);
   }
 
@@ -114,6 +112,7 @@ export default function ProductDetail() {
 
   const activeImage = selectedThumbnail || (product.main_image_url ? getImageUrl(product.main_image_url) : FALLBACK_IMAGE);
   const productRef = `REF-JARD-${String(product.id).padStart(5, '0')}`;
+  const cartQuantity = cartItems.find((item) => item.id === product.id)?.quantity ?? 0;
 
   return (
     <article className="mx-auto max-w-7xl px-6 py-8">
@@ -121,7 +120,7 @@ export default function ProductDetail() {
       <nav className="mb-8 p-3 border border-gray-200 rounded text-sm text-gray-600 bg-white">
         <Link to="/" className="hover:text-jardinerie-primary hover:underline">Accueil</Link>
         <span className="mx-2 text-gray-400">&gt;</span>
-        <Link to="/vegetaux" className="hover:text-jardinerie-primary hover:underline">{product.category_name}</Link>
+        <Link to={product.plant_id ? '/vegetaux' : '/jardinage'} className="hover:text-jardinerie-primary hover:underline">{product.category_name}</Link>
         {product.subcategory_name && (
           <>
             <span className="mx-2 text-gray-400">&gt;</span>
@@ -176,13 +175,51 @@ export default function ProductDetail() {
             </p>
           </div>
 
+          {(product.plant_id || product.description) && (
+            <div className="border border-gray-200 rounded-lg p-6 mb-6 bg-white">
+              {product.plant_id && (product.sun_exposure || product.water_requirement) && (
+                <div className="flex gap-8 mb-4 text-gray-700">
+                  {product.sun_exposure && (
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Exposition ☀️</span>
+                      <span className="font-medium text-lg">{translateLabel(product.sun_exposure)}</span>
+                    </div>
+                  )}
+                  {product.water_requirement && (
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Arrosage💧</span>
+                      <span className="font-medium text-lg">{translateLabel(product.water_requirement)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {product.description && (
+                <p className="text-gray-600 leading-relaxed">{product.description}</p>
+              )}
+
+              {product.plant_id && product.latin_name && (
+                <p className="mt-2 text-sm text-gray-500">
+                  <i className="font-serif">{product.latin_name}</i>
+                  {product.genus && ` (${product.genus} ${product.species || ''})`}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm flex flex-col items-center justify-center min-h-[250px]">
              <div className="text-3xl font-extrabold text-gray-600 mb-8">
               {Number(product.price_tax_incl).toFixed(2)} €
             </div>
 
+            {cartQuantity > 0 && (
+              <p className="text-sm text-jardinerie-primary font-medium mb-3">
+                Déjà {cartQuantity} dans votre panier
+              </p>
+            )}
+
             <div className="flex flex-wrap items-center justify-center gap-4 w-full">
-              
+
               <div className="flex items-center border border-gray-300 rounded-md bg-white">
                 <button 
                   onClick={() => handleQtyChange(-1)} 
@@ -215,44 +252,6 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
-
-      <section className="border border-gray-200 rounded-lg p-8 mb-12 bg-white text-center">
-        <h2 className="text-xl font-bold text-jardinerie-text mb-6">Caractéristiques de la plante</h2>
-        
-        <div className="flex justify-center gap-12 mb-6 text-gray-700">
-          {product.sun_exposure && (
-            <div className="flex flex-col items-center">
-              <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Exposition ☀️</span>
-              <span className="font-medium text-lg"> {translateLabel(product.sun_exposure)}</span>
-            </div>
-          )}
-          {product.water_requirement && (
-            <div className="flex flex-col items-center">
-              <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Arrosage💧</span>
-              <span className="font-medium text-lg"> {translateLabel(product.water_requirement)}</span>
-            </div>
-          )}
-        </div>
-
-        {showFullBotanical && (
-          <div className="max-w-3xl mx-auto text-left text-gray-600 mb-6 border-t border-gray-100 pt-6">
-            <p className="mb-4 text-lg leading-relaxed"><strong>Description :</strong> {product.description}</p>
-            {product.latin_name && (
-              <p className="text-lg">
-                <strong>Nom Latin :</strong> <i className="font-serif">{product.latin_name}</i>
-                {product.genus && ` (${product.genus} ${product.species || ''})`}
-              </p>
-            )}
-          </div>
-        )}
-
-        <button 
-          onClick={() => setShowFullBotanical(!showFullBotanical)}
-          className="border border-gray-300 rounded-full px-8 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
-        >
-          {showFullBotanical ? 'Réduire' : 'Voir + d\'infos'}
-        </button>
-      </section>
 
     </article>
   );

@@ -1,23 +1,34 @@
 import { Link } from 'react-router-dom';
-import { Sun, CloudSun, Cloud } from 'lucide-react';
+import { Sun, CloudSun, Cloud, ShoppingCart } from 'lucide-react';
+import toast from 'react-hot-toast';
 import StockBadge from '../ui/StockBadge';
 // IMPORT 1 : On importe l'outil de résolution d'URL (Vérifiez bien le chemin de l'import selon votre dossier)
-import { resolveAssetUrl } from '../../services/apiClient'; 
+import { resolveAssetUrl } from '../../services/apiClient';
 // IMPORT 2 : L'image par défaut
 import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
+import { useCart } from '../../contexts/CartContext';
 
 export default function ProductCard({ product }) {
+  const { addToCart, cartItems } = useCart();
+
   // Déstructuration sécurisée avec des valeurs par défaut
   const {
     id,
     product_name,
-    subcategory_name, 
+    subcategory_name,
     price_tax_incl,
     main_image_url,
     stock_quantity = 0,
     sun_exposure,
-    packaging_options = 2
   } = product;
+
+  // Quantité de CE produit déjà présente dans le panier (0 si absent)
+  const cartQuantity = cartItems.find((item) => item.id === id)?.quantity ?? 0;
+
+  const handleAddToCart = () => {
+    addToCart(product, 1);
+    toast.success(`${product_name} ajouté au panier !`);
+  };
 
   // 3. MAGIE : On construit la vraie URL de l'image (PHP) ou on garde le placeholder
   const finalImageUrl = main_image_url ? resolveAssetUrl(main_image_url) : placeholderImg;
@@ -77,29 +88,42 @@ export default function ProductCard({ product }) {
           <p className="mt-1 text-sm font-medium text-jardinerie-text/70">
             {subcategory_name}
           </p>
-          <p className="mt-2 text-xs text-jardinerie-text/50">
-            {packaging_options} conditionnement{packaging_options > 1 ? 's' : ''} possible{packaging_options > 1 ? 's' : ''}
-          </p>
         </div>
 
         {/* Prix et Bouton */}
         <div className="mt-6 flex flex-col gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-jardinerie-text/60">
-              À partir de
-            </p>
             <p className="text-2xl font-black text-jardinerie-text">
               {parseFloat(price_tax_incl).toFixed(2).replace('.', ',')}€
             </p>
           </div>
 
-          {/* Bouton d'action (Lien vers la page détail) */}
-          <Link 
-            to={`/produit/${id}`}
-            className="self-start rounded-full border border-jardinerie-primary bg-transparent px-8 py-2 text-xs font-bold text-jardinerie-text transition-all hover:border-white hover:bg-jardinerie-primary hover:text-jardinerie-light"
-          >
-            Voir le détail
-          </Link>
+          {/* Boutons d'action */}
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/produit/${id}`}
+              className="rounded-full border border-jardinerie-primary bg-transparent px-6 py-2 text-xs font-bold text-jardinerie-text transition-all hover:border-white hover:bg-jardinerie-primary hover:text-jardinerie-light"
+            >
+              Voir le détail
+            </Link>
+
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={stock_quantity <= 0}
+                title="Ajouter au panier"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-jardinerie-primary text-white transition-all hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              >
+                <ShoppingCart size={16} />
+              </button>
+              {cartQuantity > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  {cartQuantity}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         
       </div>
