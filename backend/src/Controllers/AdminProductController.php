@@ -16,12 +16,6 @@ class AdminProductController
      */
     public function index(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $products = $this->model->findAll();
@@ -38,12 +32,6 @@ class AdminProductController
      */
     public function show(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $product = $this->model->findById($id);
@@ -66,12 +54,6 @@ class AdminProductController
      */
     public function store(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $data   = json_decode(file_get_contents("php://input"), true);
@@ -102,12 +84,6 @@ class AdminProductController
      */
     public function update(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         // Vérifier que le produit existe
@@ -140,12 +116,6 @@ class AdminProductController
      */
     public function destroy(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $deleted = $this->model->softDelete($id);

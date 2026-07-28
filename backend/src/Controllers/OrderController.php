@@ -16,13 +16,6 @@ class OrderController
      */
     public function index(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
         $orders  = $this->orderModel->findByUserId($payload['id']);
 
@@ -38,13 +31,6 @@ class OrderController
      */
     public function show(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
         $order   = $this->orderModel->findByIdAndUserId($id, $payload['id']);
 

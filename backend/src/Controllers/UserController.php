@@ -17,13 +17,6 @@ class UserController
      */
     public function show(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
         $user = $this->userModel->findById($payload['id']);
 
@@ -52,13 +45,6 @@ class UserController
      */
     public function update(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
@@ -110,13 +96,6 @@ class UserController
      */
     public function updatePassword(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
@@ -174,13 +153,6 @@ class UserController
      */
     public function dashboard(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
         $user = $this->userModel->findById($payload['id']);
 
@@ -217,13 +189,6 @@ class UserController
      */
     public function delete(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload  = AuthMiddleware::authenticate();
         $rawInput = file_get_contents("php://input");
         $data     = json_decode($rawInput, true);

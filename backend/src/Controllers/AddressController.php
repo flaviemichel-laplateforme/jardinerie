@@ -17,13 +17,6 @@ class AddressController
      */
     public function index(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
 
         $addresses = $this->addressModel->findByUserId($payload['id']);
@@ -43,13 +36,6 @@ class AddressController
      */
     public function store(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
 
         $rawInput = file_get_contents("php://input");
@@ -84,13 +70,6 @@ class AddressController
      */
     public function update(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
 
         $rawInput = file_get_contents("php://input");
@@ -130,13 +109,6 @@ class AddressController
      */
     public function destroy(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
 
         try {

@@ -16,13 +16,6 @@ class AdminStockController
      */
     public function getAlerts(): void
     {
-        // 1. Gestion des entêtes HTTP et des CORS
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         // 2. Sécurité : Vérification du jeton Administrateur
         AdminMiddleware::authenticate();
 

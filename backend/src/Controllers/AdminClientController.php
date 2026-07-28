@@ -16,13 +16,6 @@ class AdminClientController
      */
     public function index(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $search = $_GET['search'] ?? null;
@@ -41,13 +34,6 @@ class AdminClientController
      */
     public function show(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $result = $this->service->getClientDetails($id);
@@ -61,13 +47,6 @@ class AdminClientController
      */
     public function updateRole(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AdminMiddleware::authenticate();
 
         $data = json_decode(file_get_contents("php://input"), true);
@@ -84,13 +63,6 @@ class AdminClientController
      */
     public function anonymize(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $result = $this->service->anonymizeClient($id);
@@ -104,13 +76,6 @@ class AdminClientController
      */
     public function sendPasswordReset(int $id): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $result = $this->service->sendPasswordResetLink($id);

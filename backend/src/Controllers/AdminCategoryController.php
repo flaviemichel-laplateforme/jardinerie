@@ -13,12 +13,6 @@ class AdminCategoryController
 
     public function tree(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $result = $this->service->getTree();
@@ -28,12 +22,6 @@ class AdminCategoryController
 
     public function taxes(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $result = $this->service->getTaxes();
@@ -43,12 +31,6 @@ class AdminCategoryController
 
     public function createCategory(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $data = json_decode(file_get_contents("php://input"), true);
@@ -73,12 +55,6 @@ class AdminCategoryController
 
     public function createSubcategory(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         AdminMiddleware::authenticate();
 
         $data = json_decode(file_get_contents("php://input"), true);

@@ -18,13 +18,6 @@ class AuthController
      */
     public function register(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
@@ -60,13 +53,6 @@ class AuthController
      */
     public function login(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput, true);
 
@@ -116,13 +102,6 @@ class AuthController
 
     public function me(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $payload = AuthMiddleware::authenticate();
 
         // 3. Récupération des données utilisateur fraîches via le service
@@ -149,13 +128,6 @@ class AuthController
      */
     public function logout(): void
     {
-        header('Content-Type: application/json; Charset-UTF-8');
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         setcookie('jardinerie_session', '', [
             'expires' => time() - 3600,
             'path' => '/',
@@ -177,13 +149,6 @@ class AuthController
      */
     public function requestPasswordReset(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $data = json_decode(file_get_contents("php://input"), true);
 
         if (empty($data['email'])) {
@@ -206,13 +171,6 @@ class AuthController
      */
     public function resetPassword(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $data = json_decode(file_get_contents("php://input"), true);
 
         if (empty($data['token']) || empty($data['new_password'])) {
@@ -235,13 +193,6 @@ class AuthController
      */
     public function verifyEmail(): void
     {
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         $token = $_GET['token'] ?? null;
 
         if (empty($token)) {

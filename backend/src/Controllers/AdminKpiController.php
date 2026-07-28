@@ -16,14 +16,6 @@ class AdminKpiController
      */
     public function sales(): void
     {
-        // Gestion de CORS et des headers (Protocole http)
-        header("Content-Type: application/json; charset=UTF-8");
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit;
-        }
-
         // Sécurisation (Le visiteur est-il bien Admin ?)
         AdminMiddleware::authenticate();
 
