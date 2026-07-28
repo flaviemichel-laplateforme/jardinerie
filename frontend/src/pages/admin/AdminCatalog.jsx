@@ -14,7 +14,7 @@ export default function AdminCatalog() {
   const { data, loading, request, setData } = useApi();
   const { loading: deleteLoading, request: deleteRequest } = useApi();
 
-  const products = data?.products ?? [];
+  const products = useMemo(() => data?.products ?? [], [data]);
   const [searchParams] = useSearchParams();
   const [search,              setSearch]              = useState('');
   const [filterActive,        setFilterActive]        = useState(
@@ -71,7 +71,7 @@ export default function AdminCatalog() {
     
     // Si une catégorie est choisie, on ne liste que SES sous-catégories
     let relevantProducts = products;
-    if (selectedCategory !== 'all') {
+    if (selectedCategory !== 'tous') {
       relevantProducts = products.filter(p => p.category_name === selectedCategory);
     }
     
