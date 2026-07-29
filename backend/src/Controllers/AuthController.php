@@ -81,7 +81,6 @@ class AuthController
         $cookieOptions = [
             'expires' => time() + 86400, // Expire dans 24h
             'path' => '/',
-            'domain' => 'localhost',
             'secure' => false, // Passer à true en HTTPS
             'httponly' => true,
             'samesite' => 'Lax'
@@ -131,7 +130,6 @@ class AuthController
         setcookie('jardinerie_session', '', [
             'expires' => time() - 3600,
             'path' => '/',
-            'domain' => 'localhost',
             'secure' => false,
             'httponly' => true,
             'samesite' => 'LAX'
