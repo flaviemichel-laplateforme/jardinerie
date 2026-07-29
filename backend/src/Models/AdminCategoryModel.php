@@ -8,7 +8,7 @@ use PDO;
 class AdminCategoryModel
 {
     /**
-     * Retourne la hiérarchie complète département → catégorie → sous-catégorie.
+     * Retourne la hiérarchie complète rayon → catégorie → sous-catégorie.
      */
     public function getTree(): array
     {

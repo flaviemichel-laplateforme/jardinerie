@@ -63,12 +63,12 @@ export default function CategoryCascadeSection({ tree, onCategoryCreated, onSubc
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Département <span className="text-red-500">*</span>
+            Rayon <span className="text-red-500">*</span>
           </label>
           <select
             className="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-jardinerie-primary focus:outline-none"
             {...register('department_id', { 
-              required: "Le département est requis",
+              required: "Le rayon est requis",
               onChange: () => {
                 setValue('category_id', '');
                 setValue('subcategory_id', '');
