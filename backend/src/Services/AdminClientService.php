@@ -154,7 +154,7 @@ class AdminClientService
     /**
      * Anonymise un compte client, à la demande de l'admin (droit à l'oubli).
      */
-    public function anonymizeClient(int $id): array
+    public function anonymizeClient(int $id, int $currentAdminId): array
     {
         $client = $this->model->getById($id);
 
@@ -163,6 +163,22 @@ class AdminClientService
                 'success' => false,
                 'code'    => 404,
                 'message' => "Client introuvable."
+            ];
+        }
+
+        if ($id === $currentAdminId) {
+            return [
+                'success' => false,
+                'code'    => 403,
+                'message' => "Vous ne pouvez pas anonymiser votre propre compte."
+            ];
+        }
+
+        if ($client['role'] === 'admin' && $this->model->countAdmins() <= 1) {
+            return [
+                'success' => false,
+                'code'    => 403,
+                'message' => "Impossible d'anonymiser le dernier administrateur."
             ];
         }
 
