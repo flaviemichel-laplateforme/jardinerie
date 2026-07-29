@@ -99,6 +99,7 @@ export default function CheckoutDelivery() {
           type="checkbox"
           checked={billingSameAsShipping}
           onChange={(e) => setBillingSameAsShipping(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300 accent-jardinerie-primary focus:ring-jardinerie-primary"
         />
         <span className="text-sm text-jardinerie-text">
           Utiliser la même adresse pour la facturation

@@ -24,7 +24,7 @@ export default function GeneralInfoSection() {
           <input
             type="checkbox"
             id="is_active"
-            className="h-5 w-5 rounded border-gray-300 text-jardinerie-primary focus:ring-jardinerie-primary"
+            className="h-5 w-5 rounded border-gray-300 accent-jardinerie-primary focus:ring-jardinerie-primary"
             {...register('is_active')}
           />
           <label htmlFor="is_active" className="text-sm font-medium text-gray-700">

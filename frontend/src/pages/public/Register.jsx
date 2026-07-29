@@ -190,7 +190,7 @@ export default function Register() {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, gdpr_consent: e.target.checked }))
                   }
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-jardinerie-primary focus:ring-jardinerie-primary"
+                  className="mt-1 h-4 w-4 rounded border-gray-300 accent-jardinerie-primary focus:ring-jardinerie-primary"
                 />
                 <label htmlFor="gdpr_consent" className="text-sm text-gray-700">
                     J'accepte les{' '}
