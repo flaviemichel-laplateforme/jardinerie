@@ -73,7 +73,17 @@ class AdminProductModel
         $stmt = $db->prepare($sql);
         $stmt->execute([':id' => $id]);
 
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
+        $product = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($product && $product['plant_id']) {
+            $critStmt = $db->prepare(
+                "SELECT criterion_id FROM plant_criterion WHERE plant_id = :plant_id"
+            );
+            $critStmt->execute([':plant_id' => $product['plant_id']]);
+            $product['criteria_ids'] = $critStmt->fetchAll(\PDO::FETCH_COLUMN);
+        }
+
+        return $product;
     }
 
     /**
@@ -215,6 +225,9 @@ class AdminProductModel
             ':sun_exposure'     => isset($plant['sun_exposure']) ? (string) $plant['sun_exposure'] : null,
             ':water_requirement' => isset($plant['water_requirement']) ? (string) $plant['water_requirement'] : null,
         ]);
+
+        $plantId = (int) $db->lastInsertId();
+        $this->syncPlantCriteria($db, $plantId, $plant['criteria'] ?? []);
     }
 
     /**
@@ -224,8 +237,9 @@ class AdminProductModel
     {
         $check = $db->prepare("SELECT id FROM plants WHERE product_id = :pid LIMIT 1");
         $check->execute([':pid' => $productId]);
+        $existing = $check->fetch(\PDO::FETCH_ASSOC);
 
-        if ($check->fetch()) {
+        if ($existing) {
             $sql = "UPDATE plants SET
                         common_name       = :common_name,
                         latin_name        = :latin_name,
@@ -253,5 +267,34 @@ class AdminProductModel
             ':sun_exposure'      => isset($plant['sun_exposure']) ? (string) $plant["sun_exposure"] : null,
             ':water_requirement' => isset($plant['water_requirement']) ? (string) $plant['water_requirement'] : null,
         ]);
+
+        $plantId = $existing ? (int) $existing['id'] : (int) $db->lastInsertId();
+        $this->syncPlantCriteria($db, $plantId, $plant['criteria'] ?? []);
+    }
+
+    /**
+     * Remplace les critères associés à une plante : supprime les anciens liens,
+     * puis recrée ceux envoyés par le formulaire (delete-then-insert, simple et sûr
+     * aussi bien pour une création — rien à supprimer — que pour une modification).
+     */
+    private function syncPlantCriteria(\PDO $db, int $plantId, array $criteriaIds): void
+    {
+        $delete = $db->prepare("DELETE FROM plant_criterion WHERE plant_id = :plant_id");
+        $delete->execute([':plant_id' => $plantId]);
+
+        if (empty($criteriaIds)) {
+            return;
+        }
+
+        $insert = $db->prepare(
+            "INSERT INTO plant_criterion (plant_id, criterion_id) VALUES (:plant_id, :criterion_id)"
+        );
+
+        foreach ($criteriaIds as $criterionId) {
+            $insert->execute([
+                ':plant_id'     => $plantId,
+                ':criterion_id' => (int) $criterionId,
+            ]);
+        }
     }
 }
