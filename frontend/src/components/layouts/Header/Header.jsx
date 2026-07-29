@@ -197,6 +197,7 @@ export default function Header() {
           </div>
 
           {/* Icône Panier */}
+          {user?.role !== 'admin' && (
           <Link to="/panier" className="hover:opacity-80 transition-opacity relative flex flex-col items-center">
             <img src={panierIcon} alt="Panier" className="h-11 w-11 object-contain" />
             {cartCount > 0 && (
@@ -205,6 +206,7 @@ export default function Header() {
               </span>
             )}
           </Link>
+          )}
 
         </div>
       </div>
