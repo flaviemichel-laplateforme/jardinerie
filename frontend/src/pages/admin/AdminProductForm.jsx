@@ -98,7 +98,7 @@ export default function AdminProductForm() {
       }
 
       const p = result.data.product;
-      // Retrouver le Département et la Catégorie
+      // Retrouver le rayon (department) et la Catégorie
       let foundDeptId = p.department_id || '';
       let foundCatId = p.category_id || '';
 
