@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { authService } from '../../services/authService';
 import { buildRequestOptions } from '../../services/apiClient';
 import toast from 'react-hot-toast';
+import { getPasswordRules } from '../../utils/passwordRules';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,13 @@ export default function ResetPassword() {
 
     if (newPassword !== confirmPassword) {
       toast.error("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+    const passwordRules = getPasswordRules(newPassword);
+    const failedRule = passwordRules.find((rule) => !rule.valid);
+    if (failedRule) {
+      toast.error(`Mot de passe invalide : il manque "${failedRule.label}".`);
       return;
     }
 
@@ -72,6 +80,17 @@ export default function ResetPassword() {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-jardinerie-primary focus:border-jardinerie-primary sm:text-sm"
           />
         </div>
+
+        {newPassword && (
+          <ul className="mt-1 space-y-0.5 text-xs">
+            {getPasswordRules(newPassword).map((rule) => (
+              <li key={rule.label} className={rule.valid ? 'text-green-600' : 'text-gray-400'}>
+                {rule.valid ? '✓' : '○'} {rule.label}
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div>
           <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-900">
             Confirmer le mot de passe

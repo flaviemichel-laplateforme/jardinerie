@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\UserModel;
+use App\Core\PasswordPolicy;
 
 class AuthService
 {
@@ -34,7 +35,17 @@ class AuthService
                 ];
             }
 
-            // 2. Hachage du mot de passe
+            // 2. Règle métier : le mot de passe respecte-t-il la politique de sécurité ?
+            $passwordError = PasswordPolicy::validate($data['password']);
+            if ($passwordError) {
+                return [
+                    'success' => false,
+                    'code' => 400,
+                    'message' => $passwordError,
+                ];
+            }
+
+            // 3. Hachage du mot de passe
             $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
 
             // Horodatage du consentement : sert de preuve RGPD (date exacte), pas juste un booléen
@@ -197,11 +208,12 @@ class AuthService
             ];
         }
 
-        if (strlen($newPassword) < 8) {
+        $passwordError = PasswordPolicy::validate($newPassword);
+        if ($passwordError) {
             return [
                 'success' => false,
                 'code'    => 400,
-                'message' => "Le mot de passe doit contenir au moins 8 caractères."
+                'message' => $passwordError,
             ];
         }
 

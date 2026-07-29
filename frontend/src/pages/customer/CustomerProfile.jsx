@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import { userService } from '../../services/userService';
 import { buildRequestOptions } from '../../services/apiClient';
 import toast from 'react-hot-toast';
+import { getPasswordRules } from '../../utils/passwordRules';
 
 export default function CustomerProfile() {
   const { user, login } = useAuth();
@@ -66,8 +67,10 @@ export default function CustomerProfile() {
       return;
     }
 
-    if (passwordForm.new_password.length < 8) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+    const passwordRules = getPasswordRules(passwordForm.new_password);
+    const failedRule = passwordRules.find((rule) => !rule.valid);
+    if (failedRule) {
+      toast.error(`Mot de passe invalide : il manque "${failedRule.label}".`);
       return;
     }
 
@@ -194,7 +197,15 @@ export default function CustomerProfile() {
               minLength={8}
               className="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-jardinerie-primary focus:outline-none focus:ring-1 focus:ring-jardinerie-primary"
             />
-            <p className="mt-1 text-xs text-gray-400">Minimum 8 caractères.</p>
+            {passwordForm.new_password && (
+              <ul className="mt-1 space-y-0.5 text-xs">
+                {getPasswordRules(passwordForm.new_password).map((rule) => (
+                  <li key={rule.label} className={rule.valid ? 'text-green-600' : 'text-gray-400'}>
+                    {rule.valid ? '✓' : '○'} {rule.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div>

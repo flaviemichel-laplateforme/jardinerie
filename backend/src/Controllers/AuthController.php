@@ -27,6 +27,12 @@ class AuthController
             return;
         }
 
+        // Nettoyage des espaces avant/après — un champ rempli uniquement d'espaces
+        // ne doit pas être considéré comme valide.
+        $data['first_name'] = trim($data['first_name'] ?? '');
+        $data['last_name']  = trim($data['last_name'] ?? '');
+        $data['email']      = trim($data['email'] ?? '');
+
         if (
             empty($data['first_name']) ||
             empty($data['last_name']) ||
@@ -37,6 +43,15 @@ class AuthController
             echo json_encode([
                 "success" => false,
                 "message" => "Tous les champs sont obligatoires."
+            ]);
+            return;
+        }
+
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Adresse email invalide."
             ]);
             return;
         }

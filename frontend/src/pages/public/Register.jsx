@@ -6,8 +6,10 @@ import { buildRequestOptions } from '../../services/apiClient';
 import toast from 'react-hot-toast';
 import logoImage from '../../assets/img/Logo.png';
 import fondImage from '../../../public/assets/img/fond.png';
+import { getPasswordRules } from '../../utils/passwordRules';
 
 export default function Register() {
+
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -36,6 +38,14 @@ export default function Register() {
       toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
+
+    const passwordRules = getPasswordRules(formData.password);
+const failedRule = passwordRules.find((rule) => !rule.valid);
+if (failedRule) {
+  toast.error(`Mot de passe invalide : il manque "${failedRule.label}".`);
+  return;
+}
+
 
     const response = await request(
       authService.buildRegisterUrl(),
@@ -162,6 +172,20 @@ export default function Register() {
                   className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-jardinerie-primary focus:border-jardinerie-primary sm:text-sm bg-white/95 transition-colors"
                 />
               </div>
+
+              {formData.password && (
+  <ul className="mt-1 space-y-0.5 text-xs">
+    {getPasswordRules(formData.password).map((rule) => (
+      <li
+        key={rule.label}
+        className={rule.valid ? 'text-green-600' : 'text-gray-400'}
+      >
+        {rule.valid ? '✓' : '○'} {rule.label}
+      </li>
+    ))}
+  </ul>
+)}
+
 
               {/* Confirmation Mot de passe */}
               <div>

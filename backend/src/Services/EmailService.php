@@ -111,15 +111,18 @@ class EmailService
         float  $total,
         float  $shippingCost
     ): string {
+        $safeFirstName = htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8');
+
         // Construire les lignes du tableau des articles
         $itemsRows = '';
         foreach ($cartItems as $item) {
+            $safeItemName = htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8');
             $lineTotal = number_format($item['line_total'], 2, ',', ' ');
             $unitPrice = number_format($item['unit_price'], 2, ',', ' ');
             $itemsRows .= "
                 <tr>
                     <td style='padding: 12px; border-bottom: 1px solid #eee;'>
-                        {$item['name']}
+                        {$safeItemName}
                     </td>
                     <td style='padding: 12px; border-bottom: 1px solid #eee; text-align: center;'>
                         {$item['quantity']}
@@ -160,7 +163,7 @@ class EmailService
                 <!-- Corps -->
                 <div style='padding: 32px;'>
                     <h2 style='color: #1a2e1a; margin-top: 0;'>
-                        Merci pour votre commande, {$firstName} ! 🌱
+                        Merci pour votre commande, {$safeFirstName} ! 🌱
                     </h2>
 
                     <p style='color: #555; line-height: 1.6;'>
@@ -228,6 +231,8 @@ class EmailService
      */
     private function buildPasswordResetEmail(string $firstName, string $resetUrl): string
     {
+        $safeFirstName = htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8');
+
         return "
     <!DOCTYPE html>
     <html lang='fr'>
@@ -240,7 +245,7 @@ class EmailService
                 <h1 style='color: white; margin: 0; font-size: 24px;'>La Jardinerie</h1>
             </div>
             <div style='padding: 32px;'>
-                <h2 style='color: #1a2e1a; margin-top: 0;'>Bonjour {$firstName},</h2>
+                <h2 style='color: #1a2e1a; margin-top: 0;'>Bonjour {$safeFirstName},</h2>
                 <p style='color: #555; line-height: 1.6;'>
                     Un administrateur a initié une réinitialisation de votre mot de passe.
                     Cliquez sur le bouton ci-dessous pour en choisir un nouveau. Ce lien est valable 1 heure.
@@ -266,6 +271,8 @@ class EmailService
      */
     private function buildVerificationEmail(string $firstName, string $verifyUrl): string
     {
+        $safeFirstName = htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8');
+
         return "
     <!DOCTYPE html>
     <html lang='fr'>
@@ -278,7 +285,7 @@ class EmailService
                 <h1 style='color: white; margin: 0; font-size: 24px;'>La Jardinerie</h1>
             </div>
             <div style='padding: 32px;'>
-                <h2 style='color: #1a2e1a; margin-top: 0;'>Bienvenue {$firstName} ! 🌱</h2>
+                <h2 style='color: #1a2e1a; margin-top: 0;'>Bienvenue {$safeFirstName} ! 🌱</h2>
                 <p style='color: #555; line-height: 1.6;'>
                     Merci de votre inscription. Cliquez sur le bouton ci-dessous pour confirmer
                     votre adresse email et activer votre compte. Ce lien est valable 24 heures.
