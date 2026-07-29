@@ -63,9 +63,9 @@ class AdminClientController
      */
     public function anonymize(int $id): void
     {
-        AdminMiddleware::authenticate();
+        $payload = AdminMiddleware::authenticate();
 
-        $result = $this->service->anonymizeClient($id);
+        $result = $this->service->anonymizeClient($id, (int) $payload['id']);
 
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
