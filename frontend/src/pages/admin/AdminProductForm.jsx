@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useApi } from '../../hooks/useApi';
+import { filterService } from '../../services/filterService';
 import { adminService } from '../../services/adminService';
 import { buildRequestOptions, resolveAssetUrl } from '../../services/apiClient';
 import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
@@ -56,6 +57,7 @@ export default function AdminProductForm() {
   const [secondaryImageFile,    setSecondaryImageFile]    = useState(null);
   const [tree,  setTree]  = useState([]);
   const [taxes, setTaxes] = useState([]);
+  const [criteria, setCriteria] = useState([]);
 
   const { loading: loadingMeta,    request: requestMeta }    = useApi();
   const { loading: loadingProduct, request: requestProduct } = useApi();
@@ -66,12 +68,14 @@ export default function AdminProductForm() {
   // 1. Chargement des métadonnées (Catégories et Taxes)
   useEffect(() => {
     const loadMeta = async () => {
-      const [catResult, taxResult] = await Promise.all([
+      const [catResult, taxResult, critResult] = await Promise.all([
         requestMeta(adminService.buildCategoriesUrl(), buildRequestOptions(), false),
         requestMeta(adminService.buildTaxesUrl(),      buildRequestOptions(), false),
+        requestMeta(filterService.buildFiltersUrl(),      buildRequestOptions(), false),
       ]);
       if (catResult.success) setTree(catResult.data.tree);
       if (taxResult.success) setTaxes(taxResult.data.taxes);
+      if (critResult.success) setCriteria(critResult.data.criteria);
     };
     loadMeta();
   }, [requestMeta]);
@@ -94,8 +98,7 @@ export default function AdminProductForm() {
       }
 
       const p = result.data.product;
-
-      // 🔍 LE DÉTECTIVE : Retrouver le Département et la Catégorie
+      // Retrouver le Département et la Catégorie
       let foundDeptId = p.department_id || '';
       let foundCatId = p.category_id || '';
 
@@ -130,6 +133,7 @@ export default function AdminProductForm() {
           species:           p.species ?? '',
           sun_exposure:      p.sun_exposure ?? '',
           water_requirement: p.water_requirement ?? '',
+          criteria:          (p.criteria_ids ?? []).map(String),
         },
       });
 
@@ -273,7 +277,7 @@ export default function AdminProductForm() {
             secondaryUploading={secondaryUploading}
           />
 
-          {String(watchDeptId) === '1' && <BotanicalDataSection />}
+          {String(watchDeptId) === '1' && <BotanicalDataSection criteria={criteria} />}
 
           <div className="flex gap-3 justify-end pb-8">
             <Link to="/admin/catalogue" className="rounded-full border border-gray-300 px-8 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50">
