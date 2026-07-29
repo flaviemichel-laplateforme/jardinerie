@@ -15,6 +15,7 @@ export default function Vegetaux() {
   const activeCategories = searchParams.get('categories') ? searchParams.get('categories').split(',') : [];
   const activeExpositions = searchParams.get('expositions') ? searchParams.get('expositions').split(',') : [];
   const activeWater = searchParams.get('water') ? searchParams.get('water').split(',') : [];
+  const activeCriteria = searchParams.get('criteria') ? searchParams.get('criteria').split(',') : [];
   const activePrice = {
     min: searchParams.get('price_min') || '',
     max: searchParams.get('price_max') || ''
@@ -39,6 +40,12 @@ export default function Vegetaux() {
       params.set('water', newFilters.water.join(','));
     } else {
       params.delete('water');
+    }
+
+    if (newFilters.criteria && newFilters.criteria.length > 0) {
+      params.set('criteria', newFilters.criteria.join(','));
+    } else {
+      params.delete('criteria');
     }
 
     if (newFilters.price && (newFilters.price.min !== '' || newFilters.price.max !== '')) {
@@ -81,6 +88,7 @@ export default function Vegetaux() {
           activeCategories={activeCategories}
           activeExpositions={activeExpositions}
           activeWater={activeWater}
+          activeCriteria={activeCriteria}
           activePrice={activePrice}
           onFilterChange={updateFilters} 
           onReset={resetFilters}
