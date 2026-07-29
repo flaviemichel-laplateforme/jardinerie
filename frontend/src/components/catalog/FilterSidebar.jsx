@@ -6,6 +6,7 @@ export default function FilterSidebar({
   activeCategories = [],
   activeExpositions = [],
   activeWater = [],
+  activeCriteria = [],
   activePrice = { min: '', max: '' },
   onFilterChange,
   onReset,
@@ -54,6 +55,7 @@ export default function FilterSidebar({
       categories: activeCategories,
       expositions: activeExpositions,
       water: activeWater,
+      criteria: activeCriteria,
       price: { min: String(priceMin), max: String(priceMax) },
       ...patch,
     });
@@ -67,6 +69,7 @@ export default function FilterSidebar({
     if (filterType === 'categories') updateFilters({ categories: toggleValue(activeCategories, stringValue) });
     if (filterType === 'expositions') updateFilters({ expositions: toggleValue(activeExpositions, stringValue) });
     if (filterType === 'water') updateFilters({ water: toggleValue(activeWater, stringValue) });
+    if (filterType === 'criteria') updateFilters({ criteria: toggleValue(activeCriteria, stringValue) });
   };
 
   const handleMinInput = (value) => {
@@ -93,6 +96,7 @@ export default function FilterSidebar({
     activeCategories.length > 0 ||
     activeExpositions.length > 0 ||
     activeWater.length > 0 ||
+    activeCriteria.length > 0 ||
     (activePrice && (activePrice.min !== '' || activePrice.max !== ''));
 
   if (error) {
@@ -124,6 +128,7 @@ export default function FilterSidebar({
     water: (apiFilters.water || []).sort(
       (a, b) => waterOrder.indexOf(a.id) - waterOrder.indexOf(b.id)
     ),
+    criteria: apiFilters.criteria || [],
   };
 
   const translateLabel = (technicalValue) => {
@@ -133,9 +138,9 @@ export default function FilterSidebar({
       'Shade': 'Ombre',
       'Low': 'Arrosage faible',
       'Medium': 'Arrosage moyen',
-      'High': 'Arrosage élevé'
+      'High': 'Arrosage élevé',
     };
-    return dictionary[technicalValue] || technicalValue; 
+    return dictionary[technicalValue] || technicalValue;
   };
 
   const showBotanicalFilters = mode !== 'jardinage';
@@ -212,6 +217,27 @@ export default function FilterSidebar({
                 ))}
               </div>
             </div>
+
+            {options.criteria.length > 0 && (
+              <div className="mb-6">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-jardinerie-text/80">
+                  Critères
+                </h3>
+                <div className="flex flex-col space-y-2">
+                  {options.criteria.map((crit) => (
+                    <label key={`criteria-${crit.id}`} className="group flex cursor-pointer items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        className="form-checkbox h-4 w-4 rounded border-gray-300 accent-jardinerie-primary focus:ring-2 focus:ring-jardinerie-primary/50"
+                        checked={activeCriteria.includes(String(crit.id))}
+                        onChange={() => handleCheckboxChange('criteria', crit.id)}
+                      />
+                      <span className="text-sm text-gray-600 transition-colors group-hover:text-jardinerie-primary">{crit.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
