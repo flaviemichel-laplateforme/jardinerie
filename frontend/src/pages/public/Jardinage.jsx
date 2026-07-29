@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useCatalogFilters } from '../../hooks/useCatalogFilters';
 import { useInfiniteProducts } from '../../hooks/useInfiniteProducts';
 import { productService } from '../../services/productService';
 
@@ -8,48 +8,20 @@ import FilterSidebar from '../../components/catalog/FilterSidebar';
 
 export default function Jardinage() {
 
-  const [searchParams, setSearchParams] = useSearchParams();
+ const {
+    searchParams,
+    searchQuery,
+    activeCategories,
+    activePrice,
+    updateFilters,
+    resetFilters,
+
+  } = useCatalogFilters();
+
   const { items: products, loading, hasMore, total, error, sentinelRef } =
     useInfiniteProducts(searchParams, productService.buildJardinageUrl, 12);
 
-  // Lecture des paramètres depuis l'URL du navigateur
-  const searchQuery = searchParams.get('search') || '';
-  const activeCategories = searchParams.get('categories') ? searchParams.get('categories').split(',') : [];
-
-  const activePrice = {
-    min: searchParams.get('price_min') || '',
-    max: searchParams.get('price_max') || ''
-  };
-
-  const updateFilters = (newFilters) => {
-    const params = new URLSearchParams(searchParams);
-
-    if (newFilters.categories && newFilters.categories.length > 0) {
-      params.set('categories', newFilters.categories.join(','));
-    } else {
-      params.delete('categories');
-    }
-
-    if (newFilters.price && (newFilters.price.min !== '' || newFilters.price.max !== '')) {
-      if (newFilters.price.min !== '') params.set('price_min', newFilters.price.min);
-      else params.delete('price_min');
-
-      if (newFilters.price.max !== '') params.set('price_max', newFilters.price.max);
-      else params.delete('price_max');
-    } else {
-      params.delete('price_min');
-      params.delete('price_max');
-    }
-
-    setSearchParams(params);
-  };
-
-  const resetFilters = () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('search', searchQuery);
-    setSearchParams(params);
-  };
-
+  
   return (
     <div className="mx-auto max-w-[1880px] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
 
