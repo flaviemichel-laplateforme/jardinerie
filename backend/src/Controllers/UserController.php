@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Middlewares\AuthMiddleware;
+use App\Core\PasswordPolicy;
 
 class UserController
 {
@@ -109,11 +110,12 @@ class UserController
             return;
         }
 
-        if (strlen($data['new_password']) < 8) {
+        $passwordError = PasswordPolicy::validate($data['new_password']);
+        if ($passwordError) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
-                'message' => 'Le mot de passe doit contenir au moins 8 caractères minimum'
+                'message' => $passwordError
             ], JSON_UNESCAPED_UNICODE);
             return;
         }
