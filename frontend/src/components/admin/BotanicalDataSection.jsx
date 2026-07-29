@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-export default function BotanicalDataSection() {
+export default function BotanicalDataSection({ criteria = [] }) {
   const { register } = useFormContext();
 
   return (
@@ -36,6 +36,23 @@ export default function BotanicalDataSection() {
           </select>
         </div>
       </div>
+      <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">Critères</label>
+  <div className="flex flex-wrap gap-4">
+    {criteria.map((crit) => (
+      <label key={crit.id} className="flex items-center gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          value={String(crit.id)}
+          {...register('plant.criteria')}
+          className="h-4 w-4 rounded border-gray-300 accent-jardinerie-primary"
+        />
+        {crit.label}
+      </label>
+    ))}
+  </div>
+</div>
+
     </section>
   );
 }
