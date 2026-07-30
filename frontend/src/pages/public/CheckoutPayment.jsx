@@ -4,7 +4,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useCheckout } from '../../contexts/CheckoutContext';
 import { useCart } from '../../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CheckoutStepper from '../../components/checkout/CheckoutStepper';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
@@ -68,8 +68,13 @@ export default function CheckoutPayment() {
 
   // Si on arrive ici sans clientSecret (accès direct à l'URL ou après
   // une confirmation déjà traitée), on renvoie au début du tunnel.
+  useEffect(() => {
+    if (!clientSecret) {
+      navigate('/commande/livraison');
+    }
+  }, [clientSecret, navigate]);
+
   if (!clientSecret) {
-    navigate('/commande/livraison');
     return null;
   }
 
