@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { buildRequestOptions } from '../../services/apiClient';
@@ -62,13 +62,13 @@ export default function CustomerRgpd() {
               Consultez l'intégralité de vos données personnelles ci-dessous.
             </p>
           </a>
-          <a href="/compte/parametres" className="rounded-lg border border-gray-100 p-4 hover:border-jardinerie-primary transition-colors">
+          <Link to="/compte/parametres" className="rounded-lg border border-gray-100 p-4 hover:border-jardinerie-primary transition-colors">
             <span className="text-2xl">✏️</span>
             <p className="font-medium text-jardinerie-text mt-2">Rectification</p>
             <p className="text-xs text-gray-500 mt-1">
               Modifiez vos informations à tout moment depuis votre profil.
             </p>
-          </a>
+          </Link>
           <a href="#suppression-compte" className="rounded-lg border border-gray-100 p-4 hover:border-jardinerie-primary transition-colors">
             <span className="text-2xl">🗑️</span>
             <p className="font-medium text-jardinerie-text mt-2">Droit à l'oubli</p>
@@ -122,9 +122,9 @@ export default function CustomerRgpd() {
         </dl>
         <p className="mt-4 text-xs text-gray-400">
           Pour modifier ces informations, rendez-vous dans{' '}
-          <a href="/compte/parametres" className="text-jardinerie-primary underline">
+          <Link to="/compte/parametres" className="text-jardinerie-primary underline">
             Mon profil
-          </a>.
+          </Link>.
         </p>
       </section>
 
