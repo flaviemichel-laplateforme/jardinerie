@@ -21,12 +21,16 @@ export default function SearchBar() {
       return;
     }
 
+    const controller = new AbortController();
+
     const fetchSuggestions = async () => {
       const url = productService.buildCatalogUrl({ search: debouncedSearchTerm, limit: 5 });
-      await request(url);
+      await request(url, { signal: controller.signal });
       setIsOpen(true);
     };
     fetchSuggestions();
+
+    return () => controller.abort();
   }, [debouncedSearchTerm, request]);
 
   // Le panneau n'est visible que si isOpen ET que le terme est suffisamment long.
