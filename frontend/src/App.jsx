@@ -63,10 +63,11 @@ const router = createBrowserRouter([
       { path: 'verifier-email', element: <VerifyEmail /> },
 
       
-      // 🟢 TUNNEL D'ACHAT (Accès libre pour l'instant)
+      // 🟢 TUNNEL D'ACHAT (🛡️ PROTÉGÉ)
       { path: 'panier', element: <Cart /> },
       {
         path: 'commande',
+        element:  <ProtectedRoute />,
         children: [
           { path: 'livraison', element: <CheckoutDelivery /> },
           { path: 'paiement', element: <CheckoutPayment /> },
