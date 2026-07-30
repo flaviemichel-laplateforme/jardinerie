@@ -160,7 +160,7 @@ class UserController
 
         if (!$user) {
             http_response_code(404);
-            json_encode([
+            echo json_encode([
                 'success' => false,
                 'message' => 'Utilisateur introuvalbe.'
             ], JSON_UNESCAPED_UNICODE);
