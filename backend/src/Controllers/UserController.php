@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Middlewares\AuthMiddleware;
 use App\Core\PasswordPolicy;
+use App\Core\NamePolicy;
 
 class UserController
 {
@@ -65,6 +66,20 @@ class UserController
                 'success' => false,
                 'message' => 'Adresse email invalide.'
             ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $nameError = NamePolicy::validate($data['first_name']);
+        if ($nameError) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $nameError = NamePolicy::validate($data['last_name']);
+        if ($nameError) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
             return;
         }
 
