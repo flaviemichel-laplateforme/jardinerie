@@ -57,7 +57,7 @@ export default function AdminOrders() {
     }
   };
 
-  if (loading) return <Spinner message="Chargement des commandes..." />;
+  if (loading && !data) return <Spinner message="Chargement des commandes..." />;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
