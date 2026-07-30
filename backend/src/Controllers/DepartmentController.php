@@ -25,11 +25,11 @@ class DepartmentController
                 'data' => $departments
             ], JSON_UNESCAPED_UNICODE);
         } catch (\Exception $e) {
-
+            error_log("DepartmentController::index : " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 'status' => 500,
-                'error' => $e->getMessage()
+                'message' => "Une erreur est survenue lors du chargement des rayons."
             ], JSON_UNESCAPED_UNICODE);
         }
     }
