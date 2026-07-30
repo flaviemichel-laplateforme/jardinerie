@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\UserModel;
 use App\Core\PasswordPolicy;
+use App\Core\NamePolicy;
 
 class AuthService
 {
@@ -32,6 +33,24 @@ class AuthService
                     'success' => false,
                     'code' => 400,
                     'message' => "Vous devez accepter les CGV et la politique de confidentialité."
+                ];
+            }
+
+            $nameError = NamePolicy::validate($data['first_name']);
+            if ($nameError) {
+                return [
+                    'success'   => false,
+                    'code'      => 400,
+                    'message'   => $nameError,
+                ];
+            }
+
+            $nameError = NamePolicy::validate($data['last_name']);
+            if ($nameError) {
+                return [
+                    'success'   => false,
+                    'code'      => 400,
+                    'message'   => $nameError,
                 ];
             }
 
