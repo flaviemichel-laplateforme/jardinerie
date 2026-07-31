@@ -3,6 +3,10 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true">
+         <php>
+            <env name="RESEND_API_KEY" value="ddddddddddddddd" />
+         </php>
+         
     <testsuites>
         <testsuite name="Backend Test Suite">
             <directory>tests</directory>
