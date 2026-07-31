@@ -11,7 +11,7 @@ class AdminClientServiceTest extends TestCase
     // CAS 1 : Le cas nominal, tout doit bien se passer
     public function testUpdateRoldeReussitPourUnAutreClient(): void
     {
-        $fauxModel = $this->createMock(AdminClientModel::class);
+        $fauxModel = $this->createStub(AdminClientModel::class);
 
         // On programme les réponses du faux modèle : 
         $fauxModel->method('getById')->willReturn(['id' => 5, 'role' => 'customer']);
@@ -29,7 +29,7 @@ class AdminClientServiceTest extends TestCase
     // Cas 2 : un admin ne doit jamais pouvoir modifier son propre rôle
     public function testUpdateRoleRefuseAutoModification(): void
     {
-        $fauxModele = $this->createMock(AdminClientModel::class);
+        $fauxModele = $this->createStub(AdminClientModel::class);
         $fauxModele->method('getById')->willReturn(['id' => 1, 'role' => 'admin']);
 
         $service = new AdminClientService($fauxModele);
@@ -44,7 +44,7 @@ class AdminClientServiceTest extends TestCase
     // Cas 3 : impossible de rétrograder le tout dernier administrateur
     public function testUpdateRoleRefuseDernierAdmin(): void
     {
-        $fauxModele = $this->createMock(AdminClientModel::class);
+        $fauxModele = $this->createStub(AdminClientModel::class);
         $fauxModele->method('getById')->willReturn(['id' => 5, 'role' => 'admin']);
         $fauxModele->method('countAdmins')->willReturn(1);
 
