@@ -42,3 +42,5 @@ Thumbs.db
 # Fichiers de configuration de VS Code ou PHPStorm (pour ne pas forcer vos réglages aux autres)
 .vscode/
 .idea/
+
+/backend/coverage

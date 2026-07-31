@@ -7,9 +7,24 @@
             <env name="RESEND_API_KEY" value="ddddddddddddddd" />
          </php>
          
+         
     <testsuites>
         <testsuite name="Backend Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>
+
+    <source>
+        <!-- Répertoire contenant le code applicatif à analyser. -->
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </source>
+
+    <coverage>
+        <report>
+            <!-- Génère un rapport HTML consultable dans le navigateur. -->
+            <html outputDirectory="coverage"/>
+        </report>
+    </coverage>
 </phpunit>

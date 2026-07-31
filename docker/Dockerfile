@@ -1,8 +1,13 @@
 # Utilisation de l'image officielle PHP 8.2 avec le serveur Apache
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Installation des extensions PHP nécessaires
 RUN docker-php-ext-install pdo pdo_mysql
+
+# Installation de Xdebug (débogueur pas-à-pas, utilisable depuis VS Code)
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+COPY docker/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
+
 
 # Installation de curl (nécessaire pour Resend SDK et Composer)
 RUN apt-get update && apt-get install -y \
@@ -10,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Installation de Composer (gestionnaire de paquets PHP)
 # On copie directement depuis l'image officielle Composer — la méthode recommandée
