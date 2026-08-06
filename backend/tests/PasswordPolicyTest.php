@@ -28,4 +28,17 @@ class PasswordPolicyTest extends TestCase
 
         $this->assertEquals("Le mot de passe doit contenir au moins une majuscule.", $resultat);
     }
+
+    public function testMotDePasseSansChiffre(): void
+    {
+        $resultat = PasswordPolicy::validate("Azertydd**cA");
+
+        $this->assertEquals("Le mot de passe doit contenir au moins un chiffre.", $resultat);
+    }
+
+    public function testMotDePasseSansCaracteresSpecial(): void
+    {
+        $resultat = PasswordPolicy::validate("AAAAGGGggg444");
+        $this->assertEquals("Le mot de passe doit contenir au moins un caractère spécial.", $resultat);
+    }
 }
