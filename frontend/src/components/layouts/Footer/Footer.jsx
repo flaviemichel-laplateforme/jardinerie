@@ -31,7 +31,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/jardinage" className="transition-colors hover:text-white hover:text-jardinerie-primary hover:underline-offset-4">
+                <Link to="/jardinage" className="transition-colors hover:text-jardinerie-primary hover:underline hover:underline-offset-4">
                   Jardinage
                 </Link>
               </li>
@@ -43,7 +43,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Colonne 3 : Légal et Conformité (EPIC-5) */}
+          {/* Colonne 3 : Légal et Conformité */}
           <div className="flex flex-col space-y-4">
             <span className="text-sm font-bold uppercase tracking-wider text-jardinerie-text">
               Informations légales

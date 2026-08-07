@@ -5,7 +5,7 @@ import { authService } from '../../services/authService';
 import { buildRequestOptions } from '../../services/apiClient';
 import toast from 'react-hot-toast';
 import logoImage from '../../assets/img/Logo.png';
-import fondImage from '../../../public/assets/img/fond.png';
+import fondImage from '../../assets/img/fond.png';
 import { getPasswordRules } from '../../utils/passwordRules';
 
 export default function Register() {

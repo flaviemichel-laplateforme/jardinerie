@@ -2,13 +2,9 @@
 
 // CONFIGURATION CORS (Support des Cookies)
 
-use App\Controllers\AddressController;
-use App\Controllers\AuthController;
-use App\Controllers\UserController;
-
 $allowedOrigins = [
-    'http://localhost:5173', // Votre front-end React en développement
-    'https://www.votre-jardinerie.fr' // Votre futur front-end en production
+    'http://localhost:5173', // Front-end React en développement
+    'https://la-jardinerie.vercel.app' // Front-end en production (Vercel)
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

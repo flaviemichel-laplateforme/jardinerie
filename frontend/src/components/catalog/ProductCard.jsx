@@ -46,7 +46,7 @@ export default function ProductCard({ product }) {
       {/* ========================================= */}
       {/* ZONE 1 : L'IMAGE ET LES ÉLÉMENTS ABSOLUS  */}
       {/* ========================================= */}
-      <div className="relative h-[240px] w-full overflow-hidden bg-white/50">
+      <div className="relative aspect-square w-full overflow-hidden bg-white/50">
         <img 
           loading="lazy"
           // 4. On utilise notre variable calculée qui contient le bon chemin du serveur
