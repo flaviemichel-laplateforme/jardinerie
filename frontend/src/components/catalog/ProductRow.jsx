@@ -15,7 +15,7 @@ export default function ProductRow({ title, products }) {
         - Sur desktop (md:) : 'md:grid md:grid-cols-3' casse le slider pour en faire une grille stricte
         - La scrollbar est cachée pour un look plus "App" avec une classe custom ou via les utilitaires standards.
       */}
-      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:overflow-visible">
+      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 md:overflow-visible">
         {products.map((product) => (
           // Sur mobile, chaque carte prend 85% de l'écran (min-w-[85%]) pour qu'on devine la suivante.
           // Sur desktop (md:), la largeur forcée est annulée (md:min-w-0) car la grille s'en occupe.

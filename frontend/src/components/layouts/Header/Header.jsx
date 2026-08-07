@@ -81,12 +81,12 @@ export default function Header() {
           <img
             src={logoImage}
             alt="La Jardinerie"
-            className="h-16 w-auto md:h-24 md:w-70 rounded-full border border-jardinerie-primary bg-white object-cover shadow-sm scale-110"
+            className="h-16 w-auto lg:h-24 lg:w-72 rounded-full border border-jardinerie-primary bg-white object-cover shadow-sm scale-110"
           />
         </Link>
 
         {/* Recherche desktop : toujours visible à partir de md */}
-        <div className="hidden md:block md:flex-grow">
+        <div className="hidden lg:block lg:flex-grow">
           <SearchBar />
         </div>
 
@@ -94,14 +94,14 @@ export default function Header() {
         <button
           type="button"
           onClick={() => setIsSearchOpen(!isSearchOpen)}
-          className="md:hidden flex items-center justify-center hover:opacity-80 transition-opacity"
+          className="lg:hidden flex items-center justify-center hover:opacity-80 transition-opacity"
           aria-label="Rechercher"
         >
           <img src={loupeIcon} alt="" className="h-10 w-10 object-contain" aria-hidden="true" />
         </button>
 
         {/* Icônes utilisateur & panier */}
-        <div className="flex items-center space-x-4 md:space-x-12 mr-2 md:mr-10">
+        <div className="flex items-center space-x-4 lg:space-x-12 mr-2 lg:mr-10">
 
           {/* Zone profil — connecté ou non */}
           <div className="relative" ref={profileMenuRef}>
@@ -118,7 +118,7 @@ export default function Header() {
                     {/* Point vert — connecté */}
                     <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 border-2 border-jardinerie-bg" />
                   </div>
-                  <span className="text-sm font-bold text-jardinerie-text hidden md:block">
+                  <span className="text-sm font-bold text-jardinerie-text hidden lg:block">
                     {user?.first_name}
                   </span>
                 </button>
@@ -213,7 +213,7 @@ export default function Header() {
 
       {/* Ligne de recherche mobile, repliable (affichée uniquement si isSearchOpen) */}
       {isSearchOpen && (
-        <div className="md:hidden bg-jardinerie-bg px-4 pb-4">
+        <div className="lg:hidden bg-jardinerie-bg px-4 pb-4">
           <SearchBar />
         </div>
       )}
@@ -221,7 +221,7 @@ export default function Header() {
       {/* Barre de navigation principale (Inchangée) */}
       <nav className="bg-jardinerie-primary text-jardinerie-light px-6 py-3">
         <ul ref={navMenuRef} className="flex items-center space-x-12 text-sm uppercase tracking-wider">
-          <li className="md:hidden">
+          <li className="lg:hidden">
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
@@ -236,10 +236,10 @@ export default function Header() {
               <span className="text-sm font-semibold">Menu</span>
             </button>
           </li>
-          <li className="hidden md:list-item">
+          <li className="hidden lg:list-item">
             <NavLink to="/" end className={getNavClass}>Accueil</NavLink>
           </li>
-          <li className="hidden md:list-item relative">
+          <li className="hidden lg:list-item relative">
             <div className="flex items-center gap-1">
               <NavLink to="/vegetaux" className={getNavClass}>Nos végétaux</NavLink>
               <button
@@ -267,7 +267,7 @@ export default function Header() {
               </div>
             )}
           </li>
-          <li className="hidden md:list-item relative">
+          <li className="hidden lg:list-item relative">
             <div className="flex items-center gap-1">
               <NavLink to="/jardinage" className={getNavClass}>Jardinage</NavLink>
               <button
@@ -295,7 +295,7 @@ export default function Header() {
               </div>
             )}
           </li>
-          <li className="hidden md:list-item"><NavLink to="/produits"  className={getNavClass}>Tous nos produits</NavLink></li>
+          <li className="hidden lg:list-item"><NavLink to="/produits"  className={getNavClass}>Tous nos produits</NavLink></li>
         </ul>
       </nav>
 

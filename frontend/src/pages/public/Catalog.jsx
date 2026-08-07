@@ -24,7 +24,7 @@ export default function Catalog() {
 
   
   return (
-    <div className="mx-auto max-w-[1880px] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="mx-auto max-w-[2400px] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
 
       <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">

@@ -5,6 +5,7 @@ import { useApi } from '../../../hooks/useApi';
 import loupeIcon from '../../../assets/img/icone-loupe.svg';
 import placeholderImg from '../../../assets/img/placeholder-vegetaux.png';
 import { productService } from '../../../services/productService';
+import { resolveAssetUrl } from '../../../services/apiClient';
 
 export default function SearchBar() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +107,7 @@ export default function SearchBar() {
                   onClick={() => handleSuggestionClick(product.id)}
                 >
                   <img
-                    src={product.main_image_url || placeholderImg}
+                    src={product.main_image_url ? resolveAssetUrl(product.main_image_url) : placeholderImg}
                     alt={product.product_name}
                     className="h-10 w-10 rounded-md object-cover border border-gray-200"
                   />

@@ -2,7 +2,7 @@ import fond from '../../../public/assets/img/fond.png';
 
 export default function SplitSection() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-1 sm:px-6">
+    <section className="mx-auto max-w-[1600px] px-4 py-1 sm:px-6">
       
       {/* LE CONTENEUR PRINCIPAL (La Boîte Magique)
         - grid : active la grille moderne
