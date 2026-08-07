@@ -1,0 +1,94 @@
+import { useInfiniteProducts } from '../../hooks/useInfiniteProducts';
+import Spinner from '../../components/ui/Spinner';
+import ProductCard from '../../components/catalog/ProductCard';
+import FilterSidebar from '../../components/catalog/FilterSidebar';
+import { productService } from '../../services/productService';
+import { useCatalogFilters } from '../../hooks/useCatalogFilters';
+
+export default function Vegetaux() {
+
+  const {
+    searchParams,
+    searchQuery,
+    activeCategories,
+    activeCriteria,
+    activeExpositions,
+    activePrice,
+    activeWater,
+    updateFilters,
+    resetFilters,
+
+  } = useCatalogFilters();
+
+  const { items: products, loading, hasMore, total, error, sentinelRef } =
+    useInfiniteProducts(searchParams, productService.buildVegetauxUrl, 12);
+
+ 
+  return (
+    <div className="mx-auto max-w-[2400px] px-4 py-10 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+      
+      <div className="mb-10 flex items-center justify-between border-b border-jardinerie-primary/20 pb-4">
+        <h1 className="text-2xl font-bold uppercase tracking-wider text-jardinerie-text">
+          {searchQuery ? `Résultats pour "${searchQuery}"` : "Nos végétaux"}
+        </h1>
+        {products.length > 0 && (
+          <span className="text-sm font-medium text-jardinerie-text/60">
+            {total} {total > 1 ? 'Végétaux' : 'Végétal'}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-8 lg:flex-row xl:gap-10">
+        
+        <FilterSidebar 
+          activeCategories={activeCategories}
+          activeExpositions={activeExpositions}
+          activeWater={activeWater}
+          activeCriteria={activeCriteria}
+          activePrice={activePrice}
+          onFilterChange={updateFilters} 
+          onReset={resetFilters}
+          mode="vegetaux" 
+        />
+
+        <main className="relative min-h-[400px] min-w-0 flex-1">
+          
+          {loading && products.length === 0 ? (
+            <div className="flex h-full w-full items-center justify-center pt-20">
+              <Spinner message="Recherche des végétaux en cours..." />
+            </div>
+          ) : error && products.length === 0 ? (
+            <div className="py-20 text-center font-medium text-red-500">{error}</div>
+          ) : products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center opacity-70">
+              <p className="text-lg font-medium text-jardinerie-text">Aucun végétal ne correspond à vos filtres.</p>
+              <button
+                onClick={resetFilters}
+                className="mt-4 text-jardinerie-primary underline"
+              >
+                Réinitialiser les filtres
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+
+              {/* Sentinelle : déclenche le chargement de la page suivante quand elle devient visible */}
+              {hasMore && (
+                <div ref={sentinelRef} className="flex flex-col items-center gap-2 py-8">
+                  {loading && <Spinner message="Chargement des produits suivants..." />}
+                  {error && !loading && <p className="text-sm text-red-500">{error}</p>}
+                </div>
+              )}
+            </>
+          )}
+
+        </main>
+      </div>
+    </div>
+  );
+}
