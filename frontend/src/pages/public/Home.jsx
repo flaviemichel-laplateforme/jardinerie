@@ -52,14 +52,15 @@ export default function Home() {
           <>
             <ProductRow title="Sélection du moment !" products={products.slice(0,5)} />
             <ProductRow title="Nouveauté !" products={products.slice(5, 10)} />
-            {aromaticProducts && aromaticProducts.length > 0 && (
-              <ProductRow title="Sélection aromatique !" products={aromaticProducts} />
-            )}
-            
-            <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6">
-        <hr className="border-gray-200" />
-      </div>
           </>
+        )}
+
+        <ProductRow title="Sélection aromatique !" products={aromaticProducts ?? []} />
+
+        {products && products.length >= 1 && (
+          <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6">
+            <hr className="border-gray-200" />
+          </div>
         )}
       </div>
 
