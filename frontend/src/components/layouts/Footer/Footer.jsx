@@ -43,7 +43,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Colonne 3 : Légal et Conformité (EPIC-5) */}
+          {/* Colonne 3 : Légal et Conformité */}
           <div className="flex flex-col space-y-4">
             <span className="text-sm font-bold uppercase tracking-wider text-jardinerie-text">
               Informations légales

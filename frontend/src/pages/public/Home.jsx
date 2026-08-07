@@ -1,4 +1,3 @@
-// src/pages/public/Home.jsx
 import { useEffect } from 'react';
 import { useApi } from '../../hooks/useApi';
 import { productService } from '../../services/productService';
@@ -32,7 +31,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white">
       
-      {/* 1. HERO BANNER : Appel du composant avec ses paramètres (props) */}
+      {/* HERO BANNER */}
       <HeroBanner 
         altText="Promotion du moment"
         buttonText="Voir les offres du moment"
@@ -44,7 +43,7 @@ export default function Home() {
       </div>
 
       
-      {/* 3. LES SECTIONS DE PRODUITS */}
+      {/* SECTIONS DE PRODUITS */}
       <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
         {loading && <Spinner message="Préparation de votre jardin..." />}
         {error && <p className="mt-8 text-center text-red-500">{error}</p>}
@@ -66,7 +65,7 @@ export default function Home() {
 
       
 
-      {/* 2. SECTION EXPERTISE */}
+      {/* SECTION EXPERTISE */}
       <SplitSection />
 
     </main>
