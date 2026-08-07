@@ -1,4 +1,4 @@
-import fond from '../../../public/assets/img/fond.png';
+import fond from '../../assets/img/fond.png';
 
 export default function SplitSection() {
   return (
