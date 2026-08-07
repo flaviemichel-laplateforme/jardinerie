@@ -31,7 +31,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/jardinage" className="transition-colors hover:text-white hover:text-jardinerie-primary hover:underline-offset-4">
+                <Link to="/jardinage" className="transition-colors hover:text-jardinerie-primary hover:underline hover:underline-offset-4">
                   Jardinage
                 </Link>
               </li>
