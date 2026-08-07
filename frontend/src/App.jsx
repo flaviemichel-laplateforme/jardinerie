@@ -27,6 +27,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import MentionsLegales from './pages/public/MentionsLegales';
 import Cgv from './pages/public/Cgv';
 import PolitiqueConfidentialite from './pages/public/PolitiqueConfidentialite';
+import Contact from './pages/public/Contact';
 import AdminClients from './pages/admin/AdminClients';
 import ResetPassword from './pages/public/ResetPassword';
 import ForgotPassword from './pages/public/ForgotPassword';
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
       { path: 'mentions-legales', element: <MentionsLegales /> },
       { path: 'cgv', element: <Cgv /> },
       { path: 'politique-confidentialite', element: <PolitiqueConfidentialite /> },
+      { path: 'contact', element: <Contact /> },
 
       // 🟠 AUTHENTIFICATION (Accès libre)
       { path: 'connexion', element: <Login /> },
