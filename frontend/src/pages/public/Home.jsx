@@ -7,8 +7,12 @@ import SplitSection from '../../components/catalog/SplitSection';
 import ProductRow from '../../components/catalog/ProductRow'; 
 import Spinner from '../../components/ui/Spinner';
 
+// Catégorie "Aromatiques" (voir database/seed.sql)
+const AROMATIC_CATEGORY_ID = '7';
+
 export default function Home() {
   const { data: products, loading, error, request } = useApi();
+  const { data: aromaticProducts, request: requestAromatic } = useApi();
 
   useEffect(() => {
     const fetchHomeProducts = async () => {
@@ -16,6 +20,14 @@ export default function Home() {
     };
     fetchHomeProducts();
   }, [request]);
+
+  useEffect(() => {
+    const fetchAromaticProducts = async () => {
+      const params = new URLSearchParams({ categories: AROMATIC_CATEGORY_ID, limit: '5' });
+      await requestAromatic(productService.buildCatalogUrl(params));
+    };
+    fetchAromaticProducts();
+  }, [requestAromatic]);
 
   return (
     <main className="min-h-screen bg-white">
@@ -41,7 +53,9 @@ export default function Home() {
           <>
             <ProductRow title="Sélection du moment !" products={products.slice(0,5)} />
             <ProductRow title="Nouveauté !" products={products.slice(5, 10)} />
-            <ProductRow title="Sélection aromatique !" products={products.slice(0, 5)} />
+            {aromaticProducts && aromaticProducts.length > 0 && (
+              <ProductRow title="Sélection aromatique !" products={aromaticProducts} />
+            )}
             
             <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6">
         <hr className="border-gray-200" />
