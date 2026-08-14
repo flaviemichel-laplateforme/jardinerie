@@ -93,12 +93,15 @@ class AuthController
         }
 
         // Sécurisation JWT dans le cookie HttpOnly
+        // En production, Front-end et Back-end sont sur des domaines différents (cross-site) :
+        // le cookie doit être SameSite=None + Secure pour être accepté par le navigateur.
+        $isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
         $cookieOptions = [
             'expires' => time() + 86400, // Expire dans 24h
             'path' => '/',
-            'secure' => false, // Passer à true en HTTPS
+            'secure' => $isProduction,
             'httponly' => true,
-            'samesite' => 'Lax'
+            'samesite' => $isProduction ? 'None' : 'Lax'
         ];
 
         setcookie('jardinerie_session', $result['data']['token'], $cookieOptions);
@@ -142,12 +145,13 @@ class AuthController
      */
     public function logout(): void
     {
+        $isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
         setcookie('jardinerie_session', '', [
             'expires' => time() - 3600,
             'path' => '/',
-            'secure' => false,
+            'secure' => $isProduction,
             'httponly' => true,
-            'samesite' => 'LAX'
+            'samesite' => $isProduction ? 'None' : 'Lax'
         ]);
 
         http_response_code(200);
