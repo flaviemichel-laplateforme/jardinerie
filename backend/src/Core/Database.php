@@ -23,11 +23,16 @@ class Database
                 $dbName = $_ENV['DB_NAME'];
                 $user = $_ENV['DB_USER'];
 
+                // En local (Docker) : le mot de passe vient d'un secret Docker.
+                // En production (Plesk, sans Docker) : il vient directement du .env.
                 $passwordFile = '/run/secrets/db_password';
-                if (!file_exists($passwordFile)) {
-                    throw new Exception("Erreur critique ! Secret Docker introuvable.");
+                if (file_exists($passwordFile)) {
+                    $password = trim(file_get_contents($passwordFile));
+                } elseif (!empty($_ENV['DB_PASSWORD'])) {
+                    $password = $_ENV['DB_PASSWORD'];
+                } else {
+                    throw new Exception("Erreur critique ! Aucun mot de passe de base de données trouvé (ni secret Docker, ni DB_PASSWORD).");
                 }
-                $password = trim(file_get_contents($passwordFile));
 
                 $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
 

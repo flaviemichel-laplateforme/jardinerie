@@ -4,7 +4,7 @@
 
 $allowedOrigins = [
     'http://localhost:5173', // Front-end React en développement
-    'https://la-jardinerie.vercel.app' // Front-end en production (Vercel)
+    'https://jardinerie.vercel.app' // Front-end en production (Vercel)
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
