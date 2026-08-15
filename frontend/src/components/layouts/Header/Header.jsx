@@ -22,14 +22,19 @@ export default function Header() {
 
   const profileMenuRef = useRef(null);
   const navMenuRef = useRef(null);
+  const mobileMenuRef = useRef(null);
 
   const {data: vegetauxFilters, request: requestVegetauxFilters } = useApi();
   const { data: jardinageFilters, request: requestJardinageFilters } = useApi();
 
   // Fermeture du menu de navigation au clic extérieur
+  // (on ignore les clics dans la nav desktop ET dans le tiroir mobile,
+  // pour ne pas fermer une catégorie au moment même où on clique dessus)
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (navMenuRef.current && !navMenuRef.current.contains(e.target)) {
+      const insideDesktopNav = navMenuRef.current?.contains(e.target);
+      const insideMobileMenu = mobileMenuRef.current?.contains(e.target);
+      if (!insideDesktopNav && !insideMobileMenu) {
         setOpenSection(null);
       }
     };
@@ -311,6 +316,7 @@ export default function Header() {
           aria-label="Fermer le menu"
         />
         <aside
+          ref={mobileMenuRef}
           className={`relative z-10 h-full w-72 max-w-[85vw] bg-white shadow-2xl transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <div className="flex items-center justify-between border-b border-jardinerie-primary/20 px-5 py-4">
