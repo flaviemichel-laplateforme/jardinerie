@@ -1,5 +1,5 @@
 -- Sélection de la base de données
-USE `jardinerie_db`;
+USE `flavie-michel_jardinerie_db`;
 
 -- Configuration du canal de communication en UTF-8 moderne
 SET NAMES 'utf8mb4';
@@ -154,33 +154,33 @@ INSERT INTO `products` (`id`, `subcategory_id`, `tax_id`, `name`, `description`,
 (48, 6, 1, 'Paillage Écorces de pin 50L', 'Évite la pousse des mauvaises herbes.', 14.90, 6.00, 35, NULL, 1);
 
 -- Détails Botaniques (Produits d'origine + Nouvelles plantes)
-INSERT INTO `plants` (`product_id`, `common_name`, `latin_name`, `genus`, `species`, `sun_exposure`, `water_requirement`) VALUES
-(1, 'Faux philodendron', 'Monstera deliciosa', 'Monstera', 'deliciosa', 'Partial Shade', 'Medium'),
-(2, 'Figuier lyre', 'Ficus lyrata', 'Ficus', 'lyrata', 'Sun', 'Medium'),
-(3, 'Orchidée papillon', 'Phalaenopsis', 'Phalaenopsis', 'amabilis', 'Partial Shade', 'Low'),
-(4, 'Olivier', 'Olea europaea', 'Olea', 'europaea', 'Sun', 'Low'),
-(5, 'Basilic', 'Ocimum basilicum', 'Ocimum', 'basilicum', 'Sun', 'High'),
-(6, 'Menthe', 'Mentha spicata', 'Mentha', 'spicata', 'Partial Shade', 'High'),
-(9, 'Aloé', 'Aloe vera', 'Aloe', 'vera', 'Sun', 'Low'),
-(10, 'Langue de belle-mère', 'Sansevieria trifasciata', 'Sansevieria', 'trifasciata', 'Partial Shade', 'Low'),
-(11, 'Plante ZZ', 'Zamioculcas zamiifolia', 'Zamioculcas', 'zamiifolia', 'Partial Shade', 'Low'),
-(12, 'Plante à monnaie', 'Pilea peperomioides', 'Pilea', 'peperomioides', 'Partial Shade', 'Medium'),
-(13, 'Plante paon', 'Calathea makoyana', 'Calathea', 'makoyana', 'Shade', 'High'),
-(14, 'Fleur de lune', 'Spathiphyllum wallisii', 'Spathiphyllum', 'wallisii', 'Partial Shade', 'High'),
-(15, 'Pothos', 'Epipremnum aureum', 'Epipremnum', 'aureum', 'Partial Shade', 'Medium'),
-(16, 'Orchidée bateau', 'Cymbidium', 'Cymbidium', 'hybrid', 'Partial Shade', 'Medium'),
-(17, 'Orchidée bambou', 'Dendrobium nobile', 'Dendrobium', 'nobile', 'Sun', 'Medium'),
-(18, 'Érable japonais', 'Acer palmatum', 'Acer', 'palmatum', 'Partial Shade', 'Medium'),
-(19, 'Hortensia', 'Hydrangea macrophylla', 'Hydrangea', 'macrophylla', 'Shade', 'High'),
-(20, 'Rosier', 'Rosa', 'Rosa', 'gallica', 'Sun', 'Medium'),
-(21, 'Lavande', 'Lavandula angustifolia', 'Lavandula', 'angustifolia', 'Sun', 'Low'),
-(22, 'Bambou', 'Fargesia murielae', 'Fargesia', 'murielae', 'Partial Shade', 'High'),
-(23, 'Lis du Nil', 'Agapanthus africanus', 'Agapanthus', 'africanus', 'Sun', 'Medium'),
-(24, 'Ciboulette', 'Allium schoenoprasum', 'Allium', 'schoenoprasum', 'Sun', 'Medium'),
-(25, 'Thym', 'Thymus citriodorus', 'Thymus', 'citriodorus', 'Sun', 'Low'),
-(26, 'Romarin', 'Salvia rosmarinus', 'Salvia', 'rosmarinus', 'Sun', 'Low'),
-(27, 'Persil', 'Petroselinum crispum', 'Petroselinum', 'crispum', 'Partial Shade', 'High'),
-(28, 'Coriandre', 'Coriandrum sativum', 'Coriandrum', 'sativum', 'Sun', 'High');
+INSERT INTO `plants` (`id`, `product_id`, `common_name`, `latin_name`, `genus`, `species`, `sun_exposure`, `water_requirement`) VALUES
+(1, 1, 'Faux philodendron', 'Monstera deliciosa', 'Monstera', 'deliciosa', 'Partial Shade', 'Medium'),
+(2, 2, 'Figuier lyre', 'Ficus lyrata', 'Ficus', 'lyrata', 'Sun', 'Medium'),
+(3, 3, 'Orchidée papillon', 'Phalaenopsis', 'Phalaenopsis', 'amabilis', 'Partial Shade', 'Low'),
+(4, 4, 'Olivier', 'Olea europaea', 'Olea', 'europaea', 'Sun', 'Low'),
+(5, 5, 'Basilic', 'Ocimum basilicum', 'Ocimum', 'basilicum', 'Sun', 'High'),
+(6, 6, 'Menthe', 'Mentha spicata', 'Mentha', 'spicata', 'Partial Shade', 'High'),
+(9, 9, 'Aloé', 'Aloe vera', 'Aloe', 'vera', 'Sun', 'Low'),
+(10, 10, 'Langue de belle-mère', 'Sansevieria trifasciata', 'Sansevieria', 'trifasciata', 'Partial Shade', 'Low'),
+(11, 11, 'Plante ZZ', 'Zamioculcas zamiifolia', 'Zamioculcas', 'zamiifolia', 'Partial Shade', 'Low'),
+(12, 12, 'Plante à monnaie', 'Pilea peperomioides', 'Pilea', 'peperomioides', 'Partial Shade', 'Medium'),
+(13, 13, 'Plante paon', 'Calathea makoyana', 'Calathea', 'makoyana', 'Shade', 'High'),
+(14, 14, 'Fleur de lune', 'Spathiphyllum wallisii', 'Spathiphyllum', 'wallisii', 'Partial Shade', 'High'),
+(15, 15, 'Pothos', 'Epipremnum aureum', 'Epipremnum', 'aureum', 'Partial Shade', 'Medium'),
+(16, 16, 'Orchidée bateau', 'Cymbidium', 'Cymbidium', 'hybrid', 'Partial Shade', 'Medium'),
+(17, 17, 'Orchidée bambou', 'Dendrobium nobile', 'Dendrobium', 'nobile', 'Sun', 'Medium'),
+(18, 18, 'Érable japonais', 'Acer palmatum', 'Acer', 'palmatum', 'Partial Shade', 'Medium'),
+(19, 19, 'Hortensia', 'Hydrangea macrophylla', 'Hydrangea', 'macrophylla', 'Shade', 'High'),
+(20, 20, 'Rosier', 'Rosa', 'Rosa', 'gallica', 'Sun', 'Medium'),
+(21, 21, 'Lavande', 'Lavandula angustifolia', 'Lavandula', 'angustifolia', 'Sun', 'Low'),
+(22, 22, 'Bambou', 'Fargesia murielae', 'Fargesia', 'murielae', 'Partial Shade', 'High'),
+(23, 23, 'Lis du Nil', 'Agapanthus africanus', 'Agapanthus', 'africanus', 'Sun', 'Medium'),
+(24, 24, 'Ciboulette', 'Allium schoenoprasum', 'Allium', 'schoenoprasum', 'Sun', 'Medium'),
+(25, 25, 'Thym', 'Thymus citriodorus', 'Thymus', 'citriodorus', 'Sun', 'Low'),
+(26, 26, 'Romarin', 'Salvia rosmarinus', 'Salvia', 'rosmarinus', 'Sun', 'Low'),
+(27, 27, 'Persil', 'Petroselinum crispum', 'Petroselinum', 'crispum', 'Partial Shade', 'High'),
+(28, 28, 'Coriandre', 'Coriandrum sativum', 'Coriandrum', 'sativum', 'Sun', 'High');
 
 -- Filtres et Critères dynamiques
 INSERT INTO `criteria` (`id`, `name`) VALUES
