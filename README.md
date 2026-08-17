@@ -89,4 +89,63 @@ docker compose exec api vendor/bin/phpunit --coverage-html coverage
 
 ## Déploiement
 
-*À compléter après la mise en production.*
+L'application est déployée en production sur deux infrastructures distinctes : le Front-end sur Vercel (intégration continue), le Back-end et la base de données sur un serveur Plesk (transfert manuel).
+
+### Front-end (Vercel)
+
+Le dépôt GitHub est connecté à Vercel. Chaque push sur la branche `main` déclenche automatiquement un build (`npm run build`) et une mise en production, sans intervention manuelle.
+
+Variables d'environnement à configurer dans le tableau de bord Vercel (Project Settings → Environment Variables) :
+
+| Variable | Rôle |
+|---|---|
+| `VITE_API_BASE_URL` | URL du Back-end en production (ex : `https://api.mondomaine.fr`) |
+| `VITE_STRIPE_PUBLIC_KEY` | Clé publique Stripe |
+
+Le fichier `frontend/vercel.json` configure une redirection de toutes les routes vers `index.html` :
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+Cette règle est indispensable pour une Single Page Application : sans elle, toute URL profonde demandée directement (rafraîchissement de page, lien partagé, retour de redirection Stripe après paiement) renvoie une erreur 404, faute de fichier correspondant côté serveur.
+
+### Back-end (Plesk)
+
+Le Back-end n'est pas connecté à un système de déploiement continu. Les fichiers sont transférés manuellement via **FileZilla** (client FTP/SFTP), un choix cohérent avec un hébergement mutualisé sans Docker.
+
+1. Connexion au serveur via FileZilla, avec les identifiants FTP fournis par Plesk.
+2. Transfert de l'arborescence `backend/` (contrôleurs, services, modèles, dossier `vendor/`) vers `httpdocs/` sur le serveur.
+3. Configuration de la racine du document (Document Root) sur `backend/public/`, pour n'exposer publiquement que le point d'entrée de l'API.
+4. Création du fichier `.env` de production directement sur le serveur (jamais versionné), avec les valeurs réelles de :
+
+```
+APP_ENV=production
+DB_HOST=...
+DB_PORT=3306
+DB_NAME=...
+DB_USER=...
+DB_PASSWORD=...
+JWT_SECRET=...
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
+RESEND_API_KEY=...
+FRONTEND_URL=https://mondomaine.vercel.app
+```
+
+5. Import de la base de données via phpMyAdmin (intégré à Plesk) : d'abord le script de structure, puis le script de données.
+6. Activation d'un certificat SSL (Let's Encrypt) sur le domaine, avec redirection automatique HTTP → HTTPS.
+7. Configuration d'un webhook Stripe pointant vers `https://<domaine-back-end>/api/webhooks/stripe`, écoutant l'événement `payment_intent.succeeded` — indispensable, car c'est ce webhook (et non la page de confirmation) qui déclenche la création de la commande en base de données.
+
+### Différences entre environnement local et production
+
+| Aspect | Local (Docker) | Production (Plesk) |
+|---|---|---|
+| Mot de passe base de données | Secret Docker (`secrets/db_password.txt`) | Variable `DB_PASSWORD` dans le `.env` |
+| Cookie de session | `SameSite=Lax`, `Secure=false` (même domaine, HTTP) | `SameSite=None`, `Secure=true` (domaines différents, HTTPS obligatoire) |
+
+`Database.php` et `AuthController.php` détectent automatiquement l'environnement (via `APP_ENV`) pour appliquer la configuration adaptée, sans nécessiter de code différent entre les deux contextes.
