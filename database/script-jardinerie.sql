@@ -8,20 +8,13 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Schema mydb
--- -----------------------------------------------------
--- -----------------------------------------------------
--- Schema jardinerie_db
--- -----------------------------------------------------
-
--- -----------------------------------------------------
--- Schema jardinerie_db
+-- Schema flavie-michel_jardinerie_db
 -- -----------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS `flavie-michel_jardinerie_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci ;
 USE `flavie-michel_jardinerie_db` ;
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`taxes`
+-- Table `flavie-michel_jardinerie_db`.`taxes`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`taxes` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -33,7 +26,7 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`users`
+-- Table `flavie-michel_jardinerie_db`.`users`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`users` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -42,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`users` (
   `email` VARCHAR(255) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `role` ENUM('admin', 'customer') NULL DEFAULT 'customer',
-  `registration_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `registration_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `gdpr_consent_key` VARCHAR(255) NULL DEFAULT NULL,
   `email_verified_at` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -52,7 +45,7 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`addresses`
+-- Table `flavie-michel_jardinerie_db`.`addresses`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`addresses` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -69,13 +62,13 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`addresses` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_addresses_users`
     FOREIGN KEY (`user_id`)
-    REFERENCES `jardinerie_db`.`users` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`users` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`departments`
+-- Table `flavie-michel_jardinerie_db`.`departments`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`departments` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -86,7 +79,7 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`categories`
+-- Table `flavie-michel_jardinerie_db`.`categories`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`categories` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -98,13 +91,13 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`categories` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_categories_departments`
     FOREIGN KEY (`department_id`)
-    REFERENCES `jardinerie_db`.`departments` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`departments` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`subcategories`
+-- Table `flavie-michel_jardinerie_db`.`subcategories`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`subcategories` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -115,13 +108,13 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`subcategories` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_subcategories_categories`
     FOREIGN KEY (`category_id`)
-    REFERENCES `jardinerie_db`.`categories` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`categories` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`products`
+-- Table `flavie-michel_jardinerie_db`.`products`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`products` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -141,15 +134,15 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`products` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_products_subcategories`
     FOREIGN KEY (`subcategory_id`)
-    REFERENCES `jardinerie_db`.`subcategories` (`id`),
+    REFERENCES `flavie-michel_jardinerie_db`.`subcategories` (`id`),
   CONSTRAINT `fk_products_taxes`
     FOREIGN KEY (`tax_id`)
-    REFERENCES `jardinerie_db`.`taxes` (`id`))
+    REFERENCES `flavie-michel_jardinerie_db`.`taxes` (`id`))
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`plants`
+-- Table `flavie-michel_jardinerie_db`.`plants`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`plants` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -165,13 +158,13 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`plants` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_plants_products`
     FOREIGN KEY (`product_id`)
-    REFERENCES `jardinerie_db`.`products` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`products` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`criteria`
+-- Table `flavie-michel_jardinerie_db`.`criteria`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`criteria` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -182,7 +175,7 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`plant_criterion`
+-- Table `flavie-michel_jardinerie_db`.`plant_criterion`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`plant_criterion` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -195,53 +188,53 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`plant_criterion` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_plant_criterion_plants`
     FOREIGN KEY (`plant_id`)
-    REFERENCES `jardinerie_db`.`plants` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`plants` (`id`)
     ON DELETE CASCADE,
   CONSTRAINT `fk_plant_criterion_criteria`
     FOREIGN KEY (`criterion_id`)
-    REFERENCES `jardinerie_db`.`criteria` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`criteria` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`stock_movements`
+-- Table `flavie-michel_jardinerie_db`.`stock_movements`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`stock_movements` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `product_id` INT NOT NULL,
   `quantity` INT NOT NULL,
   `movement_type` ENUM('restock', 'sale', 'inventory', 'loss') NOT NULL,
-  `movement_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `movement_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   INDEX (`product_id` ASC) VISIBLE,
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_stock_movements_products`
     FOREIGN KEY (`product_id`)
-    REFERENCES `jardinerie_db`.`products` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`products` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`carts`
+-- Table `flavie-michel_jardinerie_db`.`carts`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`carts` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
-  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE INDEX (`user_id` ASC) VISIBLE,
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_carts_users`
     FOREIGN KEY (`user_id`)
-    REFERENCES `jardinerie_db`.`users` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`users` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`cart_items`
+-- Table `flavie-michel_jardinerie_db`.`cart_items`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`cart_items` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -255,17 +248,17 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`cart_items` (
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_cart_items_carts`
     FOREIGN KEY (`cart_id`)
-    REFERENCES `jardinerie_db`.`carts` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`carts` (`id`)
     ON DELETE CASCADE,
   CONSTRAINT `fk_cart_items_products`
     FOREIGN KEY (`product_id`)
-    REFERENCES `jardinerie_db`.`products` (`id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`products` (`id`)
     ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`payment_methods`
+-- Table `flavie-michel_jardinerie_db`.`payment_methods`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`payment_methods` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -277,9 +270,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `jardinerie_db`.`delivery_methods`
+-- Table `flavie-michel_jardinerie_db`.`delivery_methods`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `jardinerie_db`.`delivery_methods` (
+CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`delivery_methods` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
   `base_cost_tax_incl` DECIMAL(10,2) NOT NULL,
@@ -302,7 +295,7 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`orders` (
   `billing_address_text` TEXT NOT NULL,
   `shipping_address_text` TEXT NOT NULL,
   `order_reference` VARCHAR(50) NOT NULL,
-  `order_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `order_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `total_amount_tax_incl` DECIMAL(10,2) NOT NULL,
   `shipping_cost_tax_incl` DECIMAL(10,2) NOT NULL,
   `status` ENUM('pending', 'paid', 'shipped', 'delivered', 'cancelled') NULL DEFAULT 'pending',
@@ -363,7 +356,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`invoices` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `order_id` INT NOT NULL,
-  `invoice_date` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `invoice_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `total_amount_tax_incl` DECIMAL(10,2) NOT NULL,
   `pdf_url` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -385,7 +378,7 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`account_tokens` (
   `purpose` ENUM('password_reset', 'email_verification') NOT NULL DEFAULT 'password_reset',
   `expires_at` DATETIME NOT NULL,
   `used_at` DATETIME NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `token_UNIQUE` (`token` ASC) VISIBLE,
   INDEX `fk_account_tokens_users_idx` (`user_id` ASC) VISIBLE,

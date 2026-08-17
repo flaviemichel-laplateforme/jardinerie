@@ -2,6 +2,14 @@
 
 Plateforme e-commerce dédiée à la vente de végétaux et d'articles de jardinage, développée dans le cadre du Titre Professionnel Développeur Web et Web Mobile (DWWM).
 
+## Liens
+
+| Ressource                              | URL                                                                    |
+| -------------------------------------- | ---------------------------------------------------------------------- |
+| Application en ligne (Front-end)       | https://jardinerie.vercel.app                                          |
+| API (Back-end, production)             | https://flavie-michel.students-laplateforme.io/jardinerie/api/products |
+| Collection Postman (documentation API) | https://documenter.getpostman.com/view/52030770/2sBYApzZC4             |
+
 ## Stack technique
 
 - **Front-end** : React (Vite), Tailwind CSS
@@ -40,11 +48,11 @@ echo "votre_mot_de_passe_root" > secrets/db_root_password.txt
 
 Trois fichiers `.env` sont nécessaires, chacun à copier depuis son modèle `.env.example` correspondant, puis à compléter :
 
-| Fichier | Rôle |
-|---|---|
+| Fichier         | Rôle                                                                           |
+| --------------- | ------------------------------------------------------------------------------ |
 | `.env` (racine) | Lu par `docker compose` pour configurer les conteneurs (ports, nom de la base) |
-| `backend/.env` | Lu par l'API PHP (connexion base de données, clé JWT, clés Stripe et Resend) |
-| `frontend/.env` | Lu par Vite (URL de l'API, clé publique Stripe) |
+| `backend/.env`  | Lu par l'API PHP (connexion base de données, clé JWT, clés Stripe et Resend)   |
+| `frontend/.env` | Lu par Vite (URL de l'API, clé publique Stripe)                                |
 
 ```
 cp .env.example .env
@@ -61,6 +69,7 @@ docker compose up -d
 ```
 
 Cette commande démarre trois conteneurs :
+
 - l'API PHP (Apache), accessible sur le port défini par `API_PORT`
 - la base de données MySQL
 - phpMyAdmin, accessible sur `http://localhost:8080`
@@ -97,18 +106,16 @@ Le dépôt GitHub est connecté à Vercel. Chaque push sur la branche `main` dé
 
 Variables d'environnement à configurer dans le tableau de bord Vercel (Project Settings → Environment Variables) :
 
-| Variable | Rôle |
-|---|---|
-| `VITE_API_BASE_URL` | URL du Back-end en production (ex : `https://api.mondomaine.fr`) |
-| `VITE_STRIPE_PUBLIC_KEY` | Clé publique Stripe |
+| Variable                 | Rôle                                                             |
+| ------------------------ | ---------------------------------------------------------------- |
+| `VITE_API_BASE_URL`      | URL du Back-end en production (ex : `https://api.mondomaine.fr`) |
+| `VITE_STRIPE_PUBLIC_KEY` | Clé publique Stripe                                              |
 
 Le fichier `frontend/vercel.json` configure une redirection de toutes les routes vers `index.html` :
 
 ```json
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
 ```
 
@@ -134,6 +141,7 @@ JWT_SECRET=...
 STRIPE_SECRET_KEY=...
 STRIPE_WEBHOOK_SECRET=...
 RESEND_API_KEY=...
+RESEND_FROM_EMAIL=...
 FRONTEND_URL=https://mondomaine.vercel.app
 ```
 
@@ -143,9 +151,9 @@ FRONTEND_URL=https://mondomaine.vercel.app
 
 ### Différences entre environnement local et production
 
-| Aspect | Local (Docker) | Production (Plesk) |
-|---|---|---|
-| Mot de passe base de données | Secret Docker (`secrets/db_password.txt`) | Variable `DB_PASSWORD` dans le `.env` |
-| Cookie de session | `SameSite=Lax`, `Secure=false` (même domaine, HTTP) | `SameSite=None`, `Secure=true` (domaines différents, HTTPS obligatoire) |
+| Aspect                       | Local (Docker)                                      | Production (Plesk)                                                      |
+| ---------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------- |
+| Mot de passe base de données | Secret Docker (`secrets/db_password.txt`)           | Variable `DB_PASSWORD` dans le `.env`                                   |
+| Cookie de session            | `SameSite=Lax`, `Secure=false` (même domaine, HTTP) | `SameSite=None`, `Secure=true` (domaines différents, HTTPS obligatoire) |
 
 `Database.php` et `AuthController.php` détectent automatiquement l'environnement (via `APP_ENV`) pour appliquer la configuration adaptée, sans nécessiter de code différent entre les deux contextes.
