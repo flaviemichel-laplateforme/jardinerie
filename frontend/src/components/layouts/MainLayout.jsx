@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './Header';
@@ -19,6 +20,12 @@ export default function MainLayout() {
   // Données fictives pour le profil (en attendant le système d'authentification)
   const userRole = isAdminSpace ? 'admin' : 'customer';
   const userName = user?.first_name ?? 'Invité';
+
+  // Sans ça, React Router conserve la position de défilement d'une page à l'autre :
+  // en cliquant sur une carte produit en bas de catalogue, on arrivait en bas de la fiche produit.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">

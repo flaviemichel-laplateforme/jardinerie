@@ -9,8 +9,12 @@ $allowedOrigins = [
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
+// Les URLs de preview Vercel changent à chaque branche (ex: jardinerie-git-ma-branche-michels-projects-37882444.vercel.app).
+// Impossible de toutes les lister à l'avance : on les autorise via un motif, limité à mon propre projet Vercel.
+$isVercelPreview = preg_match('#^https://jardinerie-git-[a-z0-9-]+-michels-projects-37882444\.vercel\.app$#', $origin) === 1;
+
 // Si l'origine de la requête fait partie de nos origines autorisées, on l'affiche explicitement
-if (in_array($origin, $allowedOrigins)) {
+if (in_array($origin, $allowedOrigins) || $isVercelPreview) {
     header("Access-Control-Allow-Origin: " . $origin);
 } else {
     // Fallback de sécurité
@@ -53,9 +57,12 @@ try {
 // -----------------------------------------------------------------------
 $router = new AltoRouter();
 
-// Optionnel mais recommandé : Si votre projet était dans un sous-dossier (ex: localhost/monprojet/api)
-// il faudrait indiquer la base de l'URL ici. Avec Docker, on est à la racine, donc on laisse vide ou on gère dynamiquement.
-// $router->setBasePath(''); 
+// En local (Docker), l'API est servie à la racine du domaine : http://localhost:8000/api/...
+// En production (Plesk), l'API est servie dans un sous-dossier : https://.../jardinerie/api/...
+// Sans cette ligne, AltoRouter compare l'URL complète à des routes définies sans préfixe et ne matche jamais en production.
+if (($_ENV['APP_ENV'] ?? 'development') === 'production') {
+    $router->setBasePath('/jardinerie');
+}
 
 
 // -----------------------------------------------------------------------

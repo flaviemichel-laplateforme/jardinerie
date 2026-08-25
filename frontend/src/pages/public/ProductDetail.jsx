@@ -195,7 +195,34 @@ export default function ProductDetail() {
               )}
 
               {product.description && (
-                <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                <div className="text-gray-600 leading-relaxed">
+                  {product.description.split('•').map((part, index) => {
+                    const trimmed = part.trim();
+                    if (!trimmed) return null;
+
+                    // Le premier segment (avant la première puce) contient plusieurs informations
+                    // du type "Label : valeur." collées à la suite (Type de Sol, Rusticité, Arrosage...).
+                    // On fait démarrer chacune sur sa propre ligne, à chaque fois qu'un nouveau label est détecté.
+                    if (index === 0) {
+                      const lines = trimmed.split(/(?<=\.)\s+(?=[A-ZÀ-Ü][^.:]{1,30}:)/);
+                      return (
+                        <div key={index} className="mb-3 space-y-1.5">
+                          {lines.map((line, lineIndex) => (
+                            <p key={lineIndex}>{line.trim()}</p>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    // Les segments suivants (Conseils, Maladies et ravageurs...) deviennent des points distincts.
+                    return (
+                      <p key={index} className="flex gap-2 mb-1.5 text-sm">
+                        <span className="text-jardinerie-primary shrink-0">•</span>
+                        <span>{trimmed}</span>
+                      </p>
+                    );
+                  })}
+                </div>
               )}
 
               {product.plant_id && product.latin_name && (
