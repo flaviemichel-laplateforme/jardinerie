@@ -200,9 +200,18 @@ export default function ProductDetail() {
                     const trimmed = part.trim();
                     if (!trimmed) return null;
 
-                    // Le premier segment (avant la première puce) reste le texte d'introduction.
+                    // Le premier segment (avant la première puce) contient plusieurs informations
+                    // du type "Label : valeur." collées à la suite (Type de Sol, Rusticité, Arrosage...).
+                    // On fait démarrer chacune sur sa propre ligne, à chaque fois qu'un nouveau label est détecté.
                     if (index === 0) {
-                      return <p key={index} className="mb-3">{trimmed}</p>;
+                      const lines = trimmed.split(/(?<=\.)\s+(?=[A-ZÀ-Ü][^.:]{1,30}:)/);
+                      return (
+                        <div key={index} className="mb-3 space-y-1.5">
+                          {lines.map((line, lineIndex) => (
+                            <p key={lineIndex}>{line.trim()}</p>
+                          ))}
+                        </div>
+                      );
                     }
 
                     // Les segments suivants (Conseils, Maladies et ravageurs...) deviennent des points distincts.
