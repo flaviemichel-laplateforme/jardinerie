@@ -195,7 +195,25 @@ export default function ProductDetail() {
               )}
 
               {product.description && (
-                <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                <div className="text-gray-600 leading-relaxed">
+                  {product.description.split('•').map((part, index) => {
+                    const trimmed = part.trim();
+                    if (!trimmed) return null;
+
+                    // Le premier segment (avant la première puce) reste le texte d'introduction.
+                    if (index === 0) {
+                      return <p key={index} className="mb-3">{trimmed}</p>;
+                    }
+
+                    // Les segments suivants (Conseils, Maladies et ravageurs...) deviennent des points distincts.
+                    return (
+                      <p key={index} className="flex gap-2 mb-1.5 text-sm">
+                        <span className="text-jardinerie-primary shrink-0">•</span>
+                        <span>{trimmed}</span>
+                      </p>
+                    );
+                  })}
+                </div>
               )}
 
               {product.plant_id && product.latin_name && (
