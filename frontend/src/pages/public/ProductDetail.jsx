@@ -9,6 +9,25 @@ import { resolveAssetUrl } from '../../services/apiClient';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
 
+// Transforme les URLs présentes dans un texte libre en vrais liens cliquables.
+function linkify(text) {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-jardinerie-primary underline hover:text-green-700"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -208,7 +227,7 @@ export default function ProductDetail() {
                       return (
                         <div key={index} className="mb-3 space-y-1.5">
                           {lines.map((line, lineIndex) => (
-                            <p key={lineIndex}>{line.trim()}</p>
+                            <p key={lineIndex}>{linkify(line.trim())}</p>
                           ))}
                         </div>
                       );
@@ -218,7 +237,7 @@ export default function ProductDetail() {
                     return (
                       <p key={index} className="flex gap-2 mb-1.5 text-sm">
                         <span className="text-jardinerie-primary shrink-0">•</span>
-                        <span>{trimmed}</span>
+                        <span>{linkify(trimmed)}</span>
                       </p>
                     );
                   })}
