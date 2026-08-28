@@ -4,6 +4,15 @@ FROM php:8.3-apache
 # Installation des extensions PHP nécessaires
 RUN docker-php-ext-install pdo pdo_mysql
 
+# Installation de GD (traitement d'images : redimensionnement/compression à l'upload)
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libwebp-dev \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
+    && docker-php-ext-install gd \
+    && rm -rf /var/lib/apt/lists/*
+
 # Installation de Xdebug (débogueur pas-à-pas, utilisable depuis VS Code)
 RUN pecl install xdebug && docker-php-ext-enable xdebug
 COPY docker/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
