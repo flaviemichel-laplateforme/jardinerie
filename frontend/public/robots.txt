@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin
+Disallow: /compte
+Allow: /
+
+Sitemap: https://jardinerie.vercel.app/sitemap.xml

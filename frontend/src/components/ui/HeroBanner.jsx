@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import fondImage from '../../assets/img/fond.png';
+import fondImage from '../../assets/img/fond.jpg';
 // Leçon de destructuration : On définit les "props" (propriétés) que ce composant peut recevoir.
 // On leur donne des valeurs par défaut au cas où on oublierait de les renseigner.
 export default function HeroBanner({ 
@@ -11,13 +11,13 @@ export default function HeroBanner({
   return (
     // On conserve exactement la même structure et les mêmes classes Tailwind
     <section className="relative mx-auto max-w-[1600px] px-4 pt-6 sm:px-6">
-      <div className="relative flex h-[300px] w-full flex-col items-center justify-center overflow-hidden rounded-[20px] bg-gray-100 md:h-[400px]">
+      <div className="relative flex h-[300px] w-full flex-col items-center justify-center overflow-hidden rounded-[20px] bg-gray-100 md:h-[560px]">
         
         {/* L'image devient dynamique grâce à la prop imageSrc */}
         <img 
           src={imageSrc} 
           alt={altText} 
-          className="absolute inset-0 h-full w-full object-cover opacity-80"
+          className="absolute inset-0 h-full w-full object-cover object-top opacity-80"
         />
         
         <div className="absolute inset-0 bg-jardinerie-text/20"></div>
