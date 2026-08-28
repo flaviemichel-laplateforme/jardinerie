@@ -7,8 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import CheckoutStepper from '../../components/checkout/CheckoutStepper';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
 function PaymentForm() {
   const stripe = useStripe();
   const elements = useElements();
@@ -59,6 +57,11 @@ function PaymentForm() {
 }
 
 export default function CheckoutPayment() {
+  // Initialisation paresseuse : loadStripe() (et le chargement du SDK Stripe
+  // qui va avec, ~900 Ko) ne s'exécute qu'au montage de cette page, jamais
+  // sur les autres pages du site où ce composant n'est pas affiché.
+  const [stripePromise] = useState(() => loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY));
+
   const { clientSecret } = useCheckout();
   const navigate = useNavigate();
 
