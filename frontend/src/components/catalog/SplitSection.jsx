@@ -1,6 +1,11 @@
 import fond from '../../assets/img/fond.jpg';
+import { Link } from 'react-router-dom';
 
-export default function SplitSection() {
+export default function SplitSection({
+   buttonText="Nous contacter pour un conseil",
+    buttonLink="/contact"
+}) {
+  
   return (
     <section className="mx-auto max-w-[1600px] px-4 py-1 sm:px-6">
       
@@ -44,9 +49,12 @@ export default function SplitSection() {
           </p>
           
           {/* self-start empêche le bouton de prendre toute la largeur de la colonne */}
-          <button className="self-start rounded-full bg-jardinerie-primary px-8 py-3.5 text-sm font-bold text-white transition-all hover:bg-green-700 hover:-translate-y-1 hover:shadow-lg">
-            Nous contacter pour un conseil
-          </button>
+          <Link
+            to={buttonLink}
+            className="self-start rounded-full bg-jardinerie-primary px-8 py-3.5 text-sm font-bold text-white transition-all hover:bg-green-700 hover:-translate-y-1 hover:shadow-lg"
+          >
+            {buttonText}
+          </Link>
           
         </div>
 

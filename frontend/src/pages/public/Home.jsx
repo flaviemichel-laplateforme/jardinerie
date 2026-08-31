@@ -67,7 +67,9 @@ export default function Home() {
       
 
       {/* SECTION EXPERTISE */}
-      <SplitSection />
+      <SplitSection 
+       buttonText="Nous contacter pour un conseil"
+      buttonLink="/contact"/>
 
     </main>
   );
