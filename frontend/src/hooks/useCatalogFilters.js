@@ -5,6 +5,7 @@ export function useCatalogFilters() {
 
     const searchQuery = searchParams.get('search') || '';
   const activeCategories = searchParams.get('categories') ? searchParams.get('categories').split(',') : [];
+  const activeSubcategories = searchParams.get('subcategories') ? searchParams.get('subcategories').split(',') : [];
   const activeExpositions = searchParams.get('expositions') ? searchParams.get('expositions').split(',') : [];
   const activeWater = searchParams.get('water') ? searchParams.get('water').split(',') : [];
   const activeCriteria = searchParams.get('criteria') ? searchParams.get('criteria').split(',') : [];
@@ -20,6 +21,12 @@ export function useCatalogFilters() {
       params.set('categories', newFilters.categories.join(','));
     } else {
       params.delete('categories');
+    }
+
+    if (newFilters.subcategories && newFilters.subcategories.length > 0) {
+      params.set('subcategories', newFilters.subcategories.join(','));
+    } else {
+      params.delete('subcategories');
     }
 
     if (newFilters.expositions && newFilters.expositions.length > 0) {
@@ -64,6 +71,7 @@ export function useCatalogFilters() {
     searchParams,
     searchQuery,
     activeCategories,
+    activeSubcategories,
     activeCriteria,
     activeExpositions,
     activePrice,

@@ -4,6 +4,7 @@ import { filterService } from '../../services/filterService';
 
 export default function FilterSidebar({
   activeCategories = [],
+  activeSubcategories = [],
   activeExpositions = [],
   activeWater = [],
   activeCriteria = [],
@@ -12,7 +13,7 @@ export default function FilterSidebar({
   onReset,
   mode = 'global', // 'vegetaux', 'jardinage', ou 'global'
 }) {
-  const { data: apiFilters, loading, error, request } = useApi();
+  const { data: apiFilters, error, request } = useApi();
 
   const MIN = 0;
   const MAX = 500;
@@ -27,8 +28,8 @@ export default function FilterSidebar({
     const controller = new AbortController();
     
     const fetchSidebarFilters = async () => {
-      const url = filterService.buildFiltersUrl(mode);
-      
+      const url = filterService.buildFiltersUrl(mode, activeCategories);
+
       // On encapsule l'appel dans une fonction asynchrone pour mieux gérer l'AbortController
       await request(url, { signal: controller.signal }, false);
     };
@@ -36,13 +37,16 @@ export default function FilterSidebar({
     fetchSidebarFilters();
 
     return () => {
-      // Nettoyage uniquement si le composant est détruit ou si le 'mode' change
+      // Nettoyage uniquement si le composant est détruit, si le 'mode' change, ou si les catégories cochées changent
       controller.abort();
     };
-    // On a retiré 'request' du tableau de dépendances. 
+    // On a retiré 'request' du tableau de dépendances.
     // Ainsi, quand le parent se met à jour suite à un changement de prix, ce bloc n'est plus relancé.
+    // 'activeCategories.join(",")' plutôt que 'activeCategories' directement : le tableau est recréé
+    // à chaque rendu par useCatalogFilters, sa référence change toujours ; la chaîne, elle, ne change
+    // que si le contenu change réellement.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  }, [mode, activeCategories.join(',')]);
 
   // Synchronisation si le parent force un nouveau prix (ex: bouton "effacer")
   useEffect(() => {
@@ -53,6 +57,7 @@ export default function FilterSidebar({
   const updateFilters = (patch) => {
     onFilterChange({
       categories: activeCategories,
+      subcategories: activeSubcategories,
       expositions: activeExpositions,
       water: activeWater,
       criteria: activeCriteria,
@@ -66,7 +71,18 @@ export default function FilterSidebar({
 
   const handleCheckboxChange = (filterType, value) => {
     const stringValue = String(value);
-    if (filterType === 'categories') updateFilters({ categories: toggleValue(activeCategories, stringValue) });
+    if (filterType === 'categories') {
+      // Décocher une catégorie doit aussi retirer ses sous-catégories cochées,
+      // sinon un filtre invisible resterait actif sans que l'utilisateur le voie.
+      const nextCategories = toggleValue(activeCategories, stringValue);
+      const stillVisibleSubcategoryIds = options.subcategories
+        .filter((sub) => nextCategories.includes(String(sub.category_id)))
+        .map((sub) => String(sub.id));
+      const nextSubcategories = activeSubcategories.filter((id) => stillVisibleSubcategoryIds.includes(id));
+
+      updateFilters({ categories: nextCategories, subcategories: nextSubcategories });
+    }
+    if (filterType === 'subcategories') updateFilters({ subcategories: toggleValue(activeSubcategories, stringValue) });
     if (filterType === 'expositions') updateFilters({ expositions: toggleValue(activeExpositions, stringValue) });
     if (filterType === 'water') updateFilters({ water: toggleValue(activeWater, stringValue) });
     if (filterType === 'criteria') updateFilters({ criteria: toggleValue(activeCriteria, stringValue) });
@@ -94,6 +110,7 @@ export default function FilterSidebar({
 
   const hasActiveFilters =
     activeCategories.length > 0 ||
+    activeSubcategories.length > 0 ||
     activeExpositions.length > 0 ||
     activeWater.length > 0 ||
     activeCriteria.length > 0 ||
@@ -109,7 +126,7 @@ export default function FilterSidebar({
     );
   }
 
-  if (loading || !apiFilters) {
+  if (!apiFilters) {
     return (
       <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto h-96 animate-pulse bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center">
         <span className="text-gray-400 text-sm">Chargement des filtres...</span>
@@ -122,6 +139,7 @@ export default function FilterSidebar({
 
   const options = {
     categories: apiFilters.categories || [],
+    subcategories: apiFilters.subcategories || [],
     expositions: (apiFilters.expositions || []).sort(
       (a, b) => exposureOrder.indexOf(a.id) - exposureOrder.indexOf(b.id)
     ),
@@ -177,6 +195,25 @@ export default function FilterSidebar({
             )}
           </div>
         </div>
+
+        {activeCategories.length > 0 && options.subcategories.length > 0 && (
+          <div className="mb-6">
+            <h3 className="mb-3 text-sm font-semibold text-jardinerie-text/80">Sous-catégories</h3>
+            <div className="flex flex-col space-y-2">
+              {options.subcategories.map((sub) => (
+                <label key={`subcat-${sub.id}`} className="group flex cursor-pointer items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-4 w-4 rounded border-gray-300 accent-jardinerie-primary focus:ring-2 focus:ring-jardinerie-primary/50"
+                    checked={activeSubcategories.includes(String(sub.id))}
+                    onChange={() => handleCheckboxChange('subcategories', sub.id)}
+                  />
+                  <span className="text-sm text-gray-600 transition-colors group-hover:text-jardinerie-primary">{sub.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         {showBotanicalFilters && (
           <>
