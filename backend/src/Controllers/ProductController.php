@@ -35,6 +35,11 @@ class ProductController
             $filters['categories'] = htmlspecialchars(trim($_GET['categories']));
         }
 
+        // Filtre par sous-catégories
+        if (isset($_GET['subcategories']) && trim($_GET['subcategories']) !== '') {
+            $filters['subcategories'] = htmlspecialchars(trim($_GET['subcategories']));
+        }
+
         // Filtre par exposition
         if (isset($_GET['expositions']) && trim($_GET['expositions']) !== '') {
             $filters['expositions'] = htmlspecialchars(trim($_GET['expositions']));
