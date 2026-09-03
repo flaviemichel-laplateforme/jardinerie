@@ -17,8 +17,11 @@ class FilterController
         // 1. On récupère le paramètre type depuis l'URL de React (ex: ?type=vegetaux)
         $type = $_GET['type'] ?? null;
 
-        // 2. On interroge le service avec ce filtre
-        $result = $this->filterService->getFiltersConfiguration($type);
+        // 1bis. Catégories cochées (ex: ?categories=1,3)
+        $categoryIds = $_GET['categories'] ?? null;
+
+        // 2. On interroge le service avec ces filtres
+        $result = $this->filterService->getFiltersConfiguration($type, $categoryIds);
 
         // 3. En cas d'erreur serveur ou SQL
         if (!$result['success']) {

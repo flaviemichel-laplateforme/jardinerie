@@ -10,6 +10,7 @@ export default function Catalog() {
     searchParams,
     searchQuery,
     activeCategories,
+    activeSubcategories,
     activeCriteria,
     activeExpositions,
     activePrice,
@@ -42,6 +43,7 @@ export default function Catalog() {
         {/* LA BARRE DE FILTRES : Protégée, elle reste ancrée dans le DOM */}
         <FilterSidebar
           activeCategories={activeCategories}
+          activeSubcategories={activeSubcategories}
           activeExpositions={activeExpositions}
           activeWater={activeWater}
           activeCriteria={activeCriteria}

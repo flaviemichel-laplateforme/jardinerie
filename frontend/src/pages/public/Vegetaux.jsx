@@ -11,6 +11,7 @@ export default function Vegetaux() {
     searchParams,
     searchQuery,
     activeCategories,
+    activeSubcategories,
     activeCriteria,
     activeExpositions,
     activePrice,
@@ -40,8 +41,9 @@ export default function Vegetaux() {
 
       <div className="flex flex-col gap-8 lg:flex-row xl:gap-10">
         
-        <FilterSidebar 
+        <FilterSidebar
           activeCategories={activeCategories}
+          activeSubcategories={activeSubcategories}
           activeExpositions={activeExpositions}
           activeWater={activeWater}
           activeCriteria={activeCriteria}

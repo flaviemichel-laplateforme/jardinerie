@@ -84,6 +84,17 @@ class ProductModel
                 $conditions[] = "c.id IN (" . implode(',', $catPlaceholders) . ")";
             }
 
+            if (!empty($filters['subcategories'])) {
+                $subcatIds = explode(',', $filters['subcategories']);
+                $subcatPlaceholders = [];
+                foreach ($subcatIds as $index => $id) {
+                    $paramName = 'subcat' . $index;
+                    $subcatPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = (int) $id;
+                }
+                $conditions[] = "s.id IN (" . implode(',', $subcatPlaceholders) . ")";
+            }
+
             if (!empty($filters['expositions'])) {
                 $exposures = explode(',', $filters['expositions']);
                 $expPlaceholders = [];
@@ -226,6 +237,17 @@ class ProductModel
                     $params[$paramName] = (int) $id;
                 }
                 $conditions[] = "c.id IN (" . implode(',', $catPlaceholders) . ")";
+            }
+
+            if (!empty($filters['subcategories'])) {
+                $subcatIds = explode(',', $filters['subcategories']);
+                $subcatPlaceholders = [];
+                foreach ($subcatIds as $index => $id) {
+                    $paramName = 'subcat' . $index;
+                    $subcatPlaceholders[] = ':' . $paramName;
+                    $params[$paramName] = (int) $id;
+                }
+                $conditions[] = "s.id IN (" . implode(',', $subcatPlaceholders) . ")";
             }
 
             if (!empty($filters['expositions'])) {

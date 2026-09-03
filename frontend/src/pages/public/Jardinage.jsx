@@ -12,6 +12,7 @@ export default function Jardinage() {
     searchParams,
     searchQuery,
     activeCategories,
+    activeSubcategories,
     activePrice,
     updateFilters,
     resetFilters,
@@ -41,6 +42,7 @@ export default function Jardinage() {
         {/* LA BARRE DE FILTRES : Protégée, elle ne se démontera plus au chargement */}
         <FilterSidebar
           activeCategories={activeCategories}
+          activeSubcategories={activeSubcategories}
           activePrice={activePrice}
           onFilterChange={updateFilters}
           onReset={resetFilters}
