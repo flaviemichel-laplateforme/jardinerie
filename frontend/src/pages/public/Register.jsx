@@ -8,6 +8,12 @@ import logoImage from '../../assets/img/Logo.png';
 import fondImage from '../../assets/img/fond.jpg';
 import { getPasswordRules } from '../../utils/passwordRules';
 
+// Même règle que NamePolicy::validate() côté backend : lettres (accents compris), apostrophes, tirets, espaces.
+const NAME_REGEX = /^[a-zA-ZÀ-ÿ' -]+$/;
+// Même regex que celle utilisée nativement par les navigateurs pour <input type="email">
+// (spec HTML Living Standard) — rejette les caractères comme ":" ou "/" dans la partie locale.
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
 export default function Register() {
 
   const [formData, setFormData] = useState({
@@ -20,6 +26,7 @@ export default function Register() {
   });
 
   const [registered, setRegistered] = useState(false);
+  const [touched, setTouched] = useState({});
 
   const { loading, request } = useApi();
 
@@ -31,8 +38,51 @@ export default function Register() {
     }));
   };
 
+  const handleBlur = (e) => {
+    setTouched((prev) => ({ ...prev, [e.target.name]: true }));
+  };
+
+  const fieldErrors = {
+    first_name: formData.first_name.trim() === ''
+      ? "Le prénom est obligatoire."
+      : !NAME_REGEX.test(formData.first_name.trim())
+        ? "Uniquement des lettres et des tirets."
+        : null,
+    last_name: formData.last_name.trim() === ''
+      ? "Le nom est obligatoire."
+      : !NAME_REGEX.test(formData.last_name.trim())
+        ? "Uniquement des lettres et des tirets."
+        : null,
+    email: formData.email.trim() === ''
+      ? "L'adresse email est obligatoire."
+      : !EMAIL_REGEX.test(formData.email.trim())
+        ? "Adresse email invalide."
+        : null,
+    confirm_password: formData.confirm_password !== '' && formData.confirm_password !== formData.password
+      ? "Les mots de passe ne correspondent pas."
+      : null,
+  };
+
+  const getInputClassName = (fieldName) => {
+    const base = "mt-1 appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm bg-white/95 transition-colors";
+    if (!touched[fieldName]) {
+      return `${base} border-gray-300 focus:ring-jardinerie-primary focus:border-jardinerie-primary`;
+    }
+    return fieldErrors[fieldName]
+      ? `${base} border-red-400 focus:ring-red-400 focus:border-red-400`
+      : `${base} border-green-500 focus:ring-green-500 focus:border-green-500`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Force l'affichage de toutes les erreurs si l'utilisateur soumet sans avoir quitté chaque champ.
+    setTouched({ first_name: true, last_name: true, email: true, confirm_password: true });
+
+    if (Object.values(fieldErrors).some(Boolean)) {
+      toast.error("Merci de corriger les champs invalides.");
+      return;
+    }
 
     if (formData.password !== formData.confirm_password) {
       toast.error("Les mots de passe ne correspondent pas.");
@@ -125,8 +175,12 @@ if (failedRule) {
                     required
                     value={formData.first_name}
                     onChange={handleChange}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-jardinerie-primary focus:border-jardinerie-primary sm:text-sm bg-white/95 transition-colors"
+                    onBlur={handleBlur}
+                    className={getInputClassName('first_name')}
                   />
+                  {touched.first_name && fieldErrors.first_name && (
+                    <p className="mt-1 text-xs text-red-600">{fieldErrors.first_name}</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="last_name" className="block text-sm font-medium text-gray-900">Nom</label>
@@ -137,8 +191,12 @@ if (failedRule) {
                     required
                     value={formData.last_name}
                     onChange={handleChange}
-                    className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-jardinerie-primary focus:border-jardinerie-primary sm:text-sm bg-white/95 transition-colors"
+                    onBlur={handleBlur}
+                    className={getInputClassName('last_name')}
                   />
+                  {touched.last_name && fieldErrors.last_name && (
+                    <p className="mt-1 text-xs text-red-600">{fieldErrors.last_name}</p>
+                  )}
                 </div>
               </div>
 
@@ -153,8 +211,12 @@ if (failedRule) {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-jardinerie-primary focus:border-jardinerie-primary sm:text-sm bg-white/95 transition-colors"
+                  onBlur={handleBlur}
+                  className={getInputClassName('email')}
                 />
+                {touched.email && fieldErrors.email && (
+                  <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+                )}
               </div>
 
               {/* Mot de passe */}
@@ -199,8 +261,12 @@ if (failedRule) {
                   minLength={8}
                   value={formData.confirm_password}
                   onChange={handleChange}
-                  className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-jardinerie-primary focus:border-jardinerie-primary sm:text-sm bg-white/95 transition-colors"
+                  onBlur={handleBlur}
+                  className={getInputClassName('confirm_password')}
                 />
+                {touched.confirm_password && fieldErrors.confirm_password && (
+                  <p className="mt-1 text-xs text-red-600">{fieldErrors.confirm_password}</p>
+                )}
               </div>
 
               {/* Consentement RGPD*/}
