@@ -1,5 +1,9 @@
 // src/pages/public/CheckoutPayment.jsx
-import { loadStripe } from '@stripe/stripe-js';
+// Import depuis '/pure' plutôt que '@stripe/stripe-js' directement : la version
+// standard déclenche un préchargement du script Stripe dès l'import du module,
+// même sans appeler loadStripe() — ce qui chargeait Stripe sur TOUTES les pages
+// puisque l'app n'a pas de découpage de code par route (un seul bundle JS).
+import { loadStripe } from '@stripe/stripe-js/pure';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCheckout } from '../../contexts/CheckoutContext';
 import { useCart } from '../../contexts/CartContext';
