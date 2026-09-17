@@ -113,7 +113,6 @@ class EmailService
     ): string {
         $safeFirstName = htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8');
 
-        // Construire les lignes du tableau des articles
         $itemsRows = '';
         foreach ($cartItems as $item) {
             $safeItemName = htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8');
@@ -187,19 +186,25 @@ class EmailService
                     </table>
 
                     <!-- Récapitulatif des totaux -->
+                    <!-- Tableau plutôt que des div en flex : Outlook (bureau) ignore display:flex
+                         et collerait le libellé au montant sans le moindre espace. Le padding et le
+                         fond restent sur le div englobant : Outlook ne les applique pas de façon
+                         fiable directement sur une balise <table>. -->
                     <div style='background: #f9f9f6; border-radius: 8px; padding: 16px; margin-top: 16px;'>
-                        <div style='display: flex; justify-content: space-between; margin-bottom: 8px; color: #555;'>
-                            <span>Sous-total TTC</span>
-                            <span>{$totalFormatted} €</span>
-                        </div>
-                        <div style='display: flex; justify-content: space-between; margin-bottom: 12px; color: #555;'>
-                            <span>Livraison (Colissimo)</span>
-                            <span>{$shippingFormatted}</span>
-                        </div>
-                        <div style='display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #027148; border-top: 2px solid #027148; padding-top: 12px;'>
-                            <span>Total payé </span>
-                            <span>{$grandTotal} €</span>
-                        </div>
+                        <table style='width: 100%; border-collapse: collapse;'>
+                            <tr style='color: #555;'>
+                                <td style='padding-bottom: 8px;'>Sous-total TTC</td>
+                                <td style='padding-bottom: 8px; text-align: right;'>{$totalFormatted} €</td>
+                            </tr>
+                            <tr style='color: #555;'>
+                                <td style='padding-bottom: 12px;'>Livraison (Colissimo)</td>
+                                <td style='padding-bottom: 12px; text-align: right;'>{$shippingFormatted}</td>
+                            </tr>
+                            <tr style='font-size: 18px; font-weight: bold; color: #027148; border-top: 2px solid #027148;'>
+                                <td style='padding-top: 12px;'>Total payé</td>
+                                <td style='padding-top: 12px; text-align: right;'>{$grandTotal} €</td>
+                            </tr>
+                        </table>
                     </div>
 
                     <p style='color: #555; line-height: 1.6; margin-top: 24px;'>

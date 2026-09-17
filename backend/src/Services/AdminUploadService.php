@@ -114,8 +114,6 @@ class AdminUploadService
             $width  = imagesx($source);
             $height = imagesy($source);
 
-            // On ne redimensionne que si l'image est réellement trop large ;
-            // pas besoin d'agrandir une petite image.
             if ($width > self::MAX_WIDTH) {
                 $newWidth  = self::MAX_WIDTH;
                 $newHeight = (int) round($height * ($newWidth / $width));
