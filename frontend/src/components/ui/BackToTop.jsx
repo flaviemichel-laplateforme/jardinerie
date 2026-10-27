@@ -3,7 +3,8 @@ import { ArrowUp } from 'lucide-react';
 
 const SCROLL_THRESHOLD = 400;
 
-export default function BackToTop() {
+// raised : sur mobile, on remonte le bouton au-dessus de la barre de filtre du catalogue
+export default function BackToTop({ raised = false }) {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -29,7 +30,7 @@ export default function BackToTop() {
             type="button"
             onClick={scrollToTop}
             aria-label="Retour en haut de la page"
-            className='fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-jardinerie-primary text-white shadow-lg transition-opacity hover:opacity-80'
+            className={`fixed right-6 z-30 ${raised ? 'bottom-24 lg:bottom-6' : 'bottom-6'} flex h-12 w-12 items-center justify-center rounded-full bg-jardinerie-primary text-white shadow-lg transition-opacity hover:opacity-80`}
         >
             <ArrowUp size={22} />
         </button>
