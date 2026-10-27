@@ -13,3 +13,15 @@
     @apply list-disc list-inside text-sm text-gray-700 space-y-1;
   }
 }
+
+/* Ouverture du panneau de filtres mobile : la feuille monte depuis le bas de l'écran */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: none; }
+}
+.animate-sheet-up {
+  animation: sheet-up 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-up { animation: none; }
+}
