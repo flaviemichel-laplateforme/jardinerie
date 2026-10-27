@@ -81,11 +81,15 @@ export default function MobileFilters({ chips, activeCount, resultCount, onReset
         <div
           // top = hauteur réelle du header, publiée par Header.jsx (repli 140px)
           style={{ top: 'var(--header-h, 140px)' }}
-          className="sticky z-30 -mb-4 bg-white py-2 shadow-[0_3px_6px_-3px_rgba(0,0,0,0.2)] lg:hidden"
+          // Pleine largeur d'écran : les marges négatives annulent le retrait de la page
+          // (main p-6/md:p-8 dans MainLayout + px-4/sm:px-6 dans les pages catalogue).
+          className="sticky z-30 -mx-10 -mb-4 bg-white py-2 shadow-[0_3px_6px_-3px_rgba(0,0,0,0.2)] sm:-mx-12 md:-mx-14 lg:hidden"
         >
+          {/* Le padding est sur la liste (et non sur la barre) : les pastilles défilent jusqu'au bord
+            de l'écran, tout en démarrant alignées sur les cartes. */}
           <ul
             aria-label="Filtres actifs"
-            className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex gap-2 overflow-x-auto px-10 [scrollbar-width:none] sm:px-12 md:px-14 [&::-webkit-scrollbar]:hidden"
           >
             {chips.map((chip) => (
               <li key={chip.key} className="shrink-0">
@@ -125,7 +129,8 @@ export default function MobileFilters({ chips, activeCount, resultCount, onReset
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-label={triggerLabel}
-        className={`sticky bottom-3 z-30 order-last flex min-h-[48px] items-center justify-between rounded-[10px] bg-jardinerie-primary px-4 text-white shadow-lg lg:hidden ${focusRing}`}
+        // Marges négatives : la barre s'étend jusqu'à 12 px des bords de l'écran (même retrait que ci-dessus)
+        className={`sticky bottom-3 z-30 -mx-7 order-last flex min-h-[48px] sm:-mx-9 md:-mx-11 items-center justify-between rounded-[10px] bg-jardinerie-primary px-4 text-white shadow-lg lg:hidden ${focusRing}`}
       >
         <span className="flex items-center gap-2 text-sm font-bold">
           <SlidersHorizontal size={16} aria-hidden="true" />
