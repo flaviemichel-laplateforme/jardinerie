@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './Header';
 import Footer from './Footer';
@@ -25,14 +24,13 @@ export default function MainLayout() {
   const userRole = isAdminSpace ? 'admin' : 'customer';
   const userName = user?.first_name ?? 'Invité';
 
-  // Sans ça, React Router conserve la position de défilement d'une page à l'autre :
-  // en cliquant sur une carte produit en bas de catalogue, on arrivait en bas de la fiche produit.
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
-
   return (
     <div className="flex flex-col min-h-screen overflow-x-clip bg-white font-sans">
+      {/* Gère la position de défilement à chaque navigation :
+          - nouvelle page (clic sur un lien) : on repart en haut, sinon une carte cliquée en bas du
+            catalogue ouvrirait la fiche produit en bas ;
+          - retour en arrière (bouton Retour, flèche du navigateur) : on retrouve la position quittée. */}
+      <ScrollRestoration />
       <Toaster
         position="bottom-right"
         // "!" (important) pour primer sur le style en ligne que react-hot-toast pose sur son conteneur
