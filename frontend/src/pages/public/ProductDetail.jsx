@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 import { productService } from '../../services/productService';
 import { resolveAssetUrl } from '../../services/apiClient';
 import { useInView } from 'react-intersection-observer';
-import { ArrowLeft, Droplet } from 'lucide-react';
+import { ArrowLeft, Droplet, Truck } from 'lucide-react';
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, formatEuro } from '../../constants/shipping';
 import { SUN_EXPOSURE_CONFIG, WATER_REQUIREMENT_CONFIG, WATER_COLOR } from '../../constants/plantAttributes';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
@@ -41,7 +42,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [realTimeStock, setRealTimeStock] = useState(null);
 
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, cartItems, cartTotal } = useCart();
 
   // Le bloc d'achat de la page est-il à l'écran ? Sur mobile, la barre d'achat collée en bas ne s'affiche
   // que lorsqu'il est hors écran, pour ne jamais montrer deux boutons identiques en même temps.
@@ -158,6 +159,9 @@ export default function ProductDetail() {
   };
 
   const totalPrice = (Number(product.price_tax_incl) * quantity).toFixed(2);
+
+  // Avec ce que contient déjà le panier + la quantité choisie, la commande atteindrait-elle la livraison offerte ?
+  const getsFreeShipping = cartTotal + Number(product.price_tax_incl) * quantity >= FREE_SHIPPING_THRESHOLD;
 
   return (
     // pb-36 sur mobile : laisse la place à la barre d'achat collée en bas (~110 px)
@@ -319,9 +323,22 @@ export default function ProductDetail() {
             ref={buyBoxRef}
             className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm flex flex-col items-center justify-center min-h-[250px]"
           >
-             <div className="text-3xl font-extrabold text-gray-600 mb-8">
+             <div className="text-3xl font-extrabold text-gray-600 mb-2">
               {Number(product.price_tax_incl).toFixed(2)} €
             </div>
+
+            {/* Livraison : information fixe tant que le seuil n'est pas atteint, puis confirmation dès que le
+                panier (contenu actuel + quantité choisie) donne droit à la livraison offerte. */}
+            <p
+              className={`mb-8 flex items-center justify-center gap-2 text-center text-sm ${
+                getsFreeShipping ? 'font-bold text-jardinerie-primary' : 'text-gray-500'
+              }`}
+            >
+              <Truck size={16} className="shrink-0" aria-hidden="true" />
+              {getsFreeShipping
+                ? 'Livraison offerte pour cette commande'
+                : `Livraison offerte dès ${FREE_SHIPPING_THRESHOLD} € d'achat · sinon ${formatEuro(SHIPPING_COST)}`}
+            </p>
 
             {cartQuantity > 0 && (
               <p className="text-sm text-jardinerie-primary font-medium mb-3">
