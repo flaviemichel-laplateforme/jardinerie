@@ -50,6 +50,7 @@ export default function Catalog() {
           activePrice={activePrice}
           onFilterChange={updateFilters}
           onReset={resetFilters}
+          resultCount={total}
           mode="global" // Mode explicite pour la clarté (ou laisser par défaut)
         />
 

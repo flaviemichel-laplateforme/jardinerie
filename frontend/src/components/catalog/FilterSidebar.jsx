@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '../../hooks/useApi';
 import { filterService } from '../../services/filterService';
+import MobileFilters from './MobileFilters';
 
 export default function FilterSidebar({
   activeCategories = [],
@@ -11,6 +12,7 @@ export default function FilterSidebar({
   activePrice = { min: '', max: '' },
   onFilterChange,
   onReset,
+  resultCount, // nombre de résultats, affiché dans la barre mobile
   mode = 'global', // 'vegetaux', 'jardinage', ou 'global'
 }) {
   const { data: apiFilters, error, request } = useApi();
@@ -128,7 +130,7 @@ export default function FilterSidebar({
 
   if (!apiFilters) {
     return (
-      <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto h-96 animate-pulse bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center">
+      <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto h-96 animate-pulse bg-gray-50 rounded-2xl border border-gray-100 hidden lg:flex items-center justify-center">
         <span className="text-gray-400 text-sm">Chargement des filtres...</span>
       </aside>
     );
@@ -163,19 +165,30 @@ export default function FilterSidebar({
 
   const showBotanicalFilters = mode !== 'jardinage';
 
-  return (
-    <aside className="mb-8 w-full shrink-0 pr-0 md:mb-0 md:w-64 md:pr-6 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
-      <div className="rounded-2xl border border-jardinerie-primary/10 bg-white p-5 shadow-sm">
-        
-        <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-          <h2 className="font-bold uppercase tracking-wider text-jardinerie-text">Filtres</h2>
-          {hasActiveFilters && (
-            <button onClick={onReset} className="text-xs font-medium text-red-500 underline transition-colors hover:text-red-700">
-              Effacer tout
-            </button>
-          )}
-        </div>
+  // Libellé d'une valeur de filtre à partir de la liste d'options chargée depuis l'API
+  const labelOf = (list, id) => list.find((item) => String(item.id) === String(id))?.label ?? id;
 
+  // Les filtres actifs sous forme de pastilles (barre mobile). Retirer une pastille réutilise
+  // exactement la logique des cases à cocher : une catégorie retire aussi ses sous-catégories.
+  const chips = [
+    ...activeCategories.map((id) => ({ key: `cat-${id}`, label: labelOf(options.categories, id), onRemove: () => handleCheckboxChange('categories', id) })),
+    ...activeSubcategories.map((id) => ({ key: `subcat-${id}`, label: labelOf(options.subcategories, id), onRemove: () => handleCheckboxChange('subcategories', id) })),
+    ...activeExpositions.map((id) => ({ key: `exp-${id}`, label: translateLabel(id), onRemove: () => handleCheckboxChange('expositions', id) })),
+    ...activeWater.map((id) => ({ key: `water-${id}`, label: translateLabel(id), onRemove: () => handleCheckboxChange('water', id) })),
+    ...activeCriteria.map((id) => ({ key: `criteria-${id}`, label: labelOf(options.criteria, id), onRemove: () => handleCheckboxChange('criteria', id) })),
+  ];
+  if (activePrice.min !== '' || activePrice.max !== '') {
+    chips.push({
+      key: 'price',
+      label: `${activePrice.min !== '' ? activePrice.min : MIN} – ${activePrice.max !== '' ? activePrice.max : MAX} €`,
+      onRemove: resetPrice,
+    });
+  }
+
+  // Les sections de filtres (catégories → prix) sont partagées : la sidebar desktop et le panneau mobile
+  // affichent exactement le même contenu, avec les mêmes handlers.
+  const filterSections = (
+    <>
         <div className="mb-6">
           <h3 className="mb-3 text-sm font-semibold text-jardinerie-text/80">Catégories</h3>
           <div className="flex flex-col space-y-2">
@@ -343,8 +356,38 @@ export default function FilterSidebar({
             </div>
           </div>
         </div>
+    </>
+  );
 
-      </div>
-    </aside>
+  return (
+    <>
+      {/* Desktop (lg et plus) : sidebar collante à gauche */}
+      <aside className="hidden w-64 shrink-0 pr-6 lg:sticky lg:top-6 lg:block lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+        <div className="rounded-2xl border border-jardinerie-primary/10 bg-white p-5 shadow-sm">
+
+        <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+          <h2 className="font-bold uppercase tracking-wider text-jardinerie-text">Filtres</h2>
+          {hasActiveFilters && (
+            <button onClick={onReset} className="text-xs font-medium text-red-500 underline transition-colors hover:text-red-700">
+              Effacer tout
+            </button>
+          )}
+        </div>
+
+          {filterSections}
+
+        </div>
+      </aside>
+
+      {/* Mobile et tablette (sous lg) : pastilles, barre du bas et panneau coulissant */}
+      <MobileFilters
+        chips={chips}
+        activeCount={chips.length}
+        resultCount={resultCount}
+        onReset={onReset}
+      >
+        {filterSections}
+      </MobileFilters>
+    </>
   );
 }
