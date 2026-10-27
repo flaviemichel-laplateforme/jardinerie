@@ -1,5 +1,10 @@
 import { useSearchParams } from 'react-router-dom';
 
+// Un changement de filtre vide la liste puis la recharge : la page devient très courte un instant et le
+// navigateur ramène la position de défilement tout en bas, sur le footer. On repart donc du haut de la
+// liste, ce qui est aussi le comportement attendu pour un nouveau jeu de résultats.
+const scrollToResultsTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
+
 export function useCatalogFilters() {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -58,13 +63,15 @@ export function useCatalogFilters() {
       params.delete('price_max');
     }
 
-    setSearchParams(params); 
+    setSearchParams(params);
+    scrollToResultsTop();
   };
 
   const resetFilters = () => {
     const params = new URLSearchParams();
-    if (searchQuery) params.set('search', searchQuery); 
+    if (searchQuery) params.set('search', searchQuery);
     setSearchParams(params);
+    scrollToResultsTop();
   };
 
      return {
