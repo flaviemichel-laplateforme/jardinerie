@@ -28,7 +28,7 @@ export default function MainLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans">
+    <div className="flex flex-col min-h-screen overflow-x-clip bg-white font-sans">
       <Toaster 
         position="bottom-right"
         toastOptions={{
