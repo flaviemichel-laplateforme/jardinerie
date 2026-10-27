@@ -11,7 +11,7 @@ export default function HeroBanner({
   return (
     // On conserve exactement la même structure et les mêmes classes Tailwind
     <section className="relative mx-auto max-w-[1600px] px-4 pt-6 sm:px-6">
-      <div className="relative flex h-[300px] w-full flex-col items-center justify-center overflow-hidden rounded-[20px] bg-gray-100 md:h-[560px]">
+      <div className="relative flex aspect-[4/3] w-full flex-col items-center justify-center overflow-hidden rounded-[20px] bg-gray-100 sm:aspect-[16/9] md:aspect-auto md:h-[560px]">
         
         {/* L'image devient dynamique grâce à la prop imageSrc */}
         <img 

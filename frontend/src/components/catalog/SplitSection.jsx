@@ -21,8 +21,8 @@ export default function SplitSection({
         {/* ========================================== */}
         {/* BLOC GAUCHE : L'IMAGE                      */}
         {/* ========================================== */}
-        {/* Sur mobile on force une hauteur (h-64), sur desktop elle s'adapte (md:h-full) */}
-        <div className="h-64 w-full overflow-hidden rounded-2xl md:h-[400px]">
+        {/* Sur mobile la hauteur suit la largeur (ratio 16/10), sur desktop elle est fixée (md:h-[400px]) */}
+        <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl md:aspect-auto md:h-[400px]">
           <img 
             src={fond} 
             alt="Jardinage professionnel" 
