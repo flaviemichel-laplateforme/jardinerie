@@ -10,6 +10,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import CheckoutStepper from '../../components/checkout/CheckoutStepper';
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from '../../constants/shipping';
 
 function PaymentForm() {
   const stripe = useStripe();
@@ -70,7 +71,7 @@ export default function CheckoutPayment() {
   const navigate = useNavigate();
 
   const { cartItems, cartTotal } = useCart();
-  const shippingCost = cartTotal >= 50 ? 0 : 7.90;
+  const shippingCost = cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
   const grandTotal = cartTotal + shippingCost;
 
   // Si on arrive ici sans clientSecret (accès direct à l'URL ou après

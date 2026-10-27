@@ -5,6 +5,8 @@ import { Trash2, CreditCard, ShieldCheck, Smartphone } from 'lucide-react';
 import { resolveAssetUrl } from '../../services/apiClient';
 import placeholderImg from '../../assets/img/placeholder-vegetaux.png';
 import CheckoutStepper from '../../components/checkout/CheckoutStepper';
+import FreeShippingProgress from '../../components/cart/FreeShippingProgress';
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from '../../constants/shipping';
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -39,8 +41,8 @@ export default function Cart() {
 
   const totalHT = Object.values(vatBreakdown).reduce((sum, { ht }) => sum + ht, 0);
 
-  const isFreeShipping = totalTTC >= 50 || totalTTC === 0;
-  const shippingCost = isFreeShipping ? 0 : 7.90;
+  const isFreeShipping = totalTTC >= FREE_SHIPPING_THRESHOLD || totalTTC === 0;
+  const shippingCost = isFreeShipping ? 0 : SHIPPING_COST;
   const finalTotal = totalTTC + shippingCost;
 
   if (cartItems.length === 0) {
@@ -62,6 +64,9 @@ export default function Cart() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
         <div className="lg:col-span-8 flex flex-col gap-4">
+          {/* En haut de la liste : sur mobile le résumé est tout en bas, le message doit rester visible */}
+          <FreeShippingProgress cartTotal={totalTTC} />
+
           {cartItems.map((item) => (
             <div key={item.id} className="bg-white rounded-[20px] shadow-sm border border-gray-100 p-4 flex gap-4 relative">
               

@@ -5,6 +5,7 @@ import Footer from './Footer';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import BackToTop from '../ui/BackToTop';
+import AnnouncementBar from './AnnouncementBar';
 
 export default function MainLayout() {
   const location = useLocation();
@@ -51,6 +52,9 @@ export default function MainLayout() {
           },
         }}
       />
+      {/* Bandeau d'information (livraison offerte), absent de l'espace d'administration */}
+      {!isAdminSpace && <AnnouncementBar />}
+
       {/* L'en-tête reste présent pour la navigation globale */}
       <Header />
       
