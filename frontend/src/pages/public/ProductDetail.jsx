@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import StockBadge from '../../components/ui/StockBadge';
 import { useCart } from '../../contexts/CartContext';
 import toast from 'react-hot-toast';
 import { productService } from '../../services/productService';
 import { resolveAssetUrl } from '../../services/apiClient';
+import { ArrowLeft, Droplet } from 'lucide-react';
+import { SUN_EXPOSURE_CONFIG, WATER_REQUIREMENT_CONFIG, WATER_COLOR } from '../../constants/plantAttributes';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
 
@@ -31,6 +33,7 @@ function linkify(text) {
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: product, loading, error, request } = useApi();
 
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
@@ -87,11 +90,6 @@ export default function ProductDetail() {
     return resolveAssetUrl(imagePath);
   };
 
-  const translateLabel = (val) => {
-    const dict = { 'Sun': 'Plein Soleil', 'Partial Shade': 'Mi-ombre', 'Shade': 'Ombre', 'Low': 'Faible', 'Medium': 'Moyen', 'High': 'Élevé' };
-    return dict[val] || val;
-  };
-
   const handleQtyChange = (delta) => {
     setQuantity((prev) => {
       const next = prev + delta;
@@ -131,11 +129,28 @@ export default function ProductDetail() {
 
   const activeImage = selectedThumbnail || (product.main_image_url ? getImageUrl(product.main_image_url) : FALLBACK_IMAGE);
   const productRef = `REF-JARD-${String(product.id).padStart(5, '0')}`;
+
+  // Retour à la page d'où l'on vient (catalogue avec ses filtres, accueil...). Si la fiche a été ouverte
+  // directement (lien partagé, nouvel onglet), il n'y a pas d'historique : on renvoie vers le bon catalogue.
+  // location.key vaut 'default' uniquement sur la toute première page chargée.
+  const handleBack = () => {
+    if (location.key !== 'default') navigate(-1);
+    else navigate(product.plant_id ? '/vegetaux' : '/jardinage');
+  };
   const cartQuantity = cartItems.find((item) => item.id === product.id)?.quantity ?? 0;
 
   return (
     <article className="mx-auto max-w-7xl px-6 py-8">
-      
+
+      <button
+        type="button"
+        onClick={handleBack}
+        className="mb-4 inline-flex items-center gap-2 rounded-full border border-jardinerie-primary px-4 py-2 text-sm font-bold text-jardinerie-text transition-colors hover:bg-jardinerie-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jardinerie-primary focus-visible:ring-offset-2"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        Retour
+      </button>
+
       <nav className="mb-8 p-3 border border-gray-200 rounded text-sm text-gray-600 bg-white">
         <Link to="/" className="hover:text-jardinerie-primary hover:underline">Accueil</Link>
         <span className="mx-2 text-gray-400">&gt;</span>
@@ -197,19 +212,44 @@ export default function ProductDetail() {
           {(product.plant_id || product.description) && (
             <div className="border border-gray-200 rounded-lg p-6 mb-6 bg-white">
               {product.plant_id && (product.sun_exposure || product.water_requirement) && (
-                <div className="flex gap-8 mb-4 text-gray-700">
-                  {product.sun_exposure && (
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Exposition ☀️</span>
-                      <span className="font-medium text-lg">{translateLabel(product.sun_exposure)}</span>
-                    </div>
-                  )}
-                  {product.water_requirement && (
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Arrosage💧</span>
-                      <span className="font-medium text-lg">{translateLabel(product.water_requirement)}</span>
-                    </div>
-                  )}
+                <div className="flex flex-wrap gap-x-8 gap-y-4 mb-4 text-gray-700">
+                  {product.sun_exposure && (() => {
+                    // L'icône change selon l'exposition ; elle est décorative : l'information est portée par le texte.
+                    const exposure = SUN_EXPOSURE_CONFIG[product.sun_exposure];
+                    return (
+                      <div className="flex items-center gap-3">
+                        {exposure && (
+                          // Même taille de pastille pour l'exposition et l'arrosage : les textes restent alignés
+                          <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.18)]" aria-hidden="true">
+                            <exposure.Icon size={22} color={exposure.color} />
+                          </span>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Exposition</span>
+                          <span className="font-medium text-lg">{exposure?.label ?? product.sun_exposure}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {product.water_requirement && (() => {
+                    // Le nombre de gouttes augmente avec le besoin en eau (1, 2 ou 3).
+                    const water = WATER_REQUIREMENT_CONFIG[product.water_requirement];
+                    return (
+                      <div className="flex items-center gap-3">
+                        {water && (
+                          <span className="flex h-11 w-16 shrink-0 items-center justify-center gap-0.5 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.18)]" aria-hidden="true">
+                            {Array.from({ length: water.drops }, (_, i) => (
+                              <Droplet key={i} size={18} color={WATER_COLOR} fill={WATER_COLOR} fillOpacity={0.25} />
+                            ))}
+                          </span>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-500 uppercase tracking-wide mb-1">Arrosage</span>
+                          <span className="font-medium text-lg">{water?.label ?? product.water_requirement}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

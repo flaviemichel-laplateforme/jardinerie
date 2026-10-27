@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Sun, CloudSun, Cloud, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
+import { SUN_EXPOSURE_CONFIG } from '../../constants/plantAttributes';
 import toast from 'react-hot-toast';
 import StockBadge from '../ui/StockBadge';
 // IMPORT 1 : On importe l'outil de résolution d'URL (Vérifiez bien le chemin de l'import selon votre dossier)
@@ -33,12 +34,7 @@ export default function ProductCard({ product }) {
   // 3. MAGIE : On construit la vraie URL de l'image (PHP) ou on garde le placeholder
   const finalImageUrl = main_image_url ? resolveAssetUrl(main_image_url) : placeholderImg;
 
-  const EXPOSURE_ICONS = {
-    'Sun': { Icon: Sun, color: '#F4A261' },
-    'Partial Shade': { Icon: CloudSun, color: '#A98A7D' },
-    'Shade': { Icon: Cloud, color: '#505F40' },
-  };
-  const exposureIcon = EXPOSURE_ICONS[sun_exposure];
+  const exposureIcon = SUN_EXPOSURE_CONFIG[sun_exposure];
 
   return (
     <div className="group flex h-full w-full flex-col overflow-hidden rounded-[20px] bg-jardinerie-bg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
