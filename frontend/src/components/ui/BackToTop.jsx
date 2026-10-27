@@ -3,8 +3,9 @@ import { ArrowUp } from 'lucide-react';
 
 const SCROLL_THRESHOLD = 400;
 
-// raised : sur mobile, on remonte le bouton au-dessus de la barre de filtre du catalogue
-export default function BackToTop({ raised = false }) {
+// bottomClass : position verticale du bouton. Sur mobile, MainLayout le remonte au-dessus de la barre
+// collée en bas de l'écran (barre de filtre du catalogue, barre d'achat de la fiche produit).
+export default function BackToTop({ bottomClass = 'bottom-6' }) {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -30,7 +31,7 @@ export default function BackToTop({ raised = false }) {
             type="button"
             onClick={scrollToTop}
             aria-label="Retour en haut de la page"
-            className={`fixed right-6 z-30 ${raised ? 'bottom-24 lg:bottom-6' : 'bottom-6'} flex h-12 w-12 items-center justify-center rounded-full bg-jardinerie-primary text-white shadow-lg transition-opacity hover:opacity-80`}
+            className={`fixed right-6 z-30 ${bottomClass} flex h-12 w-12 items-center justify-center rounded-full bg-jardinerie-primary text-white shadow-lg transition-opacity hover:opacity-80`}
         >
             <ArrowUp size={22} />
         </button>
