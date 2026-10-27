@@ -20,12 +20,32 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [openSection, setOpenSection] = useState(null);
 
+  const headerRef = useRef(null);
   const profileMenuRef = useRef(null);
   const navMenuRef = useRef(null);
   const mobileMenuRef = useRef(null);
 
   const {data: vegetauxFilters, request: requestVegetauxFilters } = useApi();
   const { data: jardinageFilters, request: requestJardinageFilters } = useApi();
+
+  // Publie la hauteur réelle du header (--header-h) : elle varie (recherche mobile ouverte ou non),
+  // et les éléments collants placés juste dessous (pastilles de filtres) ont besoin de la connaître.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const publishHeight = () => {
+      document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    };
+    publishHeight();
+
+    const observer = new ResizeObserver(publishHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--header-h');
+    };
+  }, []);
 
   // Fermeture du menu de navigation au clic extérieur
   // (on ignore les clics dans la nav desktop ET dans le tiroir mobile,
@@ -77,7 +97,7 @@ export default function Header() {
   const dashboardLabel = user?.role === 'admin' ? 'Tableau de bord administration' : 'Mon espace client';
 
   return (
-    <header className="sticky top-0 z-40 w-full shadow-md font-sans">
+    <header ref={headerRef} className="sticky top-0 z-40 w-full shadow-md font-sans">
       {/* Barre supérieure */}
       <div className="bg-jardinerie-bg flex items-center justify-between px-4 md:px-6 py-4">
 

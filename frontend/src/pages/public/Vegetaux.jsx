@@ -50,6 +50,7 @@ export default function Vegetaux() {
           activePrice={activePrice}
           onFilterChange={updateFilters} 
           onReset={resetFilters}
+          resultCount={total}
           mode="vegetaux" 
         />
 

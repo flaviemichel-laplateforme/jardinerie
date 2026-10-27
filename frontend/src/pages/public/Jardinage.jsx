@@ -46,6 +46,7 @@ export default function Jardinage() {
           activePrice={activePrice}
           onFilterChange={updateFilters}
           onReset={resetFilters}
+          resultCount={total}
           mode="jardinage"
         />
 
