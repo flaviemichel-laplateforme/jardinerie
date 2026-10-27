@@ -7,13 +7,17 @@ export default function ProductRow({ title, products }) {
   const headingId = useId();
 
   // Un seul état pour tout ce qui dépend de la position de défilement :
-  // flèches actives ou non, et taille/position du "pouce" de la barre de progression.
+  // flèches actives ou non, "pouce" de la barre de progression et valeur du curseur.
   const [scrollState, setScrollState] = useState({
     isScrollable: false,
     canScrollLeft: false,
     canScrollRight: false,
     thumbWidth: 100,
     thumbLeft: 0,
+    progress: 0,
+    cardStep: 1,
+    maxIndex: 0,
+    index: 0,
   });
 
   // Le "- 1" absorbe les arrondis de pixels des écrans à haute densité.
@@ -21,13 +25,29 @@ export default function ProductRow({ title, products }) {
     const scroller = scrollerRef.current;
     if (!scroller) return;
     const { scrollLeft, clientWidth, scrollWidth } = scroller;
+    const maxScroll = scrollWidth - clientWidth;
+    const canScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
+
+    // Distance entre le début de deux cartes (largeur + espace) : c'est le "pas" du curseur.
+    // Le curseur avance carte par carte, comme l'aimantation (snap) du carrousel.
+    const first = scroller.firstElementChild;
+    const second = first?.nextElementSibling;
+    const cardStep = second ? second.offsetLeft - first.offsetLeft : clientWidth;
+    const maxIndex = cardStep > 0 ? Math.ceil(maxScroll / cardStep) : 0;
+
     setScrollState({
       isScrollable: scrollWidth > clientWidth + 1,
       canScrollLeft: scrollLeft > 0,
-      canScrollRight: scrollLeft + clientWidth < scrollWidth - 1,
+      canScrollRight,
       // Largeur du pouce = part visible du contenu ; position = part déjà défilée.
       thumbWidth: (clientWidth / scrollWidth) * 100,
       thumbLeft: (scrollLeft / scrollWidth) * 100,
+      progress: maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0,
+      cardStep,
+      maxIndex,
+      // En fin de course, on force le dernier cran : le dernier défilement est
+      // généralement plus court qu'un pas complet.
+      index: canScrollRight ? Math.min(Math.round(scrollLeft / cardStep), maxIndex) : maxIndex,
     });
   }, []);
 
@@ -45,9 +65,21 @@ export default function ProductRow({ title, products }) {
     scroller.scrollBy({ left: direction * scroller.clientWidth * 0.8, behavior: 'smooth' });
   };
 
+  // Le curseur déplace le carrousel directement sur la carte choisie.
+  // "instant" : avec un défilement animé, la valeur du curseur serait recalculée en cours de route
+  // et le pouce sauterait pendant le glissement.
+  const scrollToIndex = (index) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const maxScroll = scroller.scrollWidth - scroller.clientWidth;
+    scroller.scrollTo({ left: Math.min(index * scrollState.cardStep, maxScroll), behavior: 'instant' });
+  };
+
   if (!products || products.length === 0) return null;
 
-  const { isScrollable, canScrollLeft, canScrollRight, thumbWidth, thumbLeft } = scrollState;
+  const {
+    isScrollable, canScrollLeft, canScrollRight, thumbWidth, thumbLeft, progress, maxIndex, index,
+  } = scrollState;
 
   // aria-disabled (et non "disabled") : le bouton garde le focus clavier quand on atteint
   // le bout du carrousel, au lieu de renvoyer l'utilisateur en haut de la page.
@@ -110,14 +142,35 @@ export default function ProductRow({ title, products }) {
         )}
       </div>
 
-      {/* Barre de progression : purement décorative (confort visuel), donc masquée aux
-        lecteurs d'écran. La piste représente tout le contenu, le pouce la partie visible. */}
+      {/* Barre de progression cliquable.
+        - L'<input type="range"> natif, invisible (opacity-0), couvre toute la barre : il apporte
+          gratuitement le clic, le glissement, les flèches du clavier et l'annonce par les lecteurs d'écran.
+        - La barre dessinée dessous (aria-hidden) n'est que l'habillage visuel : la piste représente tout
+          le contenu, le pouce la partie visible.
+        - h-6 : zone de clic/toucher confortable autour d'une barre fine de 4 px.
+        - peer / peer-focus-visible : l'input étant invisible, c'est la barre qui affiche l'anneau de focus. */}
       {isScrollable && (
-        <div aria-hidden="true" className="mt-2 h-1 rounded-full bg-jardinerie-primary/15">
-          <div
-            className="h-full rounded-full bg-jardinerie-primary"
-            style={{ width: `${thumbWidth}%`, marginLeft: `${thumbLeft}%` }}
+        <div className="relative mt-2 flex h-6 items-center">
+          <input
+            type="range"
+            min={0}
+            max={maxIndex}
+            step={1}
+            value={index}
+            onChange={(e) => scrollToIndex(Number(e.target.value))}
+            aria-label={`Position dans ${title}`}
+            aria-valuetext={`${Math.round(progress)} % parcouru`}
+            className="peer absolute inset-0 z-10 m-0 h-full w-full cursor-pointer opacity-0"
           />
+          <div
+            aria-hidden="true"
+            className="h-1 w-full rounded-full bg-jardinerie-primary/15 peer-focus-visible:ring-2 peer-focus-visible:ring-jardinerie-primary peer-focus-visible:ring-offset-2"
+          >
+            <div
+              className="h-full rounded-full bg-jardinerie-primary"
+              style={{ width: `${thumbWidth}%`, marginLeft: `${thumbLeft}%` }}
+            />
+          </div>
         </div>
       )}
     </section>
