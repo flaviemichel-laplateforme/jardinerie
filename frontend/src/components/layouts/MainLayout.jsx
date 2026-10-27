@@ -51,7 +51,7 @@ export default function MainLayout() {
         {isPrivateSpace && <Sidebar userRole={userRole} userName={userName} />}
 
         {/* Zone de contenu principal (Outlet) */}
-        <main className={`flex-grow p-6 md:p-8 bg-jardinerie-bg/10 ${isPrivateSpace ? 'pb-24 md:pb-8' : ''}`}>
+        <main className={`min-w-0 flex-grow p-6 md:p-8 bg-jardinerie-bg/10 ${isPrivateSpace ? 'pb-24 md:pb-8' : ''}`}>
           <BackToTop />
           <Outlet />
         </main>
