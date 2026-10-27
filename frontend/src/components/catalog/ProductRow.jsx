@@ -1,23 +1,125 @@
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 
 export default function ProductRow({ title, products }) {
+  const scrollerRef = useRef(null);
+  const headingId = useId();
+
+  // Un seul état pour tout ce qui dépend de la position de défilement :
+  // flèches actives ou non, et taille/position du "pouce" de la barre de progression.
+  const [scrollState, setScrollState] = useState({
+    isScrollable: false,
+    canScrollLeft: false,
+    canScrollRight: false,
+    thumbWidth: 100,
+    thumbLeft: 0,
+  });
+
+  // Le "- 1" absorbe les arrondis de pixels des écrans à haute densité.
+  const updateScrollState = useCallback(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const { scrollLeft, clientWidth, scrollWidth } = scroller;
+    setScrollState({
+      isScrollable: scrollWidth > clientWidth + 1,
+      canScrollLeft: scrollLeft > 0,
+      canScrollRight: scrollLeft + clientWidth < scrollWidth - 1,
+      // Largeur du pouce = part visible du contenu ; position = part déjà défilée.
+      thumbWidth: (clientWidth / scrollWidth) * 100,
+      thumbLeft: (scrollLeft / scrollWidth) * 100,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    window.addEventListener('resize', updateScrollState);
+    return () => window.removeEventListener('resize', updateScrollState);
+  }, [updateScrollState, products]);
+
+  // Une flèche fait défiler d'environ 80 % de la largeur visible : on garde
+  // une carte de repère d'un clic à l'autre. Une flèche inactive ne fait rien.
+  const scrollByPage = (direction, isEnabled) => {
+    const scroller = scrollerRef.current;
+    if (!scroller || !isEnabled) return;
+    scroller.scrollBy({ left: direction * scroller.clientWidth * 0.8, behavior: 'smooth' });
+  };
+
   if (!products || products.length === 0) return null;
 
+  const { isScrollable, canScrollLeft, canScrollRight, thumbWidth, thumbLeft } = scrollState;
+
+  // aria-disabled (et non "disabled") : le bouton garde le focus clavier quand on atteint
+  // le bout du carrousel, au lieu de renvoyer l'utilisateur en haut de la page.
+  const arrowClass =
+    'absolute top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-jardinerie-primary shadow-lg ring-1 ring-black/5 transition-all hover:bg-jardinerie-primary hover:text-white aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-white aria-disabled:hover:text-jardinerie-primary md:flex';
+
   return (
-    <section className="mt-12">
+    // aria-labelledby : les lecteurs d'écran annoncent la région par le titre de la rangée.
+    <section className="mt-12" aria-labelledby={headingId}>
       {/* Titre de la section (ex: Sélection du moment !) */}
-      <h2 className="mb-6 text-2xl font-extrabold text-jardinerie-text">
+      <h2 id={headingId} className="mb-6 text-2xl font-extrabold text-jardinerie-text">
         {title}
       </h2>
 
-      {/* Même grille responsive que les pages Catalogue/Végétaux/Jardinage :
-        des cartes de taille cohérente (240px minimum), qui se répartissent
-        automatiquement en colonnes selon l'espace disponible. */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+      <div className="relative">
+        {/* Les flèches n'ont de sens que si le contenu déborde réellement */}
+        {isScrollable && (
+          <button
+            type="button"
+            onClick={() => scrollByPage(-1, canScrollLeft)}
+            aria-disabled={!canScrollLeft}
+            aria-label={`${title} : produits précédents`}
+            className={`${arrowClass} -left-4`}
+          >
+            <ChevronLeft size={22} />
+          </button>
+        )}
+
+        {/* Carrousel : une seule ligne qui défile horizontalement.
+          - overflow-x-auto : le défilement (au doigt sur mobile, à la molette/flèches sur desktop)
+          - snap-x snap-mandatory : chaque carte s'aimante au bord à l'arrêt du défilement
+          - pt-2 pb-4 : laisse la place à l'ombre et au léger soulèvement des cartes au survol,
+            que overflow-x-auto couperait sinon
+          - masquage de la barre de défilement native : remplacée par notre barre de progression */}
+        <div
+          ref={scrollerRef}
+          onScroll={updateScrollState}
+          className="flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {products.map((product) => (
+            // Largeur fixe : les cartes gardent la même taille quel que soit l'écran, et sur mobile
+            // on devine la carte suivante, ce qui invite à glisser.
+            // shrink-0 empêche les cartes de s'écraser pour tenir dans la ligne.
+            <div key={product.id} className="w-[240px] shrink-0 snap-start sm:w-[260px]">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
+
+        {isScrollable && (
+          <button
+            type="button"
+            onClick={() => scrollByPage(1, canScrollRight)}
+            aria-disabled={!canScrollRight}
+            aria-label={`${title} : produits suivants`}
+            className={`${arrowClass} -right-4`}
+          >
+            <ChevronRight size={22} />
+          </button>
+        )}
       </div>
+
+      {/* Barre de progression : purement décorative (confort visuel), donc masquée aux
+        lecteurs d'écran. La piste représente tout le contenu, le pouce la partie visible. */}
+      {isScrollable && (
+        <div aria-hidden="true" className="mt-2 h-1 rounded-full bg-jardinerie-primary/15">
+          <div
+            className="h-full rounded-full bg-jardinerie-primary"
+            style={{ width: `${thumbWidth}%`, marginLeft: `${thumbLeft}%` }}
+          />
+        </div>
+      )}
     </section>
   );
 };
