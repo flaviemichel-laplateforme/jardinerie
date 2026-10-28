@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\ProductPolicy;
 use App\Models\AdminProductModel;
 use App\Middlewares\AdminMiddleware;
 
@@ -56,16 +57,17 @@ class AdminProductController
     {
         AdminMiddleware::authenticate();
 
-        $data   = json_decode(file_get_contents("php://input"), true);
-        $errors = $this->validate($data);
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (!is_array($data)) {
+            $this->respondInvalid(['Format JSON invalide.']);
+            return;
+        }
+
+        $data   = $this->trimName($data);
+        $errors = ProductPolicy::validate($data, true);
 
         if (!empty($errors)) {
-            http_response_code(400);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Données invalides.',
-                'errors'  => $errors
-            ], JSON_UNESCAPED_UNICODE);
+            $this->respondInvalid($errors);
             return;
         }
 
@@ -101,6 +103,15 @@ class AdminProductController
             return;
         }
 
+        // Seuls les champs envoyés sont vérifiés (PATCH). Avant, la modification n'était pas validée du tout.
+        $data   = $this->trimName($data);
+        $errors = ProductPolicy::validate($data, false);
+
+        if (!empty($errors)) {
+            $this->respondInvalid($errors);
+            return;
+        }
+
         $this->model->update($id, $data);
 
         http_response_code(200);
@@ -133,44 +144,24 @@ class AdminProductController
         ], JSON_UNESCAPED_UNICODE);
     }
 
-    /**
-     * Validation des champs obligatoires à la création.
-     */
-    private function validate(?array $data): array
+    /** Nettoie les espaces autour du nom : ils comptent dans la limite et n'ont aucun intérêt à être enregistrés. */
+    private function trimName(array $data): array
     {
-        $errors = [];
-
-        if (!is_array($data)) {
-            return ['Format JSON invalide.'];
-        }
-
-        if (isset($data['name'])) {
+        if (isset($data['name']) && is_string($data['name'])) {
             $data['name'] = trim($data['name']);
         }
 
-        $required = ['subcategory_id', 'tax_id', 'name', 'price_tax_incl'];
-        foreach ($required as $field) {
-            if (empty($data[$field])) {
-                $errors[] = "Le champ '$field' est obligatoire.";
-            }
-        }
+        return $data;
+    }
 
-        if (!empty($data['price_tax_incl']) && !is_numeric($data['price_tax_incl'])) {
-            $errors[] = "Le prix doit être un nombre.";
-        }
-
-        if (!empty($data['stock_quantity']) && !is_int($data['stock_quantity'])) {
-            $errors[] = "Le stock doit être un entier.";
-        }
-
-        if (!empty($data['name']) && strlen($data['name']) > 255) {
-            $errors[] = "Le nom ne peut pas dépasser 255 caractères.";
-        }
-
-        if (!empty($data['subcategory_id']) && !is_numeric($data['subcategory_id'])) {
-            $errors[] = "L'identifiant de sous-catégorie- est invalide.";
-        }
-
-        return $errors;
+    /** @param string[] $errors */
+    private function respondInvalid(array $errors): void
+    {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Données invalides.',
+            'errors'  => $errors
+        ], JSON_UNESCAPED_UNICODE);
     }
 }

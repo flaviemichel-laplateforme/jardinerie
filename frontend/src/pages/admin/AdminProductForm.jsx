@@ -219,6 +219,7 @@ export default function AdminProductForm() {
 
     const payload = {
       ...data,
+      name: data.name.trim(),
       is_active: data.is_active ? 1 : 0,
       main_image_url: imageUrl || data.main_image_url,
       secondary_image_url: secondaryImageUrl || data.secondary_image_url,
@@ -258,7 +259,7 @@ export default function AdminProductForm() {
       </div>
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
 
           <GeneralInfoSection />
           <CategoryCascadeSection 
