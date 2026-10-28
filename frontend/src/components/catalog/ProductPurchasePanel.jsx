@@ -11,8 +11,9 @@ const focusRing =
 /**
  * Bloc d'achat de la fiche produit : livraison, stock, total, sélecteur de quantité et bouton d'ajout.
  * Placé juste sous le titre et le prix pour être visible dès le premier écran.
+ * Sous lg, le sélecteur, le total et le bouton sont dans la barre d'achat collée en bas de la page : ici ne restent
+ * que les informations (livraison, stock, panier).
  *
- * @param {React.Ref} ref - Posé sur le bloc : la page observe s'il est à l'écran pour afficher la barre d'achat mobile
  * @param {number} quantity - Quantité choisie
  * @param {(delta: number) => void} onQuantityChange - Ajoute ou retire `delta` à la quantité (borné par le stock)
  * @param {number} stockQuantity - Stock disponible
@@ -22,7 +23,6 @@ const focusRing =
  * @param {() => void} onAddToCart - Ajoute au panier
  */
 export default function ProductPurchasePanel({
-  ref,
   quantity,
   onQuantityChange,
   stockQuantity,
@@ -35,7 +35,6 @@ export default function ProductPurchasePanel({
 
   return (
     <div
-      ref={ref}
       className="border-t border-gray-100 bg-white px-4 py-6 md:mb-6 md:rounded-lg md:border md:border-gray-200 md:p-6 md:shadow-sm"
     >
       {/* Livraison : information fixe tant que le seuil n'est pas atteint, puis confirmation dès que le panier
@@ -62,13 +61,14 @@ export default function ProductPurchasePanel({
 
       {/* Le prix unitaire est affiché en haut de la fiche ; ici, le total dès que la quantité dépasse 1 */}
       {quantity > 1 && inStock && (
-        <p className="mb-4 flex items-baseline justify-between text-gray-700">
+        <p className="mb-4 hidden items-baseline justify-between text-gray-700 lg:flex">
           <span className="text-sm text-gray-500">Total</span>
           <span className="text-xl font-extrabold">{totalPrice} €</span>
         </p>
       )}
 
-      <div className="flex items-center gap-3">
+      {/* lg et plus seulement : sous lg, ces contrôles sont dans la barre d'achat collée en bas */}
+      <div className="hidden items-center gap-3 lg:flex">
         {inStock && (
           <div className="flex shrink-0 items-center rounded-[10px] border border-gray-300">
             <button
@@ -80,8 +80,7 @@ export default function ProductPurchasePanel({
             >
               −
             </button>
-            {/* Seule zone « live » de la page pour la quantité : la barre d'achat mobile partage le même état,
-                un second aria-live annoncerait chaque changement en double. */}
+            {/* Zone « live » de la quantité à partir de lg ; sous lg c'est celle de la barre d'achat (l'autre est masquée). */}
             <span aria-live="polite" className="min-w-10 text-center font-medium">
               {quantity}
             </span>

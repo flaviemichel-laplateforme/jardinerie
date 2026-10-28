@@ -31,7 +31,7 @@ export default function BackToTop({ bottomClass = 'bottom-6' }) {
             type="button"
             onClick={scrollToTop}
             aria-label="Retour en haut de la page"
-            className={`fixed right-6 z-30 ${bottomClass} flex h-12 w-12 items-center justify-center rounded-full bg-jardinerie-primary text-white shadow-lg transition-opacity hover:opacity-80`}
+            className={`fixed right-6 z-30 ${bottomClass} flex h-12 w-12 items-center justify-center rounded-full bg-jardinerie-primary text-white shadow-lg ring-2 ring-white transition-opacity hover:opacity-80`}
         >
             <ArrowUp size={22} />
         </button>
