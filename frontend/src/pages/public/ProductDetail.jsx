@@ -11,7 +11,6 @@ import { useCart } from '../../contexts/CartContext';
 import toast from 'react-hot-toast';
 import { productService } from '../../services/productService';
 import { resolveAssetUrl } from '../../services/apiClient';
-import { useInView } from 'react-intersection-observer';
 import { ArrowLeft, Droplet } from 'lucide-react';
 import { FREE_SHIPPING_THRESHOLD } from '../../constants/shipping';
 import { SUN_EXPOSURE_CONFIG, WATER_REQUIREMENT_CONFIG, WATER_COLOR } from '../../constants/plantAttributes';
@@ -28,17 +27,6 @@ export default function ProductDetail() {
   const [realTimeStock, setRealTimeStock] = useState(null);
 
   const { addToCart, cartItems, cartTotal } = useCart();
-
-  // Le bloc d'achat de la page est-il à l'écran ? Sur mobile, la barre d'achat collée en bas ne s'affiche
-  // que lorsqu'il est hors écran, pour ne jamais montrer deux boutons identiques en même temps.
-  // rootMargin négatif en haut : le header collant (~140 px sur mobile) masque le haut de l'écran, un bloc
-  // glissé dessous ne doit plus compter comme visible.
-  const { ref: buyBoxRef, inView: isBuyBoxVisible } = useInView({ threshold: 0, rootMargin: '-140px 0px 0px 0px' });
-
-  // Repère invisible juste après le bloc d'achat. Quand il est à l'écran alors que le bloc ne l'est pas,
-  // on l'a dépassé (on est vers le footer) : la barre ne ferait alors que recouvrir le bas de la page.
-  const { ref: afterBuyBoxRef, inView: isAfterBuyBoxVisible } = useInView({ threshold: 0 });
-  const showMobileBuyBar = !isBuyBoxVisible && !isAfterBuyBoxVisible;
 
   // Requête principale : récupère la fiche produit
   useEffect(() => {
@@ -158,9 +146,10 @@ export default function ProductDetail() {
   const getsFreeShipping = cartTotal + Number(product.price_tax_incl) * quantity >= FREE_SHIPPING_THRESHOLD;
 
   return (
-    // Sous md : pleine largeur (-mx-6 annule le retrait p-6 de <main>, -mt-6 le retrait du haut) et pb-36 pour
-    // laisser la place à la barre d'achat collée en bas (~110 px). À partir de md : mise en page centrée habituelle.
-    <article className="-mx-6 -mt-6 pb-36 md:mx-auto md:mt-0 md:max-w-7xl md:px-6 md:py-8 lg:pb-8">
+    // Sous md : pleine largeur (-mx-6 annule le retrait p-6 de <main>, -mt-6 le retrait du haut). La place de la barre
+    // d'achat collée en bas n'est pas réservée ici mais dans le pied de page (voir MainLayout), sinon le vide s'additionne.
+    // À partir de md : mise en page centrée habituelle.
+    <article className="-mx-6 -mt-6 md:mx-auto md:mt-0 md:max-w-7xl md:px-6 md:py-8">
 
       {/* md et plus : bouton Retour libellé. Sur mobile, un bouton rond est posé sur la galerie (voir plus bas). */}
       <button
@@ -176,7 +165,7 @@ export default function ProductDetail() {
         <Breadcrumb items={breadcrumbItems} />
       </div>
 
-      <div className="mb-12 grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-10">
+      <div className="mb-6 grid grid-cols-1 gap-2 lg:mb-12 lg:grid-cols-2 lg:gap-10">
 
         <ProductGallery
           key={product.id}
@@ -224,9 +213,8 @@ export default function ProductDetail() {
           </div>
 
           {/* Bloc d'achat : juste sous le titre et le prix, visible dès le premier écran sur desktop.
-              Sur mobile, la barre d'achat collée en bas prend le relais quand on le dépasse en lisant la description. */}
+              Sur mobile, il ne garde que les informations : le sélecteur et le bouton sont dans la barre collée en bas. */}
           <ProductPurchasePanel
-            ref={buyBoxRef}
             quantity={quantity}
             onQuantityChange={handleQtyChange}
             stockQuantity={currentStockQty}
@@ -295,12 +283,8 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      <div ref={afterBuyBoxRef} aria-hidden="true" />
-
-      {/* Barre d'achat mobile, collée en bas, visible seulement tant que le bloc d'achat de la page est
-          encore à venir. Le sélecteur partage la même quantité que celui de la page, et le prix du bouton
-          suit la quantité. */}
-      {showMobileBuyBar && (
+      {/* Barre d'achat mobile, collée en bas et toujours visible : le bouton est atteignable à tout moment.
+          Sur mobile, c'est le seul endroit avec le sélecteur et le bouton (la page n'en a plus : pas de doublon). */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] lg:hidden">
           {/* Contenu centré et limité en largeur : sur tablette (jusqu'à 1023 px), un bouton étiré sur toute la
               largeur serait disproportionné. */}
@@ -323,7 +307,7 @@ export default function ProductDetail() {
             >
               −
             </button>
-            <span className="min-w-8 text-center font-medium">{quantity}</span>
+            <span aria-live="polite" className="min-w-8 text-center font-medium">{quantity}</span>
             <button
               type="button"
               onClick={() => handleQtyChange(1)}
@@ -350,7 +334,6 @@ export default function ProductDetail() {
           </div>
           </div>
         </div>
-      )}
 
     </article>
   );

@@ -71,7 +71,13 @@ export default function MainLayout() {
       </div>
 
       {/* 3. Condition moderne : Le footer s'affiche UNIQUEMENT si on n'est PAS dans l'administration */}
-      {!isAdminSpace && <Footer />}
+      {/* Sur la fiche produit (mobile), la barre d'achat reste collée en bas : on prolonge le bandeau vert du pied de
+          page pour que son dernier texte ne passe pas dessous. */}
+      {!isAdminSpace && (
+        <div className={isProductPage ? 'bg-jardinerie-primary pb-28 lg:pb-0' : ''}>
+          <Footer />
+        </div>
+      )}
     </div>
   );
 }
