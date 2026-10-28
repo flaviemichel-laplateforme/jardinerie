@@ -60,7 +60,7 @@ export default function AdminOrders() {
   if (loading && !data) return <Spinner message="Chargement des commandes..." />;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-0 py-8 sm:px-4">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-jardinerie-text">Gestion des commandes</h1>
         <p className="text-sm text-gray-500 mt-1">
