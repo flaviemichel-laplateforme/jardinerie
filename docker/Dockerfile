@@ -18,7 +18,7 @@ RUN pecl install xdebug && docker-php-ext-enable xdebug
 COPY docker/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 
 
-# Installation de curl (nécessaire pour Resend SDK et Composer)
+# Installation de curl (utilisé par Composer ; l'extension PHP curl sert à l'API Brevo et à Stripe)
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
