@@ -16,7 +16,7 @@ Plateforme e-commerce dédiée à la vente de végétaux et d'articles de jardin
 - **Back-end** : PHP natif orienté objet (MVC), AltoRouter
 - **Base de données** : MySQL, via PDO
 - **Paiement** : Stripe
-- **Emails transactionnels** : Resend
+- **Emails transactionnels** : Brevo (API, appelée en cURL natif, sans SDK)
 - **Environnement** : Docker (API + MySQL + phpMyAdmin)
 
 ## Prérequis
@@ -51,7 +51,7 @@ Trois fichiers `.env` sont nécessaires, chacun à copier depuis son modèle `.e
 | Fichier         | Rôle                                                                           |
 | --------------- | ------------------------------------------------------------------------------ |
 | `.env` (racine) | Lu par `docker compose` pour configurer les conteneurs (ports, nom de la base) |
-| `backend/.env`  | Lu par l'API PHP (connexion base de données, clé JWT, clés Stripe et Resend)   |
+| `backend/.env`  | Lu par l'API PHP (connexion base de données, clé JWT, clés Stripe et Brevo)    |
 | `frontend/.env` | Lu par Vite (URL de l'API, clé publique Stripe)                                |
 
 ```
@@ -60,7 +60,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Complétez ensuite chaque fichier avec vos propres valeurs (ports, identifiants de base de données, clés API Stripe/Resend).
+Complétez ensuite chaque fichier avec vos propres valeurs (ports, identifiants de base de données, clés API Stripe/Brevo).
 
 ### 4. Lancer le Back-end (Docker)
 
@@ -140,10 +140,16 @@ DB_PASSWORD=...
 JWT_SECRET=...
 STRIPE_SECRET_KEY=...
 STRIPE_WEBHOOK_SECRET=...
-RESEND_API_KEY=...
-RESEND_FROM_EMAIL=...
+BREVO_API_KEY=...
+MAIL_FROM_EMAIL=...
+MAIL_FROM_NAME="La Jardinerie"
+MAIL_TAG=jardinerie
 FRONTEND_URL=https://mondomaine.vercel.app
 ```
+
+Une valeur contenant un espace (comme `MAIL_FROM_NAME`) doit être **entre guillemets** : sans eux, tout le fichier `.env` devient illisible et l'API ne démarre plus.
+
+`MAIL_FROM_EMAIL` doit être un expéditeur **vérifié** dans Brevo (Paramètres, Expéditeurs, domaine, IP). Si une de ces variables est absente, les e-mails ne partent pas (l'erreur est journalisée), mais les commandes et les comptes restent créés.
 
 5. Import de la base de données via phpMyAdmin (intégré à Plesk) : d'abord le script de structure, puis le script de données.
 6. Activation d'un certificat SSL (Let's Encrypt) sur le domaine, avec redirection automatique HTTP → HTTPS.
@@ -157,3 +163,12 @@ FRONTEND_URL=https://mondomaine.vercel.app
 | Cookie de session            | `SameSite=Lax`, `Secure=false` (même domaine, HTTP) | `SameSite=None`, `Secure=true` (domaines différents, HTTPS obligatoire) |
 
 `Database.php` et `AuthController.php` détectent automatiquement l'environnement (via `APP_ENV`) pour appliquer la configuration adaptée, sans nécessiter de code différent entre les deux contextes.
+
+### E-mails transactionnels (Brevo)
+
+Les e-mails de confirmation de commande, de réinitialisation du mot de passe et de vérification d'adresse partent via l'API Brevo (`src/Core/BrevoClient.php` et `src/Services/EmailService.php`). Points à connaître :
+
+- **Aucun nom de domaine dédié** : l'expéditeur est une adresse personnelle vérifiée dans Brevo. Brevo signe les messages avec sa propre clé DKIM : ils peuvent plus facilement être classés en courrier indésirable. Une mise en production réelle demanderait un domaine authentifié (enregistrements DNS Brevo, DKIM et DMARC) ; il suffirait alors de changer `MAIL_FROM_EMAIL` dans le `.env`, sans modifier le code.
+- **Quota** : 300 e-mails par jour sur la formule gratuite, partagés entre tous les sites rattachés au compte Brevo.
+- **Clé API** : elle expire après 90 jours d'inactivité. Envoyer un e-mail de test avant une démonstration, et en générer une nouvelle si besoin.
+

@@ -2,17 +2,41 @@
 
 namespace App\Services;
 
-use Resend;
+use App\Core\BrevoClient;
 
 class EmailService
 {
-    private \Resend\Client $client;
-    private string $fromEmail;
+    public function __construct(
+        private BrevoClient $brevo = new BrevoClient()
+    ) {}
 
-    public function __construct()
+    /**
+     * Envoie un e-mail via Brevo. L'expéditeur vient du .env (et non du code) : le jour où le site aura un domaine
+     * authentifié, il suffira de changer MAIL_FROM_EMAIL sur le serveur.
+     *
+     * @throws \RuntimeException Si l'expéditeur n'est pas configuré ou si Brevo refuse l'envoi
+     */
+    private function send(string $toEmail, string $subject, string $html): void
     {
-        $this->client    = Resend::client($_ENV['RESEND_API_KEY']);
-        $this->fromEmail = $_ENV['RESEND_FROM_EMAIL'] ?? 'onboarding@resend.dev';
+        $fromEmail = $_ENV['MAIL_FROM_EMAIL'] ?? '';
+        if ($fromEmail === '') {
+            throw new \RuntimeException("MAIL_FROM_EMAIL n'est pas configurée.");
+        }
+
+        $payload = [
+            'sender'      => ['name' => $_ENV['MAIL_FROM_NAME'] ?? 'La Jardinerie', 'email' => $fromEmail],
+            'to'          => [['email' => $toEmail]],
+            'replyTo'     => ['email' => $_ENV['MAIL_REPLY_TO'] ?? $fromEmail],
+            'subject'     => $subject,
+            'htmlContent' => $html,
+        ];
+
+        // Étiquette du site : sépare les statistiques dans Brevo quand le compte sert à plusieurs sites
+        if (!empty($_ENV['MAIL_TAG'])) {
+            $payload['tags'] = [$_ENV['MAIL_TAG']];
+        }
+
+        $this->brevo->send($payload);
     }
 
     /**
@@ -37,19 +61,13 @@ class EmailService
                 $shippingCost
             );
 
-            $this->client->emails->send([
-                'from'    => "La Jardinerie <{$this->fromEmail}>",
-                'to'      => [$toEmail],
-                'subject' => "Confirmation de commande {$orderReference} — La Jardinerie",
-                'html'    => $html,
-            ]);
+            $this->send($toEmail, "Confirmation de commande {$orderReference} — La Jardinerie", $html);
 
             return true;
         } catch (\Exception $e) {
             // On logue l'erreur mais on ne la propage pas —
             // la commande est déjà créée, l'email est secondaire.
             error_log("EMAIL ERROR [{$orderReference}]: " . $e->getMessage());
-            error_log("EMAIL ERROR TRACE: " . $e->getTraceAsString());
             return false;
         }
     }
@@ -62,12 +80,7 @@ class EmailService
         try {
             $html = $this->buildPasswordResetEmail($firstName, $resetUrl);
 
-            $this->client->emails->send([
-                'from'    => "La Jardinerie <{$this->fromEmail}>",
-                'to'      => [$toEmail],
-                'subject' => "Réinitialisation de votre mot de passe — La Jardinerie",
-                'html'    => $html,
-            ]);
+            $this->send($toEmail, "Réinitialisation de votre mot de passe — La Jardinerie", $html);
 
             return true;
         } catch (\Exception $e) {
@@ -84,12 +97,7 @@ class EmailService
         try {
             $html = $this->buildVerificationEmail($firstName, $verifyUrl);
 
-            $this->client->emails->send([
-                'from'    => "La Jardinerie <{$this->fromEmail}>",
-                'to'      => [$toEmail],
-                'subject' => "Confirmez votre adresse email — La Jardinerie",
-                'html'    => $html,
-            ]);
+            $this->send($toEmail, "Confirmez votre adresse email — La Jardinerie", $html);
 
             return true;
         } catch (\Exception $e) {
@@ -232,6 +240,44 @@ class EmailService
     }
 
     /**
+     * Bouton d'appel à l'action « à toute épreuve » pour les clients de messagerie.
+     *
+     * Un simple <a> avec du padding se découpe en morceaux dès que son texte passe sur deux lignes
+     * (écran étroit) : le fond vert est alors cassé et le texte déborde. Ici, le fond et l'arrondi sont portés par une
+     * cellule de tableau, et le lien est un bloc en ligne qui garde sa forme même lorsque le texte se replie.
+     * Le tableau reste utilisable dans Outlook (bureau), qui ignore une bonne partie du CSS moderne.
+     */
+    private function buildButton(string $url, string $label): string
+    {
+        $safeUrl   = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+        $safeLabel = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+
+        return "
+                <table role='presentation' cellspacing='0' cellpadding='0' border='0' align='center' style='margin: 32px auto; max-width: 100%;'>
+                    <tr>
+                        <td align='center' bgcolor='#027148' style='background-color: #027148; border-radius: 999px;'>
+                            <a href='{$safeUrl}' target='_blank' style='display: inline-block; padding: 14px 24px; font-family: Arial, sans-serif; font-size: 16px; line-height: 20px; font-weight: bold; color: #ffffff; text-decoration: none; text-align: center; border-radius: 999px;'>{$safeLabel}</a>
+                        </td>
+                    </tr>
+                </table>";
+    }
+
+    /**
+     * Lien en texte sous le bouton : certains clients de messagerie bloquent ou déforment les boutons.
+     * word-break évite qu'une longue adresse (avec son jeton) ne déborde de l'écran sur mobile.
+     */
+    private function buildFallbackLink(string $url): string
+    {
+        $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+
+        return "
+                <p style='color: #888; font-size: 12px; line-height: 1.6; margin: 0 0 16px; text-align: center;'>
+                    Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+                    <a href='{$safeUrl}' target='_blank' style='color: #027148; word-break: break-all;'>{$safeUrl}</a>
+                </p>";
+    }
+
+    /**
      * Construit le HTML de l'email de réinitialisation de mot de passe.
      */
     private function buildPasswordResetEmail(string $firstName, string $resetUrl): string
@@ -255,11 +301,8 @@ class EmailService
                     Un administrateur a initié une réinitialisation de votre mot de passe.
                     Cliquez sur le bouton ci-dessous pour en choisir un nouveau. Ce lien est valable 1 heure.
                 </p>
-                <div style='text-align: center; margin: 32px 0;'>
-                    <a href='{$resetUrl}' style='background-color: #027148; color: white; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-weight: bold;'>
-                        Choisir un nouveau mot de passe
-                    </a>
-                </div>
+                {$this->buildButton($resetUrl, 'Choisir un nouveau mot de passe')}
+                {$this->buildFallbackLink($resetUrl)}
                 <p style='color: #888; font-size: 12px; line-height: 1.6;'>
                     Si vous n'êtes pas à l'origine de cette demande, ignorez cet email —
                     votre mot de passe actuel restera inchangé.
@@ -295,11 +338,8 @@ class EmailService
                     Merci de votre inscription. Cliquez sur le bouton ci-dessous pour confirmer
                     votre adresse email et activer votre compte. Ce lien est valable 24 heures.
                 </p>
-                <div style='text-align: center; margin: 32px 0;'>
-                    <a href='{$verifyUrl}' style='background-color: #027148; color: white; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-weight: bold;'>
-                        Confirmer mon adresse email
-                    </a>
-                </div>
+                {$this->buildButton($verifyUrl, 'Confirmer mon adresse email')}
+                {$this->buildFallbackLink($verifyUrl)}
                 <p style='color: #888; font-size: 12px; line-height: 1.6;'>
                     Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet email.
                 </p>
