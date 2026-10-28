@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import StockBadge from '../../components/ui/StockBadge';
+import Breadcrumb from '../../components/ui/Breadcrumb';
+import ProductGallery from '../../components/catalog/ProductGallery';
 import { useCart } from '../../contexts/CartContext';
 import toast from 'react-hot-toast';
 import { productService } from '../../services/productService';
@@ -38,7 +40,6 @@ export default function ProductDetail() {
   const location = useLocation();
   const { data: product, loading, error, request } = useApi();
 
-  const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [realTimeStock, setRealTimeStock] = useState(null);
 
@@ -90,7 +91,6 @@ export default function ProductDetail() {
 
   if (id !== currentId) {
     setCurrentId(id);
-    setSelectedThumbnail(null);
     setQuantity(1);
     setRealTimeStock(null);
   }
@@ -134,13 +134,23 @@ export default function ProductDetail() {
     );
   }
 
+  // Photos de la galerie, avec un texte alternatif utile pour chacune
   const galleryImages = [product.main_image_url, product.secondary_image_url]
     .filter(Boolean)
-    .map(path => getImageUrl(path));
-  
-  if (galleryImages.length === 0) galleryImages.push(FALLBACK_IMAGE);
+    .map((path, index) => ({
+      url: getImageUrl(path),
+      alt: index === 0 ? product.product_name : `${product.product_name} — vue ${index + 1}`,
+    }));
 
-  const activeImage = selectedThumbnail || (product.main_image_url ? getImageUrl(product.main_image_url) : FALLBACK_IMAGE);
+  if (galleryImages.length === 0) galleryImages.push({ url: FALLBACK_IMAGE, alt: product.product_name });
+
+  // Fil d'Ariane : une étape sans lien (la sous-catégorie, quand elle existe) est la page courante
+  const breadcrumbItems = [
+    { label: 'Accueil', to: '/' },
+    { label: product.category_name, to: product.plant_id ? '/vegetaux' : '/jardinage' },
+    ...(product.subcategory_name ? [{ label: product.subcategory_name }] : []),
+  ];
+
   const productRef = `REF-JARD-${String(product.id).padStart(5, '0')}`;
 
   // Retour à la page d'où l'on vient (catalogue avec ses filtres, accueil...). Si la fiche a été ouverte
@@ -164,70 +174,63 @@ export default function ProductDetail() {
   const getsFreeShipping = cartTotal + Number(product.price_tax_incl) * quantity >= FREE_SHIPPING_THRESHOLD;
 
   return (
-    // pb-36 sur mobile : laisse la place à la barre d'achat collée en bas (~110 px)
-    <article className="mx-auto max-w-7xl px-6 py-8 pb-36 lg:pb-8">
+    // Sous md : pleine largeur (-mx-6 annule le retrait p-6 de <main>, -mt-6 le retrait du haut) et pb-36 pour
+    // laisser la place à la barre d'achat collée en bas (~110 px). À partir de md : mise en page centrée habituelle.
+    <article className="-mx-6 -mt-6 pb-36 md:mx-auto md:mt-0 md:max-w-7xl md:px-6 md:py-8 lg:pb-8">
 
+      {/* md et plus : bouton Retour libellé. Sur mobile, un bouton rond est posé sur la galerie (voir plus bas). */}
       <button
         type="button"
         onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-2 rounded-full border border-jardinerie-primary px-4 py-2 text-sm font-bold text-jardinerie-text transition-colors hover:bg-jardinerie-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jardinerie-primary focus-visible:ring-offset-2"
+        className="mb-4 hidden items-center gap-2 rounded-full border border-jardinerie-primary px-4 py-2 text-sm font-bold text-jardinerie-text transition-colors hover:bg-jardinerie-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jardinerie-primary focus-visible:ring-offset-2 md:inline-flex"
       >
         <ArrowLeft size={16} aria-hidden="true" />
         Retour
       </button>
 
-      <nav className="mb-8 p-3 border border-gray-200 rounded text-sm text-gray-600 bg-white">
-        <Link to="/" className="hover:text-jardinerie-primary hover:underline">Accueil</Link>
-        <span className="mx-2 text-gray-400">&gt;</span>
-        <Link to={product.plant_id ? '/vegetaux' : '/jardinage'} className="hover:text-jardinerie-primary hover:underline">{product.category_name}</Link>
-        {product.subcategory_name && (
-          <>
-            <span className="mx-2 text-gray-400">&gt;</span>
-            <span className="text-gray-900 font-medium">{product.subcategory_name}</span>
-          </>
-        )}
-      </nav>
+      <div className="md:mb-8">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
-        
-        <div className="flex flex-col gap-4">
-          <div className="rounded-lg overflow-hidden border border-gray-200 bg-white aspect-[4/3] relative flex items-center justify-center group">
-            <img 
-              src={activeImage} 
-              alt={product.product_name}
-              onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-              className="w-full h-full object-contain p-4 transition-opacity duration-300"
-            />
-          </div>
+      <div className="mb-12 grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-10">
 
-          {galleryImages.length > 0 && (
-            <div className="flex gap-4 justify-center">
-              {galleryImages.map((imgUrl, index) => (
-                <button 
-                  key={index}
-                  onClick={() => setSelectedThumbnail(imgUrl)}
-                  className={`w-24 h-24 rounded-lg overflow-hidden border-2 bg-white transition-all ${
-                    activeImage === imgUrl ? 'border-jardinerie-primary ring-2 ring-jardinerie-primary/20' : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <img src={imgUrl} alt={`Vue ${index + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductGallery
+          key={product.id}
+          images={galleryImages}
+          label={product.product_name}
+          fallbackUrl={FALLBACK_IMAGE}
+          overlay={
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Retour"
+              className="absolute left-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-jardinerie-text shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jardinerie-primary md:hidden"
+            >
+              <ArrowLeft size={20} aria-hidden="true" />
+            </button>
+          }
+        />
 
         <div className="flex flex-col">
-          <div className="border border-gray-200 rounded-lg p-6 mb-6 bg-white">
-            
+          {/* Titre, prix et stock. Sous md : sans cadre, marges de 16 px ; à partir de md : carte bordée. */}
+          <div className="bg-white px-4 pt-4 md:mb-6 md:rounded-lg md:border md:border-gray-200 md:p-6">
+
             <div className="flex justify-between items-start mb-2 gap-4">
-              <h1 className="text-3xl font-bold text-jardinerie-text">
+              <h1 className="text-2xl font-bold text-jardinerie-text md:text-3xl">
                 {product.product_name}
               </h1>
-              <div className="mt-2 shrink-0">
+              <div className="mt-1 shrink-0 md:mt-2">
                 <StockBadge quantity={currentStockQty} statusOverride={currentStockStatus} />
               </div>
             </div>
+
+            {/* Prix unitaire TTC dès le haut de la fiche : la référence qui ne change pas avec la quantité */}
+            <p className="mb-2 flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-jardinerie-primary">
+                {Number(product.price_tax_incl).toFixed(2)} €
+              </span>
+              <span className="text-sm text-gray-500">TTC</span>
+            </p>
 
             <p className="text-sm text-gray-500 font-mono">
               Réf : {productRef}
@@ -235,7 +238,7 @@ export default function ProductDetail() {
           </div>
 
           {(product.plant_id || product.description) && (
-            <div className="border border-gray-200 rounded-lg p-6 mb-6 bg-white">
+            <div className="border-t border-gray-100 bg-white px-4 py-6 md:mb-6 md:rounded-lg md:border md:border-gray-200 md:p-6">
               {product.plant_id && (product.sun_exposure || product.water_requirement) && (
                 <div className="flex flex-wrap gap-x-8 gap-y-4 mb-4 text-gray-700">
                   {product.sun_exposure && (() => {
@@ -321,16 +324,12 @@ export default function ProductDetail() {
           {/* Bloc d'achat (observé pour savoir quand afficher la barre d'achat mobile) */}
           <div
             ref={buyBoxRef}
-            className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm flex flex-col items-center justify-center min-h-[250px]"
+            className="flex flex-col items-center justify-center border-t border-gray-100 bg-white px-4 py-6 md:min-h-[250px] md:rounded-lg md:border md:border-gray-200 md:p-6 md:shadow-sm"
           >
-             <div className="text-3xl font-extrabold text-gray-600 mb-2">
-              {Number(product.price_tax_incl).toFixed(2)} €
-            </div>
-
             {/* Livraison : information fixe tant que le seuil n'est pas atteint, puis confirmation dès que le
                 panier (contenu actuel + quantité choisie) donne droit à la livraison offerte. */}
             <p
-              className={`mb-8 flex items-center justify-center gap-2 text-center text-sm ${
+              className={`mb-6 flex items-center justify-center gap-2 text-center text-sm ${
                 getsFreeShipping ? 'font-bold text-jardinerie-primary' : 'text-gray-500'
               }`}
             >
@@ -343,6 +342,14 @@ export default function ProductDetail() {
             {cartQuantity > 0 && (
               <p className="text-sm text-jardinerie-primary font-medium mb-3">
                 Déjà {cartQuantity} dans votre panier
+              </p>
+            )}
+
+            {/* Le prix unitaire est affiché en haut de la fiche ; ici, le total dès que la quantité dépasse 1 */}
+            {quantity > 1 && currentStockQty > 0 && (
+              <p className="mb-4 flex w-full items-baseline justify-between text-gray-700">
+                <span className="text-sm text-gray-500">Total</span>
+                <span className="text-xl font-extrabold">{totalPrice} €</span>
               </p>
             )}
 
