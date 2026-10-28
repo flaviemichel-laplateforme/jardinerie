@@ -17,6 +17,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
   const customerLinks = [
     {
       name: 'Retour à la boutique',
+      shortName: 'Boutique',
       path: '/',
       target: '_blank', // 👉 S'ouvre dans un nouvel onglet
       icon: (
@@ -28,6 +29,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'Tableau de bord',
+      shortName: 'Compte',
       path: '/compte',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -40,6 +42,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'Mes commandes',
+      shortName: 'Commandes',
       path: '/compte/commandes',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -51,6 +54,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'Mes adresses',
+      shortName: 'Adresses',
       path: '/compte/adresses',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -61,6 +65,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'Mon profil',
+      shortName: 'Profil',
       path: '/compte/parametres',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -71,6 +76,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'Confidentialité & RGPD',
+      shortName: 'RGPD',
       path: '/compte/rgpd',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -84,6 +90,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
   const adminLinks = [
     {
       name: 'RETOUR À LA BOUTIQUE',
+      shortName: 'Boutique',
       path: '/',
       target: '_blank', // 👉 S'ouvre dans un nouvel onglet
       icon: (
@@ -95,6 +102,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'TABLEAU DE BORD',
+      shortName: 'Tableau',
       path: '/admin', // 👉 Simplifié pour correspondre à la route d'accueil Admin
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -107,6 +115,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'GESTION DU CATALOGUE',
+      shortName: 'Catalogue',
       path: '/admin/catalogue',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -118,6 +127,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'GESTION DES COMMANDES',
+      shortName: 'Commandes',
       path: '/admin/commandes', // 👉 Correction du lien (orders -> commandes)
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -129,6 +139,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'GESTION DES CLIENTS',
+      shortName: 'Clients',
       path: '/admin/clients',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -139,6 +150,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
     },
     {
       name: 'MON PROFIL',
+      shortName: 'Profil',
       path: '/admin/profil',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -151,30 +163,43 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
   ];
 
   const links = userRole === 'admin' ? adminLinks : customerLinks;
+
+  // La page est active si on est dessus ou sur une de ses sous-pages (ex. /compte/commandes/12). Les pages d'accueil
+  // de chaque espace (/compte, /admin) sont comparées strictement, sinon elles resteraient actives partout.
+  const isLinkActive = (link) =>
+    ['/', '/compte', '/admin'].includes(link.path)
+      ? location.pathname === link.path
+      : location.pathname.startsWith(link.path);
   // La barre du bas (mobile) n'a de la place que pour les liens internes, pas le lien externe "retour boutique".
   const mobileBarLinks = links.filter((link) => link.target !== '_blank');
 
   return (
     <>
       {/* ===================================================== */}
-      {/* NIVEAU 1 — MOBILE (< md) : barre fixe en bas, icônes seules */}
+      {/* NIVEAU 1 — MOBILE (< md) : barre fixe en bas, icône + libellé court */}
       {/* ===================================================== */}
       <nav
-        className="md:hidden fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-jardinerie-primary/20 bg-jardinerie-bg py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
-        aria-label="Navigation"
+        className="md:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-jardinerie-primary/20 bg-jardinerie-bg pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+        aria-label={userRole === 'admin' ? "Navigation de l'administration" : 'Navigation du compte'}
       >
         {mobileBarLinks.map((link) => {
-          const isActive = location.pathname === link.path;
+          const isActive = isLinkActive(link);
           return (
             <Link
               key={link.name}
               to={link.path}
               title={link.name}
-              className={`flex flex-col items-center justify-center rounded-lg px-2 py-1 transition-colors ${
-                isActive ? 'text-jardinerie-primary' : 'text-jardinerie-text/60'
+              aria-current={isActive ? 'page' : undefined}
+              // flex-1 : chaque entrée prend la même largeur. Texte en pleine couleur (et non atténué) : un petit
+              // texte pâle sur le fond beige n'aurait pas un contraste suffisant.
+              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-2 text-[10.5px] tracking-tight leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jardinerie-primary ${
+                isActive ? 'font-bold text-jardinerie-primary' : 'font-medium text-jardinerie-text'
               }`}
             >
+              {/* La page active n'est pas signalée par la seule couleur : un trait en haut de l'entrée */}
+              {isActive && <span aria-hidden="true" className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-jardinerie-primary" />}
               <span className="flex-shrink-0 scale-90">{link.icon}</span>
+              <span className="w-full truncate text-center">{link.shortName}</span>
             </Link>
           );
         })}
@@ -182,13 +207,15 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
           type="button"
           onClick={handleLogout}
           title="Déconnexion"
-          className="flex flex-col items-center justify-center rounded-lg px-2 py-1 text-jardinerie-text/60"
+          aria-label="Quitter (déconnexion)"
+          className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-2 text-[10.5px] tracking-tight font-medium leading-tight text-jardinerie-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jardinerie-primary"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="my-px">
             <path d="M9 21H5C4.44772 21 4 20.5523 4 20V4C4 3.44772 4.44772 3 5 3H9" stroke="#2B3A67" strokeWidth="2" strokeLinecap="round"/>
             <path d="M16 17L21 12L16 7" stroke="#E63946" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M21 12H9" stroke="#2B3A67" strokeWidth="2" strokeLinecap="round"/>
           </svg>
+          <span className="w-full truncate text-center">Quitter</span>
         </button>
       </nav>
 
@@ -197,7 +224,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
       {/* ===================================================== */}
       <aside className="hidden md:flex lg:hidden w-20 flex-col items-center gap-3 border-r border-jardinerie-primary/20 bg-jardinerie-bg py-6 min-h-screen sticky top-[172px] self-start">
         {links.map((link) => {
-          const isActive = location.pathname === link.path;
+          const isActive = isLinkActive(link);
           return (
             <Link
               key={link.name}
@@ -261,7 +288,7 @@ export default function Sidebar({ userName = 'Invité', userRole = 'customer' })
 
         <nav className={`flex flex-col flex-grow ${isCollapsed ? 'space-y-3' : 'space-y-2'}`}>
           {links.map((link) => {
-            const isActive = location.pathname === link.path;
+            const isActive = isLinkActive(link);
 
             return (
               <Link

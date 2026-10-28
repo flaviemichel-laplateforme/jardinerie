@@ -22,8 +22,21 @@ export default function MainLayout() {
   // La barre d'achat de la fiche produit (~110 px) est plus haute que la barre de filtre du catalogue (~60 px).
   const isCatalogPage = ['/produits', '/vegetaux', '/jardinage'].includes(location.pathname);
   const isProductPage = location.pathname.startsWith('/produit/');
-  const backToTopBottomClass = isProductPage ? 'bottom-32 lg:bottom-6' : isCatalogPage ? 'bottom-24 lg:bottom-6' : 'bottom-6';
-  const toastBottomClass = isProductPage ? '!bottom-32 lg:!bottom-5' : isCatalogPage ? '!bottom-24 lg:!bottom-5' : '';
+  // Espace client et administration : la barre de navigation du bas (< md) occupe cet espace
+  const backToTopBottomClass = isProductPage
+    ? 'bottom-32 lg:bottom-6'
+    : isCatalogPage
+      ? 'bottom-24 lg:bottom-6'
+      : isPrivateSpace
+        ? 'bottom-24 md:bottom-6'
+        : 'bottom-6';
+  const toastBottomClass = isProductPage
+    ? '!bottom-32 lg:!bottom-5'
+    : isCatalogPage
+      ? '!bottom-24 lg:!bottom-5'
+      : isPrivateSpace
+        ? '!bottom-24 md:!bottom-5'
+        : '';
 
   // Données fictives pour le profil (en attendant le système d'authentification)
   const userRole = isAdminSpace ? 'admin' : 'customer';
