@@ -12,8 +12,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
  * @param {string} label - Nom du produit, utilisé pour nommer la région
  * @param {string} fallbackUrl - Image affichée si une photo ne se charge pas
  * @param {React.ReactNode} [overlay] - Contenu posé par-dessus la galerie (ex. bouton retour mobile)
+ * @param {string} [className] - Classes ajoutées au conteneur (ex. position collante)
  */
-export default function ProductGallery({ images, label, fallbackUrl, overlay }) {
+export default function ProductGallery({ images, label, fallbackUrl, overlay, className = '' }) {
   const scrollerRef = useRef(null);
   const [active, setActive] = useState(0);
   const hasSeveral = images.length > 1;
@@ -35,7 +36,7 @@ export default function ProductGallery({ images, label, fallbackUrl, overlay }) 
   };
 
   return (
-    <div role="region" aria-roledescription="carrousel" aria-label={`Photos de ${label}`} className="flex flex-col md:gap-4">
+    <div role="region" aria-roledescription="carrousel" aria-label={`Photos de ${label}`} className={`flex flex-col md:gap-4 ${className}`}>
       {/* md et plus : pas de bordure, une tuile blanche aux angles arrondis qui se fond dans le fond de la page.
           `group` : les flèches n'apparaissent qu'au survol (ou au focus clavier). */}
       <div className="group relative bg-white md:overflow-hidden md:rounded-2xl">
@@ -70,7 +71,7 @@ export default function ProductGallery({ images, label, fallbackUrl, overlay }) 
         <div
           ref={scrollerRef}
           onScroll={handleScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] motion-reduce:scroll-auto md:h-[min(70vh,720px)] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] motion-reduce:scroll-auto md:h-[min(70vh,720px)] lg:h-[min(calc(100vh_-_var(--header-h,170px)_-_9rem),720px)] [&::-webkit-scrollbar]:hidden"
         >
           {images.map((image, index) => (
             <div

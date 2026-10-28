@@ -4,35 +4,19 @@ import { useApi } from '../../hooks/useApi';
 import StockBadge from '../../components/ui/StockBadge';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import ProductGallery from '../../components/catalog/ProductGallery';
+import ProductPurchasePanel from '../../components/catalog/ProductPurchasePanel';
+import ProductDescription from '../../components/catalog/ProductDescription';
+import { parseProductDescription } from '../../utils/parseProductDescription';
 import { useCart } from '../../contexts/CartContext';
 import toast from 'react-hot-toast';
 import { productService } from '../../services/productService';
 import { resolveAssetUrl } from '../../services/apiClient';
 import { useInView } from 'react-intersection-observer';
-import { ArrowLeft, Droplet, Truck } from 'lucide-react';
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, formatEuro } from '../../constants/shipping';
+import { ArrowLeft, Droplet } from 'lucide-react';
+import { FREE_SHIPPING_THRESHOLD } from '../../constants/shipping';
 import { SUN_EXPOSURE_CONFIG, WATER_REQUIREMENT_CONFIG, WATER_COLOR } from '../../constants/plantAttributes';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?auto=format&fit=crop&w=600&q=80';
-
-// Transforme les URLs présentes dans un texte libre en vrais liens cliquables.
-function linkify(text) {
-  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-    /^https?:\/\//.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-jardinerie-primary underline hover:text-green-700"
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    )
-  );
-}
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -196,6 +180,8 @@ export default function ProductDetail() {
 
         <ProductGallery
           key={product.id}
+          // lg : la photo reste visible sous le header collant pendant la lecture de la colonne de droite
+          className="lg:sticky lg:top-[calc(var(--header-h,140px)+1rem)] lg:self-start"
           images={galleryImages}
           label={product.product_name}
           fallbackUrl={FALLBACK_IMAGE}
@@ -236,6 +222,19 @@ export default function ProductDetail() {
               Réf : {productRef}
             </p>
           </div>
+
+          {/* Bloc d'achat : juste sous le titre et le prix, visible dès le premier écran sur desktop.
+              Sur mobile, la barre d'achat collée en bas prend le relais quand on le dépasse en lisant la description. */}
+          <ProductPurchasePanel
+            ref={buyBoxRef}
+            quantity={quantity}
+            onQuantityChange={handleQtyChange}
+            stockQuantity={currentStockQty}
+            totalPrice={totalPrice}
+            getsFreeShipping={getsFreeShipping}
+            cartQuantity={cartQuantity}
+            onAddToCart={handleAddToCart}
+          />
 
           {(product.plant_id || product.description) && (
             <div className="border-t border-gray-100 bg-white px-4 py-6 md:mb-6 md:rounded-lg md:border md:border-gray-200 md:p-6">
@@ -282,34 +281,7 @@ export default function ProductDetail() {
               )}
 
               {product.description && (
-                <div className="text-gray-600 leading-relaxed">
-                  {product.description.split('•').map((part, index) => {
-                    const trimmed = part.trim();
-                    if (!trimmed) return null;
-
-                    // Le premier segment (avant la première puce) contient plusieurs informations
-                    // du type "Label : valeur." collées à la suite (Type de Sol, Rusticité, Arrosage...).
-                    // On fait démarrer chacune sur sa propre ligne, à chaque fois qu'un nouveau label est détecté.
-                    if (index === 0) {
-                      const lines = trimmed.split(/(?<=\.)\s+(?=[A-ZÀ-Ü][^.:]{1,30}:)/);
-                      return (
-                        <div key={index} className="mb-3 space-y-1.5">
-                          {lines.map((line, lineIndex) => (
-                            <p key={lineIndex}>{linkify(line.trim())}</p>
-                          ))}
-                        </div>
-                      );
-                    }
-
-                    // Les segments suivants (Conseils, Maladies et ravageurs...) deviennent des points distincts.
-                    return (
-                      <p key={index} className="flex gap-2 mb-1.5 text-sm">
-                        <span className="text-jardinerie-primary shrink-0">•</span>
-                        <span>{linkify(trimmed)}</span>
-                      </p>
-                    );
-                  })}
-                </div>
+                <ProductDescription {...parseProductDescription(product.description, product.latin_name)} />
               )}
 
               {product.plant_id && product.latin_name && (
@@ -320,70 +292,6 @@ export default function ProductDetail() {
               )}
             </div>
           )}
-
-          {/* Bloc d'achat (observé pour savoir quand afficher la barre d'achat mobile) */}
-          <div
-            ref={buyBoxRef}
-            className="flex flex-col items-center justify-center border-t border-gray-100 bg-white px-4 py-6 md:min-h-[250px] md:rounded-lg md:border md:border-gray-200 md:p-6 md:shadow-sm"
-          >
-            {/* Livraison : information fixe tant que le seuil n'est pas atteint, puis confirmation dès que le
-                panier (contenu actuel + quantité choisie) donne droit à la livraison offerte. */}
-            <p
-              className={`mb-6 flex items-center justify-center gap-2 text-center text-sm ${
-                getsFreeShipping ? 'font-bold text-jardinerie-primary' : 'text-gray-500'
-              }`}
-            >
-              <Truck size={16} className="shrink-0" aria-hidden="true" />
-              {getsFreeShipping
-                ? 'Livraison offerte pour cette commande'
-                : `Livraison offerte dès ${FREE_SHIPPING_THRESHOLD} € d'achat · sinon ${formatEuro(SHIPPING_COST)}`}
-            </p>
-
-            {cartQuantity > 0 && (
-              <p className="text-sm text-jardinerie-primary font-medium mb-3">
-                Déjà {cartQuantity} dans votre panier
-              </p>
-            )}
-
-            {/* Le prix unitaire est affiché en haut de la fiche ; ici, le total dès que la quantité dépasse 1 */}
-            {quantity > 1 && currentStockQty > 0 && (
-              <p className="mb-4 flex w-full items-baseline justify-between text-gray-700">
-                <span className="text-sm text-gray-500">Total</span>
-                <span className="text-xl font-extrabold">{totalPrice} €</span>
-              </p>
-            )}
-
-            <div className="flex flex-wrap items-center justify-center gap-4 w-full">
-
-              <div className="flex items-center border border-gray-300 rounded-md bg-white">
-                <button
-                  onClick={() => handleQtyChange(-1)}
-                  aria-label="Diminuer la quantité"
-                  className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-                  disabled={quantity <= 1 || currentStockQty <= 0}
-                >-</button>
-                <span className="px-4 py-3 min-w-[3rem] text-center font-medium border-x border-gray-300">{quantity}</span>
-                <button
-                  onClick={() => handleQtyChange(1)}
-                  aria-label="Augmenter la quantité"
-                  className="px-4 py-3 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-                  disabled={quantity >= currentStockQty || currentStockQty <= 0}
-                >+</button>
-              </div>
-
-              <button
-                onClick={handleAddToCart}
-                className={`flex-1 min-w-[200px] py-3.5 rounded-md font-bold text-lg transition-colors ${
-                  currentStockQty > 0 
-                    ? 'bg-jardinerie-primary text-white hover:bg-green-700' 
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-                disabled={currentStockQty <= 0}
-              >
-                {currentStockQty > 0 ? 'Ajouter au panier' : 'Rupture de stock'}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -415,7 +323,7 @@ export default function ProductDetail() {
             >
               −
             </button>
-            <span aria-live="polite" className="min-w-8 text-center font-medium">{quantity}</span>
+            <span className="min-w-8 text-center font-medium">{quantity}</span>
             <button
               type="button"
               onClick={() => handleQtyChange(1)}
