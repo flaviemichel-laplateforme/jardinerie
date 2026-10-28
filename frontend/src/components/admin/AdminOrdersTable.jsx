@@ -5,6 +5,7 @@ import { adminService } from '../../services/adminService';
 import { buildRequestOptions } from '../../services/apiClient';
 import Spinner from '../ui/Spinner';
 import { ORDER_STATUSES, ORDER_STATUS_CONFIG } from '../../constants/orderStatus';
+import AdminCardAction from './AdminCardAction';
 
 const formatDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -39,13 +40,65 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
 
   return (
     <>
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      {/* Sous xl (1280 px) : une carte par commande */}
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden">
+        {orders.length === 0 ? (
+          <li className="rounded-xl border border-gray-200 bg-white py-10 text-center italic text-gray-400 shadow-sm md:col-span-2">
+            Aucune commande trouvée.
+          </li>
+        ) : (
+          orders.map(o => (
+            <li
+              key={o.id}
+              className={`rounded-xl border bg-white p-4 shadow-sm ${
+                o.id === viewingOrderId
+                  ? 'border-gray-200 border-l-4 border-l-jardinerie-primary bg-jardinerie-primary/10'
+                  : 'border-gray-200'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-bold text-jardinerie-text">{o.order_reference}</p>
+                <span className={`inline-block shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${ORDER_STATUS_CONFIG[o.status]?.color}`}>
+                  {ORDER_STATUS_CONFIG[o.status]?.label ?? o.status}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-jardinerie-text">{o.customer_first_name} {o.customer_last_name}</p>
+              <div className="mt-1 flex items-center justify-between text-sm">
+                <span className="text-gray-500">{formatDate(o.order_date)}</span>
+                <span className="font-bold text-jardinerie-primary">
+                  {formatAmount(parseFloat(o.total_amount_tax_incl) + parseFloat(o.shipping_cost_tax_incl))}
+                </span>
+              </div>
+
+              <div className="mt-3 flex flex-col gap-3">
+                <AdminCardAction onClick={() => handleViewDetails(o.id)}>Voir détails</AdminCardAction>
+                <label className="block text-xs font-medium text-gray-500">
+                  Changer le statut
+                  <select
+                    value={o.status}
+                    disabled={statusLoading}
+                    onChange={(e) => onStatusChange(o.id, e.target.value)}
+                    className="mt-1 min-h-[44px] w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-jardinerie-text disabled:opacity-50"
+                  >
+                    {ORDER_STATUSES.map(status => (
+                      <option key={status} value={status}>{ORDER_STATUS_CONFIG[status]?.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+
+      {/* xl et plus : le tableau (il a besoin d'environ 900 px de large, la barre latérale en prend jusqu'à 288) */}
+      <div className="hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm xl:block">
         <table className="w-full text-sm">
           <thead className="bg-jardinerie-bg border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Référence</th>
               <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Client</th>
-              <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide hidden md:table-cell">Date</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Date</th>
               <th className="text-right px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Montant TTC</th>
               <th className="text-center px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Statut</th>
               <th className="text-center px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Actions</th>
@@ -68,7 +121,7 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
                 >
                   <td className="px-4 py-3 font-medium text-jardinerie-text">{o.order_reference}</td>
                   <td className="px-4 py-3 text-jardinerie-text">{o.customer_first_name} {o.customer_last_name}</td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{formatDate(o.order_date)}</td>
+                  <td className="px-4 py-3 text-gray-500">{formatDate(o.order_date)}</td>
                   <td className="px-4 py-3 text-right font-bold text-jardinerie-primary">{formatAmount(parseFloat(o.total_amount_tax_incl) + parseFloat(o.shipping_cost_tax_incl))}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${ORDER_STATUS_CONFIG[o.status]?.color}`}>
@@ -88,6 +141,7 @@ export default function AdminOrdersTable({ orders, onStatusChange, statusLoading
                         value={o.status}
                         disabled={statusLoading}
                         onChange={(e) => onStatusChange(o.id, e.target.value)}
+                        aria-label={`Statut de la commande ${o.order_reference}`}
                         className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-medium text-jardinerie-text disabled:opacity-50"
                       >
                         {ORDER_STATUSES.map(status => (

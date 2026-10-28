@@ -7,6 +7,7 @@ import Spinner from '../ui/Spinner';
 import DangerZone from '../ui/DangerZone';
 import toast from 'react-hot-toast';
 import { ORDER_STATUS_CONFIG } from '../../constants/orderStatus';
+import AdminCardAction from './AdminCardAction';
 
 const ROLE_LABELS = { customer: 'Client', admin: 'Administrateur' };
 const ROLE_COLORS = {
@@ -74,12 +75,46 @@ export default function AdminClientsTable({ clients }) {
 
   return (
     <>
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      {/* Sous xl (1280 px) : une carte par compte */}
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:hidden">
+        {clients.length === 0 ? (
+          <li className="rounded-xl border border-gray-200 bg-white py-10 text-center italic text-gray-400 shadow-sm md:col-span-2">
+            Aucun compte trouvé.
+          </li>
+        ) : (
+          clients.map(c => (
+            <li key={c.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-jardinerie-bg text-sm font-bold text-jardinerie-primary" aria-hidden="true">
+                  {c.first_name?.[0]}{c.last_name?.[0]}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-jardinerie-text">{c.first_name} {c.last_name}</p>
+                  <p className="truncate text-sm text-gray-500">{c.email}</p>
+                </div>
+                <span className={`inline-block shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${ROLE_COLORS[c.role]}`}>
+                  {ROLE_LABELS[c.role] ?? c.role}
+                </span>
+              </div>
+              <p className="mt-3 flex items-center justify-between text-sm text-gray-600">
+                <span>Commandes</span>
+                <span className="font-bold text-jardinerie-text">{c.total_orders}</span>
+              </p>
+              <div className="mt-3 flex">
+                <AdminCardAction onClick={() => handleViewDetails(c.id)}>Voir détails</AdminCardAction>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+
+      {/* xl et plus : le tableau (il a besoin d'environ 900 px de large, la barre latérale en prend jusqu'à 288) */}
+      <div className="hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm xl:block">
         <table className="w-full text-sm">
           <thead className="bg-jardinerie-bg border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Client</th>
-              <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide hidden md:table-cell">Email</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Email</th>
               <th className="text-center px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Rôle</th>
               <th className="text-center px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Commandes</th>
               <th className="text-center px-4 py-3 text-xs font-bold text-jardinerie-text uppercase tracking-wide">Actions</th>
@@ -99,7 +134,7 @@ export default function AdminClientsTable({ clients }) {
                     </span>
                     <span className="font-medium text-jardinerie-text">{c.first_name} {c.last_name}</span>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{c.email}</td>
+                  <td className="px-4 py-3 text-gray-500">{c.email}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${ROLE_COLORS[c.role]}`}>
                       {ROLE_LABELS[c.role] ?? c.role}
