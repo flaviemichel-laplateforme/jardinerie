@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .legal-heading {
+    @apply text-xl font-bold text-jardinerie-text mt-8 mb-3;
+  }
+  .legal-paragraph {
+    @apply text-sm text-gray-700 leading-relaxed;
+  }
+  .legal-list {
+    @apply list-disc list-inside text-sm text-gray-700 space-y-1;
+  }
+}
+
+/* Ouverture du panneau de filtres mobile : la feuille monte depuis le bas de l'écran */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: none; }
+}
+.animate-sheet-up {
+  animation: sheet-up 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-up { animation: none; }
+}
