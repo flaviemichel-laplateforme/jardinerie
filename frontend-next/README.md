@@ -4,9 +4,17 @@ Nouvelle version du site, construite à côté de l'ancienne (`../frontend`, Rea
 n'est pas terminée. Objectif : un vrai référencement (SEO) — le serveur envoie des pages complètes, avec un titre et une description
 propres à chaque page, au lieu d'une page vide remplie par JavaScript.
 
-État : **étape 1 en cours**. Mise en page commune (bandeau, en-tête, recherche, pied de page), pages légales, contact,
-page 404 et page d'erreur. L'accueil est encore la page d'essai ; le catalogue et la fiche produit arrivent dans les PR suivantes.
-Les liens vers les pages pas encore portées (panier, connexion, compte…) mènent temporairement à la page 404.
+État : **étape 1 en cours**. Mise en page commune, accueil, catalogues (`/produits`, `/vegetaux`, `/jardinage`), pages
+légales, contact, page 404 et page d'erreur. La fiche produit arrive dans la PR suivante. Les liens vers les pages pas
+encore portées (fiche produit, panier, connexion, compte…) mènent temporairement à la page 404.
+
+### Catalogue : ce qui a changé par rapport à l'ancienne version
+- La **1re page** (12 produits) est calculée par le serveur, pour chaque jeu de filtres (`components/catalog/CatalogPage.jsx`) :
+  elle est dans le HTML. Le navigateur ne charge que les pages suivantes, au défilement.
+- Les trois anciennes pages de rayon sont remplacées par une seule vue (`CatalogView.jsx`) et un fichier de réglages
+  (`constants/catalogModes.js`).
+- **Bouton Retour** : Next.js garde lui-même les 3 dernières pages visitées, avec leur état et leur position de défilement.
+  La mémoire maison de l'ancienne version a donc disparu. Sur un nouveau clic (menu), la liste repart de zéro (`bfcacheId`).
 
 ## Lancer en local
 
