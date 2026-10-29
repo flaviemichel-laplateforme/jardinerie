@@ -6,6 +6,33 @@ use App\Core\Database;
 
 class AdminProductModel
 {
+    /** Champs facultatifs de products : un champ laissé vide est enregistré NULL (jamais ''). */
+    private const PRODUCT_OPTIONAL_FIELDS = ['sku', 'packaging_type', 'pot_diameter_cm', 'volume_l', 'weight_g'];
+
+    /** Colonnes de plants et leur type, dans l'ordre d'enregistrement. */
+    private const PLANT_FIELDS = [
+        'common_name'         => 'text',
+        'latin_name'          => 'text',
+        'genus'               => 'text',
+        'species'             => 'text',
+        'family'              => 'text',
+        'cultivar'            => 'text',
+        'sun_exposure'        => 'text',
+        'water_requirement'   => 'text',
+        'foliage'             => 'text',
+        'drought_tolerance'   => 'text',
+        'difficulty'          => 'text',
+        'height_max_cm'       => 'int',
+        'hardiness_min_c'     => 'int',
+        'bloom_start_month'   => 'int',
+        'bloom_end_month'     => 'int',
+        'harvest_start_month' => 'int',
+        'harvest_end_month'   => 'int',
+        'care_pruning'        => 'text',
+        'care_repotting'      => 'text',
+        'care_pests_diseases' => 'text',
+    ];
+
     /**
      * Liste tous les produits avec leur catégorie et stock.
      * Inclut les produits inactifs (is_active = 0) — contrairement au catalogue public.
@@ -17,6 +44,7 @@ class AdminProductModel
         $sql = "SELECT
                     p.id,
                     p.name,
+                    p.sku,
                     p.price_tax_incl,
                     p.purchase_price_tax_incl,
                     p.stock_quantity,
@@ -54,6 +82,11 @@ class AdminProductModel
                     p.main_image_url,
                     p.secondary_image_url,
                     p.is_active,
+                    p.sku,
+                    p.packaging_type,
+                    p.pot_diameter_cm,
+                    p.volume_l,
+                    p.weight_g,
                     s.category_id,
                     c.department_id,
                     pl.id          AS plant_id,
@@ -61,8 +94,22 @@ class AdminProductModel
                     pl.latin_name,
                     pl.genus,
                     pl.species,
+                    pl.family,
+                    pl.cultivar,
                     pl.sun_exposure,
-                    pl.water_requirement
+                    pl.water_requirement,
+                    pl.foliage,
+                    pl.drought_tolerance,
+                    pl.difficulty,
+                    pl.height_max_cm,
+                    pl.hardiness_min_c,
+                    pl.bloom_start_month,
+                    pl.bloom_end_month,
+                    pl.harvest_start_month,
+                    pl.harvest_end_month,
+                    pl.care_pruning,
+                    pl.care_repotting,
+                    pl.care_pests_diseases
                 FROM products p
                 LEFT JOIN plants pl ON pl.product_id = p.id
                 LEFT JOIN subcategories s ON s.id = p.subcategory_id
@@ -99,11 +146,13 @@ class AdminProductModel
             $sql = "INSERT INTO products
                         (subcategory_id, tax_id, name, description,
                          price_tax_incl, purchase_price_tax_incl,
-                         stock_quantity, main_image_url, secondary_image_url, is_active)
+                         stock_quantity, main_image_url, secondary_image_url, is_active,
+                         sku, packaging_type, pot_diameter_cm, volume_l, weight_g)
                     VALUES
                         (:subcategory_id, :tax_id, :name, :description,
                          :price_tax_incl, :purchase_price_tax_incl,
-                         :stock_quantity, :main_image_url, :secondary_image_url, :is_active)";
+                         :stock_quantity, :main_image_url, :secondary_image_url, :is_active,
+                         :sku, :packaging_type, :pot_diameter_cm, :volume_l, :weight_g)";
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
@@ -117,6 +166,11 @@ class AdminProductModel
                 ':main_image_url'          => isset($data['main_image_url']) ? (string) trim($data['main_image_url']) : null,
                 ':secondary_image_url'     => isset($data['secondary_image_url']) ? (string) trim($data['secondary_image_url']) : null,
                 ':is_active'               => isset($data['is_active']) ? (int) $data['is_active'] : 1,
+                ':sku'                     => $this->optional($data['sku'] ?? null),
+                ':packaging_type'          => $this->optional($data['packaging_type'] ?? null),
+                ':pot_diameter_cm'         => $this->optionalInt($data['pot_diameter_cm'] ?? null),
+                ':volume_l'                => $this->optionalFloat($data['volume_l'] ?? null),
+                ':weight_g'                => $this->optionalInt($data['weight_g'] ?? null),
             ]);
             $productId = (int) $db->lastInsertId();
 
@@ -154,7 +208,8 @@ class AdminProductModel
                 'stock_quantity',
                 'main_image_url',
                 'secondary_image_url',
-                'is_active'
+                'is_active',
+                ...self::PRODUCT_OPTIONAL_FIELDS,
             ];
 
             $sets   = [];
@@ -163,7 +218,9 @@ class AdminProductModel
             foreach ($allowed as $field) {
                 if (array_key_exists($field, $data)) {
                     $sets[]         = "$field = :$field";
-                    $params[":$field"] = $data[$field];
+                    $params[":$field"] = in_array($field, self::PRODUCT_OPTIONAL_FIELDS, true)
+                        ? $this->optional($data[$field])
+                        : $data[$field];
                 }
             }
 
@@ -208,23 +265,8 @@ class AdminProductModel
      */
     private function insertPlant(\PDO $db, int $productId, array $plant): void
     {
-        $sql = "INSERT INTO plants
-                    (product_id, common_name, latin_name, genus,
-                     species, sun_exposure, water_requirement)
-                VALUES
-                    (:product_id, :common_name, :latin_name, :genus,
-                     :species, :sun_exposure, :water_requirement)";
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':product_id'       => (int) $productId,
-            ':common_name'      => isset($plant['common_name']) ? (string) trim($plant['common_name']) : null,
-            ':latin_name'       => isset($plant['latin_name']) ? (string) trim($plant['latin_name']) : null,
-            ':genus'            => isset($plant['genus']) ? (string) trim($plant['genus']) : null,
-            ':species'          => isset($plant['species']) ? (string) trim($plant['species']) : null,
-            ':sun_exposure'     => isset($plant['sun_exposure']) ? (string) $plant['sun_exposure'] : null,
-            ':water_requirement' => isset($plant['water_requirement']) ? (string) $plant['water_requirement'] : null,
-        ]);
+        $stmt = $db->prepare($this->plantInsertSql());
+        $stmt->execute($this->plantParams($productId, $plant));
 
         $plantId = (int) $db->lastInsertId();
         $this->syncPlantCriteria($db, $plantId, $plant['criteria'] ?? []);
@@ -239,37 +281,70 @@ class AdminProductModel
         $check->execute([':pid' => $productId]);
         $existing = $check->fetch(\PDO::FETCH_ASSOC);
 
-        if ($existing) {
-            $sql = "UPDATE plants SET
-                        common_name       = :common_name,
-                        latin_name        = :latin_name,
-                        genus             = :genus,
-                        species           = :species,
-                        sun_exposure      = :sun_exposure,
-                        water_requirement = :water_requirement
-                    WHERE product_id = :product_id";
-        } else {
-            $sql = "INSERT INTO plants
-                        (product_id, common_name, latin_name, genus,
-                         species, sun_exposure, water_requirement)
-                    VALUES
-                        (:product_id, :common_name, :latin_name, :genus,
-                         :species, :sun_exposure, :water_requirement)";
-        }
+        $sql = $existing ? $this->plantUpdateSql() : $this->plantInsertSql();
 
         $stmt = $db->prepare($sql);
-        $stmt->execute([
-            ':product_id'        => (int) $productId,
-            ':common_name'       => isset($plant['common_name']) ? (string) trim($plant['common_name']) : null,
-            ':latin_name'        => isset($plant['latin_name']) ? (string) trim($plant['latin_name']) : null,
-            ':genus'             => isset($plant['genus']) ? (string) trim($plant['genus']) : null,
-            ':species'           => isset($plant['species']) ? (string) trim($plant['species']) : null,
-            ':sun_exposure'      => isset($plant['sun_exposure']) ? (string) $plant["sun_exposure"] : null,
-            ':water_requirement' => isset($plant['water_requirement']) ? (string) $plant['water_requirement'] : null,
-        ]);
+        $stmt->execute($this->plantParams($productId, $plant));
 
         $plantId = $existing ? (int) $existing['id'] : (int) $db->lastInsertId();
         $this->syncPlantCriteria($db, $plantId, $plant['criteria'] ?? []);
+    }
+
+    private function plantInsertSql(): string
+    {
+        $fields = array_keys(self::PLANT_FIELDS);
+
+        return "INSERT INTO plants (product_id, " . implode(', ', $fields) . ")
+                VALUES (:product_id, :" . implode(', :', $fields) . ")";
+    }
+
+    private function plantUpdateSql(): string
+    {
+        $sets = array_map(fn(string $field) => "$field = :$field", array_keys(self::PLANT_FIELDS));
+
+        return "UPDATE plants SET " . implode(', ', $sets) . " WHERE product_id = :product_id";
+    }
+
+    /** Valeurs à enregistrer : une valeur absente ou vide devient NULL. */
+    private function plantParams(int $productId, array $plant): array
+    {
+        $params = [':product_id' => $productId];
+
+        foreach (self::PLANT_FIELDS as $field => $type) {
+            $value = $this->optional($plant[$field] ?? null);
+
+            $params[":$field"] = match (true) {
+                $value === null => null,
+                $type === 'int' => (int) $value,
+                default         => (string) $value,
+            };
+        }
+
+        return $params;
+    }
+
+    /** Texte nettoyé ; vide → NULL (deux références '' violeraient l'unicité du SKU). */
+    private function optional(mixed $value): mixed
+    {
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        return $value === '' ? null : $value;
+    }
+
+    private function optionalInt(mixed $value): ?int
+    {
+        $value = $this->optional($value);
+
+        return $value === null ? null : (int) $value;
+    }
+
+    private function optionalFloat(mixed $value): ?float
+    {
+        $value = $this->optional($value);
+
+        return $value === null ? null : (float) $value;
     }
 
     /**
