@@ -325,13 +325,31 @@ class ProductModel
                     p.stock_quantity,
                     p.main_image_url,
                     p.secondary_image_url,
+                    p.sku,
+                    p.packaging_type,
+                    p.pot_diameter_cm,
+                    p.volume_l,
                     pl.id AS plant_id,
                     pl.common_name,
                     pl.latin_name,
                     pl.genus,
                     pl.species,
+                    pl.family,
+                    pl.cultivar,
                     pl.sun_exposure,
                     pl.water_requirement,
+                    pl.foliage,
+                    pl.drought_tolerance,
+                    pl.difficulty,
+                    pl.height_max_cm,
+                    pl.hardiness_min_c,
+                    pl.bloom_start_month,
+                    pl.bloom_end_month,
+                    pl.harvest_start_month,
+                    pl.harvest_end_month,
+                    pl.care_pruning,
+                    pl.care_repotting,
+                    pl.care_pests_diseases,
                     c.name AS category_name,
                     s.name AS subcategory_name,
                     t.rate AS tax_rate
@@ -347,7 +365,25 @@ class ProductModel
 
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $product ?: null;
+        if (!$product) {
+            return null;
+        }
+
+        // Critères de la plante (sol, pH, comestible…) : ils s'affichent sur la fiche comme étiquettes
+        $product['criteria'] = [];
+        if ($product['plant_id']) {
+            $critStmt = $db->prepare(
+                "SELECT c.id, c.name AS label
+                 FROM plant_criterion pc
+                 INNER JOIN criteria c ON c.id = pc.criterion_id
+                 WHERE pc.plant_id = :plant_id
+                 ORDER BY c.name ASC"
+            );
+            $critStmt->execute(['plant_id' => $product['plant_id']]);
+            $product['criteria'] = $critStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $product;
     }
 
     /**

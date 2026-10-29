@@ -205,6 +205,57 @@ INSERT INTO `plant_criterion` (`plant_id`, `criterion_id`) VALUES
 (27, 4),
 (28, 4);
 
+-- Fiche botanique détaillée (Lot A) : complète les plantes ci-dessus
+INSERT INTO `plants` (`id`, `product_id`, `family`, `foliage`, `height_max_cm`, `bloom_start_month`, `bloom_end_month`, `harvest_start_month`, `harvest_end_month`, `drought_tolerance`, `hardiness_min_c`, `difficulty`, `care_pruning`, `care_repotting`, `care_pests_diseases`) VALUES
+(1, 1, 'Araceae', 'Evergreen', 300, NULL, NULL, NULL, NULL, 'Medium', 10, 'Beginner', 'Supprimez les feuilles abîmées à la base ; un tuteur en mousse guide les tiges aériennes.', 'Au printemps, tous les 2 ans, dans un pot à peine plus grand avec un terreau aéré.', 'Cochenilles et araignées rouges si l''air est trop sec : nettoyez le feuillage et brumisez.'),
+(2, 2, 'Moraceae', 'Evergreen', 400, NULL, NULL, NULL, NULL, 'Medium', 10, 'Intermediate', NULL, NULL, NULL),
+(3, 3, 'Orchidaceae', 'Evergreen', 60, 1, 4, NULL, NULL, 'Low', 15, 'Intermediate', NULL, NULL, NULL),
+(4, 4, 'Oleaceae', 'Evergreen', 400, 5, 6, 10, 12, 'High', -10, 'Beginner', 'Taillez après la floraison pour garder une forme aérée, en retirant le bois mort.', 'Rempotez tous les 3 ans au printemps, dans un mélange drainant.', 'Surveillez la cochenille noire et évitez l''excès d''eau qui fait pourrir les racines.'),
+(5, 5, 'Lamiaceae', NULL, 60, 7, 9, 6, 10, 'Low', 5, 'Beginner', NULL, NULL, NULL),
+(6, 6, 'Lamiaceae', 'Deciduous', 60, 7, 9, 5, 10, 'Low', -20, 'Beginner', NULL, NULL, NULL),
+(9, 9, 'Asphodelaceae', 'Evergreen', 60, NULL, NULL, NULL, NULL, 'High', 5, 'Beginner', NULL, NULL, NULL),
+(10, 10, 'Asparagaceae', 'Evergreen', 120, NULL, NULL, NULL, NULL, 'High', 10, 'Beginner', NULL, NULL, NULL),
+(11, 11, 'Araceae', 'Evergreen', 90, NULL, NULL, NULL, NULL, 'High', 10, 'Beginner', NULL, NULL, NULL),
+(12, 12, 'Urticaceae', 'Evergreen', 30, NULL, NULL, NULL, NULL, 'Medium', 10, 'Beginner', NULL, NULL, NULL),
+(13, 13, 'Marantaceae', 'Evergreen', 60, NULL, NULL, NULL, NULL, 'Low', 15, 'Expert', NULL, NULL, NULL),
+(14, 14, 'Araceae', 'Evergreen', 70, 3, 9, NULL, NULL, 'Low', 10, 'Beginner', NULL, NULL, NULL),
+(15, 15, 'Araceae', 'Evergreen', 200, NULL, NULL, NULL, NULL, 'Medium', 10, 'Beginner', NULL, NULL, NULL),
+(16, 16, 'Orchidaceae', 'Evergreen', 90, 1, 3, NULL, NULL, 'Low', 5, 'Intermediate', NULL, NULL, NULL),
+(17, 17, 'Orchidaceae', 'Evergreen', 50, 2, 4, NULL, NULL, 'Medium', 10, 'Intermediate', NULL, NULL, NULL),
+(18, 18, 'Sapindaceae', 'Deciduous', 500, 4, 5, NULL, NULL, 'Low', -20, 'Intermediate', NULL, NULL, NULL),
+(19, 19, 'Hydrangeaceae', 'Deciduous', 150, 6, 9, NULL, NULL, 'Low', -15, 'Beginner', NULL, NULL, NULL),
+(20, 20, 'Rosaceae', 'Deciduous', 120, 5, 10, NULL, NULL, 'Medium', -20, 'Intermediate', NULL, NULL, NULL),
+(21, 21, 'Lamiaceae', 'Evergreen', 60, 6, 8, 7, 8, 'High', -15, 'Beginner', 'Taillez court après la floraison, sans jamais descendre dans le vieux bois.', 'Rarement nécessaire en pleine terre ; en pot, rempotez au printemps dans un sol très drainé.', 'Peu sensible ; le principal risque est l''humidité stagnante en hiver.'),
+(22, 22, 'Poaceae', 'Evergreen', 400, NULL, NULL, NULL, NULL, 'Low', -25, 'Beginner', NULL, NULL, NULL),
+(23, 23, 'Amaryllidaceae', 'Semi-evergreen', 90, 7, 9, NULL, NULL, 'Medium', -8, 'Beginner', NULL, NULL, NULL),
+(24, 24, 'Amaryllidaceae', 'Deciduous', 30, 5, 7, 4, 10, 'Medium', -25, 'Beginner', NULL, NULL, NULL),
+(25, 25, 'Lamiaceae', 'Evergreen', 30, 5, 7, 4, 10, 'High', -15, 'Beginner', NULL, NULL, NULL),
+(26, 26, 'Lamiaceae', 'Evergreen', 150, 2, 5, 1, 12, 'High', -10, 'Beginner', NULL, NULL, NULL),
+(27, 27, 'Apiaceae', NULL, 40, NULL, NULL, 4, 11, 'Low', -10, 'Beginner', NULL, NULL, NULL),
+(28, 28, 'Apiaceae', NULL, 60, 6, 8, 5, 9, 'Low', 0, 'Beginner', NULL, NULL, NULL)
+ON DUPLICATE KEY UPDATE `family` = VALUES(`family`), `foliage` = VALUES(`foliage`), `height_max_cm` = VALUES(`height_max_cm`), `bloom_start_month` = VALUES(`bloom_start_month`), `bloom_end_month` = VALUES(`bloom_end_month`), `harvest_start_month` = VALUES(`harvest_start_month`), `harvest_end_month` = VALUES(`harvest_end_month`), `drought_tolerance` = VALUES(`drought_tolerance`), `hardiness_min_c` = VALUES(`hardiness_min_c`), `difficulty` = VALUES(`difficulty`), `care_pruning` = VALUES(`care_pruning`), `care_repotting` = VALUES(`care_repotting`), `care_pests_diseases` = VALUES(`care_pests_diseases`);
+
+-- Critères de sol et de pH (les critères servent aussi de filtres dans le catalogue)
+INSERT INTO `criteria` (`id`, `name`) VALUES
+(5, 'Sol argileux'),
+(6, 'Sol sableux'),
+(7, 'Sol humifère'),
+(8, 'Sol drainé'),
+(9, 'Sol acide'),
+(10, 'Sol neutre'),
+(11, 'Sol calcaire');
+
+-- Quelques sols pour la démonstration (4 = olivier, 19 = hortensia, 20 = rosier, 21 = lavande, 25 = thym, 26 = romarin)
+INSERT INTO `plant_criterion` (`plant_id`, `criterion_id`) VALUES
+(4, 8), (4, 11), (19, 7), (19, 9), (20, 6), (21, 8), (21, 11), (25, 8), (26, 8);
+
+-- Référence unique de chaque produit, et conditionnement des plantes
+UPDATE `products` SET `sku` = CONCAT('JAR-', LPAD(`id`, 4, '0'));
+UPDATE `products` SET `packaging_type` = 'Pot' WHERE `id` IN (SELECT `product_id` FROM `plants`);
+UPDATE `products` SET `pot_diameter_cm` = 17, `volume_l` = 2.00, `weight_g` = 1500 WHERE `id` = 1;
+UPDATE `products` SET `pot_diameter_cm` = 12, `volume_l` = 0.50, `weight_g` = 400 WHERE `id` = 5;
+UPDATE `products` SET `weight_g` = 20000 WHERE `id` = 8;
+
 -- =====================================================================
 -- 5. INSERTION DE COMMANDES (Pour le tableau de bord Admin et Profil)
 -- =====================================================================

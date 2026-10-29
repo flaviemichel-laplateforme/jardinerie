@@ -71,7 +71,15 @@ class AdminProductController
             return;
         }
 
-        $id = $this->model->create($data);
+        try {
+            $id = $this->model->create($data);
+        } catch (\PDOException $e) {
+            if ($this->isDuplicateSku($e)) {
+                $this->respondDuplicateSku();
+                return;
+            }
+            throw $e;
+        }
 
         http_response_code(201);
         echo json_encode([
@@ -112,7 +120,15 @@ class AdminProductController
             return;
         }
 
-        $this->model->update($id, $data);
+        try {
+            $this->model->update($id, $data);
+        } catch (\PDOException $e) {
+            if ($this->isDuplicateSku($e)) {
+                $this->respondDuplicateSku();
+                return;
+            }
+            throw $e;
+        }
 
         http_response_code(200);
         echo json_encode([
@@ -152,6 +168,21 @@ class AdminProductController
         }
 
         return $data;
+    }
+
+    /** Erreur MySQL 1062 (valeur en double) sur l'index unique de la référence. */
+    private function isDuplicateSku(\PDOException $e): bool
+    {
+        return ($e->errorInfo[1] ?? null) === 1062 && str_contains($e->getMessage(), 'sku_UNIQUE');
+    }
+
+    private function respondDuplicateSku(): void
+    {
+        http_response_code(409);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Cette référence (SKU) est déjà utilisée par un autre produit.'
+        ], JSON_UNESCAPED_UNICODE);
     }
 
     /** @param string[] $errors */
