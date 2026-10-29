@@ -28,7 +28,7 @@ export default async function HomePage() {
   const { products, error } = await getProducts();
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold text-jardinerie-primary">La Jardinerie — page d&apos;essai Next.js</h1>
       <SessionStatus />
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -40,6 +40,6 @@ export default async function HomePage() {
           ))}
         </ul>
       </section>
-    </main>
+    </div>
   );
 }
