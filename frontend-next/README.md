@@ -4,7 +4,9 @@ Nouvelle version du site, construite à côté de l'ancienne (`../frontend`, Rea
 n'est pas terminée. Objectif : un vrai référencement (SEO) — le serveur envoie des pages complètes, avec un titre et une description
 propres à chaque page, au lieu d'une page vide remplie par JavaScript.
 
-État : **étape 0** (squelette). Une page d'essai affiche les produits rendus côté serveur et l'état de la session.
+État : **étape 1 en cours**. Mise en page commune (bandeau, en-tête, recherche, pied de page), pages légales, contact,
+page 404 et page d'erreur. L'accueil est encore la page d'essai ; le catalogue et la fiche produit arrivent dans les PR suivantes.
+Les liens vers les pages pas encore portées (panier, connexion, compte…) mènent temporairement à la page 404.
 
 ## Lancer en local
 

@@ -11,6 +11,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Les images restent des <img> pendant la migration : les photos des produits viennent de l'API PHP (Plesk).
+      // Le passage à next/image (redimensionnement automatique) est prévu plus tard, une fois toutes les pages portées.
+      "@next/next/no-img-element": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
