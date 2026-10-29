@@ -84,6 +84,9 @@ npm run dev
 
 L'application est alors accessible sur `http://localhost:5173`.
 
+> **Migration en cours :** une nouvelle version du front-end en Next.js (meilleur référencement) est construite dans `frontend-next/`,
+> à côté de celle-ci. Voir `frontend-next/README.md`. L'application ci-dessus reste celle déployée en production.
+
 ## Tests automatisés (back-end)
 
 ```
