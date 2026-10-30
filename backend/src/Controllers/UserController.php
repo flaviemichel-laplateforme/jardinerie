@@ -8,14 +8,22 @@ use App\Core\PasswordPolicy;
 use App\Core\NamePolicy;
 use App\Core\Input;
 use App\Core\SessionCookie;
+use App\Core\ApiResponse;
+use App\Core\RateLimiter;
+use App\Core\SecurityLog;
 use App\Services\AuthService;
 
 class UserController
 {
+    private RateLimiter $limiter;
+
     public function __construct(
         private UserModel $userModel = new UserModel(),
-        private AuthService $authService = new AuthService()
-    ) {}
+        private AuthService $authService = new AuthService(),
+        ?RateLimiter $limiter = null
+    ) {
+        $this->limiter = $limiter ?? RateLimiter::fromEnvironment();
+    }
 
     /**
      * GET /api/me
@@ -109,6 +117,16 @@ class UserController
                 return;
             }
 
+            // Cette route vérifie le mot de passe actuel : sans limite, une session volée permettrait de le deviner
+            $attempt = $this->limiter->attempt('email_change_user', (string) $payload['id'], 5, 3600);
+            if (!$attempt['allowed']) {
+                if ($attempt['justBlocked']) {
+                    SecurityLog::record(SecurityLog::RATE_LIMITED, (int) $payload['id'], null, ['action' => 'email_change_user']);
+                }
+                ApiResponse::tooManyRequests($attempt['retryAfter']);
+                return;
+            }
+
             $result = $this->authService->requestEmailChange((int) $payload['id'], $email, $currentPassword);
 
             if (!$result['success']) {
@@ -173,7 +191,19 @@ class UserController
             return;
         }
 
+        // Cette route vérifie le mot de passe actuel : sans limite, une session volée permettrait de le deviner
+        $state = $this->limiter->check('password_change_user', (string) $payload['id'], 5, 900);
+        if ($state['blocked']) {
+            ApiResponse::tooManyRequests($state['retryAfter']);
+            return;
+        }
+
         if (!$user || !password_verify($currentPassword, $user['password'])) {
+            $failure = $this->limiter->fail('password_change_user', (string) $payload['id'], 5, 900);
+            if ($failure['justLocked']) {
+                SecurityLog::record(SecurityLog::RATE_LIMITED, (int) $payload['id'], null, ['action' => 'password_change_user']);
+            }
+
             http_response_code(401);
             echo json_encode([
                 'success' => false,
@@ -183,6 +213,8 @@ class UserController
         }
 
         $this->userModel->updatePassword($payload['id'], $newPassword);
+        $this->limiter->clear('password_change_user', (string) $payload['id']);
+        SecurityLog::record(SecurityLog::PASSWORD_CHANGED, (int) $payload['id']);
 
         http_response_code(200);
         echo json_encode([
@@ -247,6 +279,7 @@ class UserController
             return;
         }
 
+        SecurityLog::record(SecurityLog::ACCOUNT_ANONYMIZED, (int) $payload['id']);
         $anonymized = $this->userModel->anonymize($payload['id']);
 
         if (!$anonymized) {
