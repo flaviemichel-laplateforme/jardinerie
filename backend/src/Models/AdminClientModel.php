@@ -107,13 +107,14 @@ class AdminClientModel
     }
 
     /**
-     * Modifie le rôle d'un utilisateur.
+     * Modifie le rôle d'un utilisateur, et ferme ses sessions ouvertes (token_version + 1) :
+     * un administrateur rétrogradé ne doit pas garder ses droits jusqu'à l'expiration de son jeton.
      */
     public function updateRole(int $id, string $role): bool
     {
         $db = Database::getConnection();
 
-        $sql = "UPDATE users SET role = :role WHERE id = :id";
+        $sql = "UPDATE users SET role = :role, token_version = token_version + 1 WHERE id = :id";
         $stmt = $db->prepare($sql);
 
         return $stmt->execute(['role' => $role, 'id' => $id]);

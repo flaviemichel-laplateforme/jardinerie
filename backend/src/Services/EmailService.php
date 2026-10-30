@@ -298,7 +298,7 @@ class EmailService
             <div style='padding: 32px;'>
                 <h2 style='color: #1a2e1a; margin-top: 0;'>Bonjour {$safeFirstName},</h2>
                 <p style='color: #555; line-height: 1.6;'>
-                    Un administrateur a initié une réinitialisation de votre mot de passe.
+                    Une réinitialisation de votre mot de passe a été demandée.
                     Cliquez sur le bouton ci-dessous pour en choisir un nouveau. Ce lien est valable 1 heure.
                 </p>
                 {$this->buildButton($resetUrl, 'Choisir un nouveau mot de passe')}
@@ -343,6 +343,152 @@ class EmailService
                 <p style='color: #888; font-size: 12px; line-height: 1.6;'>
                     Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet email.
                 </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------
+    // E-mails de sécurité : préviennent le propriétaire d'un compte quand quelque chose le concerne
+    // ------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * « Un compte existe déjà » : envoyé quand quelqu'un tente de s'inscrire avec l'adresse d'un compte existant.
+     * Le formulaire répond la même chose dans tous les cas (voir AuthService::register) : c'est cet e-mail qui informe le propriétaire.
+     */
+    public function sendAccountAlreadyExistsEmail(string $toEmail, string $firstName, string $loginUrl, string $resetUrl): bool
+    {
+        $body = "
+                <p style='color: #555; line-height: 1.6;'>
+                    Quelqu'un vient de demander la création d'un compte avec cette adresse, mais elle est déjà associée à un compte La Jardinerie.
+                </p>
+                <p style='color: #555; line-height: 1.6;'>
+                    Si c'est vous, connectez-vous directement. Si vous avez oublié votre mot de passe, vous pouvez en choisir un nouveau.
+                </p>
+                {$this->buildButton($loginUrl, 'Me connecter')}
+                <p style='color: #555; line-height: 1.6; text-align: center;'>
+                    <a href='" . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . "' target='_blank' style='color: #027148;'>J'ai oublié mon mot de passe</a>
+                </p>
+                <p style='color: #888; font-size: 12px; line-height: 1.6;'>
+                    Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : aucun nouveau compte n'a été créé et votre compte n'a pas été modifié.
+                </p>";
+
+        return $this->sendSafely('account_exists', $toEmail, "Vous avez déjà un compte — La Jardinerie", $this->buildLayout("Bonjour {$this->escape($firstName)},", $body));
+    }
+
+    /** Alerte après un changement de mot de passe : permet de réagir si ce n'était pas le titulaire. */
+    public function sendPasswordChangedNotice(string $toEmail, string $firstName, string $resetUrl): bool
+    {
+        $body = "
+                <p style='color: #555; line-height: 1.6;'>
+                    Le mot de passe de votre compte La Jardinerie vient d'être modifié. Toutes les sessions ouvertes ont été fermées : vous devrez vous reconnecter.
+                </p>
+                <p style='color: #555; line-height: 1.6;'>
+                    <strong>Ce n'est pas vous ?</strong> Quelqu'un a peut-être accès à votre compte. Choisissez immédiatement un nouveau mot de passe :
+                </p>
+                {$this->buildButton($resetUrl, 'Sécuriser mon compte')}
+                {$this->buildFallbackLink($resetUrl)}";
+
+        return $this->sendSafely('password_changed', $toEmail, "Votre mot de passe a été modifié — La Jardinerie", $this->buildLayout("Bonjour {$this->escape($firstName)},", $body));
+    }
+
+    /** Envoyé à la NOUVELLE adresse : l'adresse du compte ne change qu'après ce clic. */
+    public function sendEmailChangeVerification(string $toEmail, string $firstName, string $confirmUrl): bool
+    {
+        $body = "
+                <p style='color: #555; line-height: 1.6;'>
+                    Vous avez demandé à utiliser cette adresse pour votre compte La Jardinerie.
+                    Cliquez sur le bouton ci-dessous pour la confirmer. Ce lien est valable 1 heure.
+                </p>
+                {$this->buildButton($confirmUrl, 'Confirmer cette adresse')}
+                {$this->buildFallbackLink($confirmUrl)}
+                <p style='color: #888; font-size: 12px; line-height: 1.6;'>
+                    Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : l'adresse du compte restera inchangée.
+                </p>";
+
+        return $this->sendSafely('email_change_verification', $toEmail, "Confirmez votre nouvelle adresse — La Jardinerie", $this->buildLayout("Bonjour {$this->escape($firstName)},", $body));
+    }
+
+    /** Envoyé à l'ANCIENNE adresse dès la demande : le titulaire est prévenu et peut réagir avant la confirmation. */
+    public function sendEmailChangeAlert(string $toEmail, string $firstName, string $maskedNewEmail, string $resetUrl): bool
+    {
+        $body = "
+                <p style='color: #555; line-height: 1.6;'>
+                    Une demande de changement d'adresse a été faite pour votre compte La Jardinerie : la nouvelle adresse serait
+                    <strong>" . $this->escape($maskedNewEmail) . "</strong>. Rien ne change tant que cette nouvelle adresse n'est pas confirmée.
+                </p>
+                <p style='color: #555; line-height: 1.6;'>
+                    <strong>Ce n'est pas vous ?</strong> Quelqu'un connaît peut-être votre mot de passe. Choisissez-en un nouveau tout de suite :
+                </p>
+                {$this->buildButton($resetUrl, 'Sécuriser mon compte')}
+                {$this->buildFallbackLink($resetUrl)}";
+
+        return $this->sendSafely('email_change_alert', $toEmail, "Demande de changement d'adresse — La Jardinerie", $this->buildLayout("Bonjour {$this->escape($firstName)},", $body));
+    }
+
+    /** Envoyé à l'ANCIENNE adresse une fois le changement confirmé. */
+    public function sendEmailChangedNotice(string $toEmail, string $firstName, string $maskedNewEmail): bool
+    {
+        $body = "
+                <p style='color: #555; line-height: 1.6;'>
+                    L'adresse de votre compte La Jardinerie est maintenant <strong>" . $this->escape($maskedNewEmail) . "</strong>.
+                    Les sessions ouvertes ont été fermées : vous devrez vous reconnecter avec la nouvelle adresse.
+                </p>
+                <p style='color: #888; font-size: 12px; line-height: 1.6;'>
+                    Si vous n'êtes pas à l'origine de ce changement, répondez à cet email sans attendre.
+                </p>";
+
+        return $this->sendSafely('email_changed', $toEmail, "L'adresse de votre compte a changé — La Jardinerie", $this->buildLayout("Bonjour {$this->escape($firstName)},", $body));
+    }
+
+    /** « camille.dupont@example.com » -> « c***@example.com » : suffisant pour se reconnaître, sans révéler l'adresse à un tiers. */
+    public static function maskEmail(string $email): string
+    {
+        $at = strrpos($email, '@');
+        if ($at === false || $at === 0) {
+            return '***';
+        }
+
+        return mb_substr($email, 0, 1) . '***' . substr($email, $at);
+    }
+
+    /** Envoi qui n'interrompt jamais l'opération en cours : un échec d'e-mail est journalisé, pas propagé. */
+    private function sendSafely(string $label, string $toEmail, string $subject, string $html): bool
+    {
+        try {
+            $this->send($toEmail, $subject, $html);
+
+            return true;
+        } catch (\Exception $e) {
+            error_log("EMAIL ERROR [{$label}]: " . $e->getMessage());
+
+            return false;
+        }
+    }
+
+    private function escape(string $text): string
+    {
+        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    }
+
+    /** Page d'e-mail commune aux e-mails de sécurité : même en-tête vert et même carte blanche que les e-mails existants. */
+    private function buildLayout(string $heading, string $bodyHtml): string
+    {
+        return "
+    <!DOCTYPE html>
+    <html lang='fr'>
+    <head>
+        <meta charset='UTF-8'>
+    </head>
+    <body style='margin: 0; padding: 0; background-color: #f5f5f0; font-family: Arial, sans-serif;'>
+        <div style='max-width: 600px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <div style='background-color: #027148; padding: 32px; text-align: center;'>
+                <h1 style='color: white; margin: 0; font-size: 24px;'>La Jardinerie</h1>
+            </div>
+            <div style='padding: 32px;'>
+                <h2 style='color: #1a2e1a; margin-top: 0;'>{$heading}</h2>{$bodyHtml}
             </div>
         </div>
     </body>

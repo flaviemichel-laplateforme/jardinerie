@@ -21,6 +21,9 @@ $isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
 // Une erreur non prévue ne doit jamais afficher de chemin ni de requête SQL : réponse JSON générique, détail dans le journal
 \App\Core\ErrorHandler::register();
 
+// La réponse est mise en tampon : les e-mails sont envoyés APRÈS l'avoir renvoyée au visiteur (voir DeferredWork)
+\App\Core\DeferredWork::enable();
+
 // -----------------------------------------------------------------------
 // 2. EN-TÊTES DE SÉCURITÉ ET CORS (Support des Cookies)
 // -----------------------------------------------------------------------
@@ -155,6 +158,8 @@ $router->map('POST', '/api/auth/logout', 'AuthController#logout', 'api_auth_logo
 $router->map('POST', '/api/auth/request-password-reset', 'AuthController#requestPasswordReset', 'api_auth_request_password_reset');
 $router->map('POST', '/api/auth/reset-password', 'AuthController#resetPassword', 'api_auth_reset_password');
 $router->map('GET', '/api/auth/verify-email', 'AuthController#verifyEmail', 'api_auth_verify_email');
+$router->map('POST', '/api/auth/verify-email', 'AuthController#verifyEmailByPost', 'api_auth_verify_email_post');
+$router->map('POST', '/api/auth/confirm-email-change', 'AuthController#confirmEmailChange', 'api_auth_confirm_email_change');
 
 
 
@@ -270,3 +275,6 @@ if (!$dispatched) {
         'error' => 'Point de terminaison introuvable (Not Found).'
     ]);
 }
+
+// Envoie la réponse au visiteur, puis exécute le travail différé (e-mails)
+\App\Core\DeferredWork::finish();
