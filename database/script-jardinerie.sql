@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`users` (
   `registration_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `gdpr_consent_key` VARCHAR(255) NULL DEFAULT NULL,
   `email_verified_at` DATETIME NULL DEFAULT NULL,
+  `token_version` INT UNSIGNED NOT NULL DEFAULT 0,
+  `anonymized_at` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX (`email` ASC) VISIBLE,
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE)
@@ -394,13 +396,16 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`account_tokens` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
-  `token` VARCHAR(255) NOT NULL,
-  `purpose` ENUM('password_reset', 'email_verification') NOT NULL DEFAULT 'password_reset',
+  `token` VARCHAR(255) NULL,
+  `token_hash` CHAR(64) NULL,
+  `purpose` ENUM('password_reset', 'email_verification', 'email_change') NOT NULL DEFAULT 'password_reset',
+  `payload` VARCHAR(255) NULL,
   `expires_at` DATETIME NOT NULL,
   `used_at` DATETIME NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `token_UNIQUE` (`token` ASC) VISIBLE,
+  UNIQUE INDEX `token_hash_UNIQUE` (`token_hash` ASC) VISIBLE,
   INDEX `fk_account_tokens_users_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `fk_account_tokens_users`
     FOREIGN KEY (`user_id`)
@@ -409,6 +414,38 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`account_tokens` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `flavie-michel_jardinerie_db`.`rate_limits`
+-- Limitation des tentatives : un compteur par « seau » (empreinte d'une action + d'une adresse ou d'une IP)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`rate_limits` (
+  `bucket` CHAR(64) NOT NULL,
+  `hits` INT UNSIGNED NOT NULL,
+  `window_start` DATETIME NOT NULL,
+  PRIMARY KEY (`bucket`),
+  INDEX `window_start_idx` (`window_start` ASC))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `flavie-michel_jardinerie_db`.`security_events`
+-- Journal de sécurité (conservé 12 mois, purgé automatiquement)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`security_events` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT NULL DEFAULT NULL,
+  `email_hash` CHAR(64) NULL DEFAULT NULL,
+  `event` VARCHAR(40) NOT NULL,
+  `ip` VARCHAR(45) NULL DEFAULT NULL,
+  `user_agent` VARCHAR(255) NULL DEFAULT NULL,
+  `details` TEXT NULL DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `created_at_idx` (`created_at` ASC),
+  INDEX `event_created_idx` (`event` ASC, `created_at` ASC),
+  INDEX `user_id_idx` (`user_id` ASC))
+ENGINE = InnoDB;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

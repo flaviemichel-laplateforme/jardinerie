@@ -180,6 +180,10 @@ MSYS_NO_PATHCONV=1 sh scripts/verifier-php81.sh
 
 Un changement d'hébergement vers un serveur en PHP 8.3 ou plus récent est à prévoir. Calendrier officiel : https://www.php.net/supported-versions.php
 
+### Migrations de la base de données
+
+Les changements de structure sont dans `database/migrations/` (un fichier par lot, daté). Pour la production, **dans cet ordre** : sauvegarde de la base (phpMyAdmin → Exporter), exécution **une seule fois** du fichier de migration (onglet SQL ; retirer la ligne `USE` si le nom de la base diffère), **puis** envoi des fichiers PHP du lot par FileZilla. Le code d'un lot qui modifie la base ne doit jamais être envoyé avant sa migration : il demanderait des colonnes qui n'existent pas encore. Les migrations sont additives (elles ne suppriment rien), donc l'ancien code continue de fonctionner entre la migration et l'envoi des fichiers.
+
 ### Sécurité de l'API
 
 - **Requêtes qui modifient des données** (POST, PUT, PATCH, DELETE) : l'en-tête `Origin` doit être un site autorisé et le corps doit être du JSON (`RequestGuard`), ce qui bloque le CSRF même avec un cookie `SameSite=None`. Exceptions : le webhook Stripe (signé) et l'envoi d'image (multipart, origine contrôlée).
@@ -187,6 +191,11 @@ Un changement d'hébergement vers un serveur en PHP 8.3 ou plus récent est à p
 - **Mots de passe** (`PasswordPolicy`) : 8 à 72 caractères, majuscule, minuscule, chiffre et symbole, refus des mots de passe courants (même déguisés : `P@ssw0rd!`) et de ceux qui contiennent l'adresse e-mail ; bcrypt coût 12, recalculé automatiquement à la connexion pour les anciens comptes.
 - **Erreurs** : une erreur imprévue renvoie un JSON générique ; le détail reste dans le journal du serveur. Les routes `/api/test*` n'existent qu'en développement.
 - **Entrées** : tout champ doit être du texte de longueur raisonnable (`Input`) ; les adresses e-mail sont normalisées en minuscules.
+- **Sessions révocables** (`SessionGuard`, `AuthMiddleware`) : à chaque requête, le jeton est confronté au compte en base. Le rôle vient de la base, et la « version de session » (`users.token_version`) est incrémentée à chaque changement de mot de passe, de rôle ou d'adresse et à l'anonymisation : tous les jetons émis avant deviennent inutilisables, même s'ils sont signés et non expirés.
+- **Jetons de vérification et de réinitialisation** (`AccountTokenModel`) : stockés sous forme d'empreinte SHA-256 (la valeur en clair n'existe que dans l'e-mail), un nouveau lien annule les précédents, un lien utilisé annule tous ceux de même usage.
+- **Pas d'énumération de comptes** : la connexion prend le même temps que le compte existe ou non, l'inscription et « mot de passe oublié » répondent la même chose dans les deux cas (le propriétaire d'une adresse déjà inscrite est prévenu par e-mail). Les e-mails partent après la réponse (`DeferredWork`), donc la durée de la réponse ne dépend pas de leur envoi.
+- **Changement d'adresse e-mail** : le mot de passe actuel est exigé, un lien de confirmation part vers la **nouvelle** adresse, l'ancienne est prévenue, et l'adresse ne change qu'après le clic (les sessions sont alors fermées).
+- **E-mails de sécurité** : alerte à chaque changement de mot de passe ou d'adresse.
 
 ### Différences entre environnement local et production
 

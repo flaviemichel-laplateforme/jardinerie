@@ -8,25 +8,28 @@ use App\Models\UserModel;
 
 class AuthServiceTest extends TestCase
 {
-    public function testInscriptionRefuseeSiEmailDejaUtilise(): void
+    public function testInscriptionDUneAdresseDejaUtiliseeRepondCommeUneAdresseLibre(): void
     {
-        $fauxUserModel = $this->createStub(UserModel::class);
-        $fauxUserModel->method('getUserByEmail')->willReturn(['id' => 1, 'email' => 'existe@deja.com']);
+        // La réponse ne doit pas révéler si l'adresse a un compte (sinon le formulaire sert à fouiller la base)
+        $fauxUserModel = $this->createMock(UserModel::class);
+        $fauxUserModel->method('getUserByEmail')->willReturn(['id' => 1, 'email' => 'existe@deja.com', 'first_name' => 'Camille']);
+        $fauxUserModel->expects($this->never())->method('create');
 
-        $service = new AuthService(userModel: $fauxUserModel);
+        $fauxEmailService = $this->createMock(\App\Services\EmailService::class);
+        $fauxEmailService->expects($this->once())->method('sendAccountAlreadyExistsEmail')->with('existe@deja.com', 'Camille');
 
-        $donnees = [
-            'first_name' => 'Test',
-            'last_name'  => 'Nom',
-            'email'      => 'existe@deja.com',
-            'password'   => 'Rz7!vTq92#mK',
-        ];
+        $service = new AuthService(userModel: $fauxUserModel, emailService: $fauxEmailService);
 
-        $resultat = $service->register($donnees);
+        $resultat = $service->register([
+            'first_name'   => 'Test',
+            'last_name'    => 'Nom',
+            'email'        => 'existe@deja.com',
+            'password'     => 'Rz7!vTq92#mK',
+            'gdpr_consent' => true,
+        ]);
 
-
-        $this->assertFalse($resultat['success']);
-        $this->assertEquals(409, $resultat['code']);
+        $this->assertTrue($resultat['success']);
+        $this->assertEquals(201, $resultat['code']);
     }
 
     public function testInscriptionRefuseeSiConsentementNonCoche(): void

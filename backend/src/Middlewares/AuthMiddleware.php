@@ -4,12 +4,16 @@ namespace App\Middlewares;
 
 use App\Core\JwtHelper;
 use App\Core\SessionCookie;
+use App\Core\SessionGuard;
+use App\Models\UserModel;
 
 class AuthMiddleware
 {
     /**
      * Vérifie que la requête provient d'un utilisateur authentifié.
-     * Si la session est valide, renvoie le payload décodé (id, role, exp).
+     * Si la session est valide, renvoie ['id' => ..., 'role' => ..., 'exp' => ...] ; l'identifiant et le rôle viennent
+     * de la base de données, pas du jeton : une session fermée (mot de passe changé, rôle retiré, compte supprimé)
+     * est refusée tout de suite, sans attendre l'expiration du jeton.
      * Si elle est invalide, envoie directement une réponse 401 JSON et arrête l'exécution.
      */
     public static function authenticate(): array
@@ -28,7 +32,15 @@ class AuthMiddleware
             self::reject('Session invalide ou expirée.');
         }
 
-        return $payload;
+        $user = (new UserModel())->findSessionUser((int) ($payload['id'] ?? 0));
+        $session = SessionGuard::validate($payload, $user ?: null);
+
+        if ($session === null) {
+            SessionCookie::clear();
+            self::reject('Session invalide ou expirée.');
+        }
+
+        return $session + ['exp' => $payload['exp']];
     }
 
     private static function reject(string $message): never

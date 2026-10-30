@@ -41,6 +41,31 @@ class UserModel
 
 
     /**
+     * Ce qu'il faut savoir d'un compte pour décider si une session est encore valable (voir SessionGuard) :
+     * une seule requête, légère, exécutée à chaque appel authentifié.
+     */
+    public function findSessionUser(int $id): array|false
+    {
+        $db = Database::getConnection();
+
+        $sql = "SELECT id, role, token_version, anonymized_at FROM users WHERE id = :id LIMIT 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':id' => $id]);
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Le compte tel qu'on peut le montrer au front-end : sans empreinte du mot de passe ni données internes de session.
+     */
+    public static function withoutSecrets(array $user): array
+    {
+        unset($user['password'], $user['token_version'], $user['anonymized_at']);
+
+        return $user;
+    }
+
+    /**
      * Enregistre un nouvel utilisateur en base de données
      * * @return int L'ID du nouvel utilisateur inséré
      */
@@ -91,17 +116,29 @@ class UserModel
         return true;
     }
     /**
-     * Met à jour le mot de passe
+     * Met à jour le mot de passe, et ferme toutes les sessions ouvertes (token_version + 1) : un jeton volé
+     * ne doit pas survivre au changement de mot de passe.
      */
     public function updatePassword(int $id, string $newPassword): void
     {
         $db = Database::getConnection();
-        $sql = "UPDATE users SET password = :password WHERE id = :id";
+        $sql = "UPDATE users SET password = :password, token_version = token_version + 1 WHERE id = :id";
         $stmt = $db->prepare($sql);
         $stmt->execute([
             ':password' => PasswordPolicy::hash($newPassword),
             ':id' => $id
         ]);
+    }
+
+    /**
+     * Recalcule le haché du MÊME mot de passe avec le coût actuel (voir PasswordPolicy::needsRehash).
+     * Contrairement à updatePassword, les sessions ouvertes ne sont pas fermées : le mot de passe n'a pas changé.
+     */
+    public function rehashPassword(int $id, string $password): void
+    {
+        $db = Database::getConnection();
+        $db->prepare("UPDATE users SET password = :password WHERE id = :id")
+           ->execute([':password' => PasswordPolicy::hash($password), ':id' => $id]);
     }
 
     /**
@@ -121,7 +158,10 @@ class UserModel
                 last_name        = 'Supprimé',
                 email            = CONCAT('anonymized_', :id_email, '@deleted.local'),
                 password         = '',
-                gdpr_consent_key = NULL
+                gdpr_consent_key = NULL,
+                email_verified_at = NULL,
+                anonymized_at    = NOW(),
+                token_version    = token_version + 1
             WHERE id = :id";
 
             $stmt = $db->prepare($sql);
@@ -141,6 +181,28 @@ class UserModel
         }
     }
 
+
+    /**
+     * Applique une nouvelle adresse déjà confirmée par son propriétaire : elle devient l'adresse vérifiée du compte,
+     * et les sessions ouvertes sont fermées.
+     * Retourne false si l'adresse a été prise entre-temps par un autre compte.
+     */
+    public function changeEmail(int $id, string $newEmail): bool
+    {
+        $db = Database::getConnection();
+
+        try {
+            $sql = "UPDATE users SET email = :email, email_verified_at = NOW(), token_version = token_version + 1 WHERE id = :id";
+            $db->prepare($sql)->execute([':email' => $newEmail, ':id' => $id]);
+
+            return true;
+        } catch (\PDOException $e) {
+            if (($e->errorInfo[1] ?? null) === 1062) { // valeur en double sur l'index unique des adresses
+                return false;
+            }
+            throw $e;
+        }
+    }
 
     /**
      * Marque l'email d'un utilisateur comme vérifié.

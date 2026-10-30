@@ -8,11 +8,13 @@ use App\Core\PasswordPolicy;
 use App\Core\NamePolicy;
 use App\Core\Input;
 use App\Core\SessionCookie;
+use App\Services\AuthService;
 
 class UserController
 {
     public function __construct(
-        private Usermodel $userModel = new UserModel()
+        private UserModel $userModel = new UserModel(),
+        private AuthService $authService = new AuthService()
     ) {}
 
     /**
@@ -33,8 +35,8 @@ class UserController
             return;
         }
 
-        // On ne renvoie jamais le mot de passe
-        unset($user['password']);
+        // On ne renvoie jamais le mot de passe ni les données internes de session
+        $user = UserModel::withoutSecrets($user);
 
         http_response_code(200);
         echo json_encode([
@@ -83,21 +85,48 @@ class UserController
             }
         }
 
-        $updated = $this->userModel->update($payload['id'], $firstName, $lastName, $email);
-
-        if (!$updated) {
-            http_response_code(409);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Cet email est déjà utilisé par un autre compte.'
-            ], JSON_UNESCAPED_UNICODE);
+        $user = $this->userModel->findById($payload['id']);
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur introuvable'], JSON_UNESCAPED_UNICODE);
             return;
         }
+
+        $message = 'Profil mis à jour avec succès!';
+
+        // Changer d'adresse prend le contrôle du compte (« mot de passe oublié » part vers cette adresse) : le mot de passe
+        // actuel est exigé, et l'adresse ne change qu'après confirmation depuis la nouvelle boîte mail. Les noms, eux,
+        // se modifient librement. Le mot de passe est vérifié AVANT toute modification.
+        if ($email !== strtolower($user['email'])) {
+            $currentPassword = Input::string($data, 'current_password', 200, trim: false);
+
+            if (empty($currentPassword)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => "Votre mot de passe actuel est requis pour changer d'adresse email."
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $result = $this->authService->requestEmailChange((int) $payload['id'], $email, $currentPassword);
+
+            if (!$result['success']) {
+                http_response_code($result['code']);
+                echo json_encode(['success' => false, 'message' => $result['message']], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $message = 'Profil mis à jour. ' . $result['message'];
+        }
+
+        // Les noms sont enregistrés avec l'adresse ACTUELLE : la nouvelle n'est appliquée qu'à la confirmation
+        $this->userModel->update($payload['id'], $firstName, $lastName, $user['email']);
 
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'message' => 'Profil mis à jour avec succès!'
+            'message' => $message
         ], JSON_UNESCAPED_UNICODE);
     }
 
@@ -183,7 +212,7 @@ class UserController
         $orderModel = new \App\Models\OrderModel();
         $dashboardData = $orderModel->getDashboardData($payload['id']);
 
-        unset($user['password']);
+        $user = UserModel::withoutSecrets($user);
 
         http_response_code(200);
         echo json_encode([

@@ -182,6 +182,44 @@ class AuthController
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * Vérification d'e-mail par POST (jeton dans le corps) : une requête GET ne devrait jamais modifier de données
+     * (les outils de sécurité des messageries ouvrent les liens et consommeraient le jeton). Le GET ci-dessus
+     * reste en place pour l'ancien site, jusqu'à la bascule.
+     */
+    public function verifyEmailByPost(): void
+    {
+        $token = Input::string(Input::json() ?? [], 'token', 128);
+
+        if (empty($token)) {
+            $this->respond(400, "Le jeton de vérification est manquant.");
+            return;
+        }
+
+        $result = $this->authService->verifyEmail($token);
+
+        http_response_code($result['code']);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * POST /api/auth/confirm-email-change : le propriétaire de la nouvelle adresse a ouvert le lien reçu par e-mail.
+     */
+    public function confirmEmailChange(): void
+    {
+        $token = Input::string(Input::json() ?? [], 'token', 128);
+
+        if (empty($token)) {
+            $this->respond(400, "Le jeton de confirmation est manquant.");
+            return;
+        }
+
+        $result = $this->authService->confirmEmailChange($token);
+
+        http_response_code($result['code']);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
     private function respond(int $code, string $message): void
     {
         http_response_code($code);
