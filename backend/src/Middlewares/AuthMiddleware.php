@@ -3,6 +3,7 @@
 namespace App\Middlewares;
 
 use App\Core\JwtHelper;
+use App\Core\SessionCookie;
 
 class AuthMiddleware
 {
@@ -13,7 +14,7 @@ class AuthMiddleware
      */
     public static function authenticate(): array
     {
-        $token = $_COOKIE['jardinerie_session'] ?? null;
+        $token = $_COOKIE[SessionCookie::NAME] ?? null;
 
         if (!$token) {
             self::reject('Non authentifié.');
@@ -23,7 +24,7 @@ class AuthMiddleware
         $payload = JwtHelper::verify($token, $secret);
 
         if (!$payload) {
-            setcookie('jardinerie_session', '', time() - 3600, '/');
+            SessionCookie::clear();
             self::reject('Session invalide ou expirée.');
         }
 

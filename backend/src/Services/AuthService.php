@@ -55,7 +55,7 @@ class AuthService
             }
 
             // 2. Règle métier : le mot de passe respecte-t-il la politique de sécurité ?
-            $passwordError = PasswordPolicy::validate($data['password']);
+            $passwordError = PasswordPolicy::validate($data['password'], $data['email']);
             if ($passwordError) {
                 return [
                     'success' => false,
@@ -65,7 +65,7 @@ class AuthService
             }
 
             // 3. Hachage du mot de passe
-            $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+            $hashedPassword = PasswordPolicy::hash($data['password']);
 
             // Horodatage du consentement : sert de preuve RGPD (date exacte), pas juste un booléen
             $consentTimestamp = date('Y-m-d H:i:s');
@@ -119,6 +119,11 @@ class AuthService
                 'message' => 'Identifiants incorrects.'
 
             ];
+        }
+
+        // Les comptes créés avec un coût de hachage plus faible montent au coût actuel, sans rien demander à l'utilisateur
+        if (PasswordPolicy::needsRehash($user['password'])) {
+            $this->userModel->updatePassword((int) $user['id'], $password);
         }
 
         if (!$user['email_verified_at']) {

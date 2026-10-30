@@ -19,7 +19,7 @@ class AuthServiceTest extends TestCase
             'first_name' => 'Test',
             'last_name'  => 'Nom',
             'email'      => 'existe@deja.com',
-            'password'   => 'MotDePasse123*',
+            'password'   => 'Rz7!vTq92#mK',
         ];
 
         $resultat = $service->register($donnees);
@@ -40,7 +40,7 @@ class AuthServiceTest extends TestCase
             'first_name' => 'Test',
             'last_name'  => 'Nom',
             'email'      => 'nouveau@demail.com',
-            'password'   => 'MotDePasse123*',
+            'password'   => 'Rz7!vTq92#mK',
             'gdpr_consent' => false,
         ];
 
@@ -61,7 +61,7 @@ class AuthServiceTest extends TestCase
             'first_name' => '',
             'last_name'  => 'Nom',
             'email'      => 'nouveau@demail.com',
-            'password'   => 'MotDePasse123*',
+            'password'   => 'Rz7!vTq92#mK',
             'gdpr_consent' => true,
         ];
 
@@ -82,7 +82,7 @@ class AuthServiceTest extends TestCase
             'first_name' => 'Flavie',
             'last_name'  => '',
             'email'      => 'nouveau@demail.com',
-            'password'   => 'MotDePasse123*',
+            'password'   => 'Rz7!vTq92#mK',
             'gdpr_consent' => true,
         ];
 
@@ -135,7 +135,7 @@ class AuthServiceTest extends TestCase
             'first_name'   => 'Flavie',
             'last_name'    => 'Michel',
             'email'        => 'nouveau@demail.com',
-            'password'     => 'MotDePasse123*',
+            'password'     => 'Rz7!vTq92#mK',
             'gdpr_consent' => true,
         ];
 

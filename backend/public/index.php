@@ -1,33 +1,51 @@
 <?php
 
-// CONFIGURATION CORS (Support des Cookies)
+// -----------------------------------------------------------------------
+// 1. CHARGEMENT DU CODE ET DE L'ENVIRONNEMENT
+// (avant tout le reste : CORS, sécurité et erreurs dépendent des variables du .env)
+// -----------------------------------------------------------------------
+require_once __DIR__ . '/../vendor/autoload.php';
 
-$allowedOrigins = [
-    'http://localhost:5173', // Front-end React en développement
-    'https://jardinerie.vercel.app' // Front-end en production (Vercel)
-];
-
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-
-// Les URLs de preview Vercel changent à chaque branche (ex: jardinerie-git-ma-branche-michels-projects-37882444.vercel.app).
-// Impossible de toutes les lister à l'avance : on les autorise via un motif, limité à mon propre projet Vercel.
-$isVercelPreview = preg_match('#^https://jardinerie-git-[a-z0-9-]+-michels-projects-37882444\.vercel\.app$#', $origin) === 1;
-
-// Si l'origine de la requête fait partie de nos origines autorisées, on l'affiche explicitement
-if (in_array($origin, $allowedOrigins) || $isVercelPreview) {
-    header("Access-Control-Allow-Origin: " . $origin);
-} else {
-    // Fallback de sécurité
-    header("Access-Control-Allow-Origin: http://localhost:5173");
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->load();
+} catch (Exception $e) {
+    // Si le fichier .env manque, on stoppe tout immédiatement pour des raisons de sécurité
+    header($_SERVER["SERVER_PROTOCOL"] . ' 500 Internal Server Error');
+    header('Content-Type: application/json; charset=UTF-8');
+    die(json_encode(['error' => 'Erreur critique : Fichier de configuration introuvable.']));
 }
 
-header("Access-Control-Allow-Credentials: true"); // INDISPENSABLE pour les cookies HttpOnly
-header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+$isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
+
+// Une erreur non prévue ne doit jamais afficher de chemin ni de requête SQL : réponse JSON générique, détail dans le journal
+\App\Core\ErrorHandler::register();
+
+// -----------------------------------------------------------------------
+// 2. EN-TÊTES DE SÉCURITÉ ET CORS (Support des Cookies)
+// -----------------------------------------------------------------------
+header_remove('X-Powered-By'); // inutile d'annoncer la version de PHP
+header('X-Content-Type-Options: nosniff'); // le navigateur ne doit pas deviner un autre type que celui annoncé
+header('Referrer-Policy: no-referrer');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
+header('Cache-Control: no-store'); // réponses de l'API : jamais gardées par un navigateur ou un relais partagé
+
+$allowedOrigins = \App\Core\CorsPolicy::allowedOrigins($_ENV['ALLOWED_ORIGINS'] ?? null);
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// Seule une origine autorisée reçoit les en-têtes CORS. Les autres n'en reçoivent aucun : le navigateur bloque alors
+// la lecture de la réponse (et, avec RequestGuard plus bas, les requêtes qui modifient des données sont refusées).
+header('Vary: Origin');
+if (\App\Core\CorsPolicy::isAllowed($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+    header("Access-Control-Allow-Credentials: true"); // INDISPENSABLE pour les cookies HttpOnly
+    header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, X-Requested-With");
+}
 
 // Si le navigateur envoie une requête de pré-vérification (OPTIONS), on valide immédiatement
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(204);
     exit();
 }
 
@@ -35,20 +53,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // plutôt que répété dans chaque contrôleur.
 header("Content-Type: application/json; charset=UTF-8");
 
-require_once __DIR__ . '/../vendor/autoload.php';
-
-
-// -----------------------------------------------------------------------
-// 2. CONFIGURATION DE L'ENVIRONNEMENT
-// On charge les variables sécurisées depuis le fichier .env
-// -----------------------------------------------------------------------
-try {
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-    $dotenv->load();
-} catch (Exception $e) {
-    // Si le fichier .env manque, on stoppe tout immédiatement pour des raisons de sécurité
-    header($_SERVER["SERVER_PROTOCOL"] . ' 500 Internal Server Error');
-    die(json_encode(['error' => 'Erreur critique : Fichier de configuration introuvable.']));
+// Protection CSRF : une requête qui modifie des données doit venir d'une origine connue et porter du JSON
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$refusal = \App\Core\RequestGuard::check(
+    $_SERVER['REQUEST_METHOD'],
+    $requestPath,
+    [
+        'origin'         => $origin,
+        'sec-fetch-site' => $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '',
+        'content-type'   => $_SERVER['CONTENT_TYPE'] ?? '',
+    ],
+    $allowedOrigins,
+    (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0 || isset($_SERVER['HTTP_TRANSFER_ENCODING'])
+);
+if ($refusal !== null) {
+    http_response_code($refusal['code']);
+    echo json_encode(['success' => false, 'message' => $refusal['message']], JSON_UNESCAPED_UNICODE);
+    exit();
 }
 
 
@@ -60,7 +81,7 @@ $router = new AltoRouter();
 // En local (Docker), l'API est servie à la racine du domaine : http://localhost:8000/api/...
 // En production (Plesk), l'API est servie dans un sous-dossier : https://.../jardinerie/api/...
 // Sans cette ligne, AltoRouter compare l'URL complète à des routes définies sans préfixe et ne matche jamais en production.
-if (($_ENV['APP_ENV'] ?? 'development') === 'production') {
+if ($isProduction) {
     $router->setBasePath('/jardinerie');
 }
 
@@ -70,50 +91,54 @@ if (($_ENV['APP_ENV'] ?? 'development') === 'production') {
 // -----------------------------------------------------------------------
 // Méthode map( 'VERBE_HTTP', 'ROUTE', 'FONCTION_CIBLE', 'NOM_DE_LA_ROUTE' )
 
-$router->map('GET', '/api/test', function () {
+// Routes de diagnostic : développement seulement. En production, elles révélaient l'environnement
+// et les messages d'erreur de la base de données à n'importe quel visiteur.
+if (!$isProduction) {
+    $router->map('GET', '/api/test', function () {
 
-    // En tant qu'API professionnelle, on force le format de réponse en JSON
-    header('Content-Type: application/json; charset=utf-8');
+        // En tant qu'API professionnelle, on force le format de réponse en JSON
+        header('Content-Type: application/json; charset=utf-8');
 
-    // On renvoie un tableau PHP qui sera converti en texte JSON
-    echo json_encode([
-        'status' => 200,
-        'message' => 'Félicitations, le routage AltoRouter fonctionne à merveille !',
-        'data' => [
-            'app_env' => $_ENV['APP_ENV'] ?? 'non-défini',
-            'timestamp' => date('Y-m-d H:i:s')
-        ]
-    ], JSON_UNESCAPED_UNICODE);
-}, 'api_test_route');
-
-// -----------------------------------------------------------------------
-// Route de test pour la Base de Données (Issue #4)
-// -----------------------------------------------------------------------
-$router->map('GET', '/api/test-db', function () {
-    header('Content-Type: application/json; charset=utf-8');
-
-    try {
-        // On instancie la connexion PDO via votre Singleton
-        $db = \App\Core\Database::getConnection();
-
-        // On effectue une requête très simple pour vérifier la lecture
-        $stmt = $db->query("SELECT id, name FROM departments LIMIT 2");
-        $departments = $stmt->fetchAll();
-
+        // On renvoie un tableau PHP qui sera converti en texte JSON
         echo json_encode([
             'status' => 200,
-            'message' => 'Connexion MySQL réussie avec succès !',
-            'data' => $departments
+            'message' => 'Félicitations, le routage AltoRouter fonctionne à merveille !',
+            'data' => [
+                'app_env' => $_ENV['APP_ENV'] ?? 'non-défini',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]
         ], JSON_UNESCAPED_UNICODE);
-    } catch (\Exception $e) {
-        http_response_code(500);
-        echo json_encode([
-            'status' => 500,
-            'error' => 'Erreur de base de données : ' . $e->getMessage(),
+    }, 'api_test_route');
 
-        ], JSON_UNESCAPED_UNICODE);
-    }
-}, 'api_test_db_route');
+    // -----------------------------------------------------------------------
+    // Route de test pour la Base de Données (Issue #4)
+    // -----------------------------------------------------------------------
+    $router->map('GET', '/api/test-db', function () {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            // On instancie la connexion PDO via votre Singleton
+            $db = \App\Core\Database::getConnection();
+
+            // On effectue une requête très simple pour vérifier la lecture
+            $stmt = $db->query("SELECT id, name FROM departments LIMIT 2");
+            $departments = $stmt->fetchAll();
+
+            echo json_encode([
+                'status' => 200,
+                'message' => 'Connexion MySQL réussie avec succès !',
+                'data' => $departments
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 500,
+                'error' => 'Erreur de base de données : ' . $e->getMessage(),
+
+            ], JSON_UNESCAPED_UNICODE);
+        }
+    }, 'api_test_db_route');
+}
 
 $router->map('GET', '/api/departments', 'DepartmentController#index', 'api_departments_list');
 
@@ -184,11 +209,13 @@ $router->map('POST',  '/api/admin/clients/[i:id]/password-reset',   'AdminClient
 
 
 
-$router->map('GET', '/api/admin/test', function () {
-    $payload = \App\Middlewares\AdminMiddleware::authenticate();
-    header('Content-Type: application/json');
-    echo json_encode(['success' => true, 'role' => $payload['role']]);
-}, 'admin_test');
+if (!$isProduction) {
+    $router->map('GET', '/api/admin/test', function () {
+        $payload = \App\Middlewares\AdminMiddleware::authenticate();
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'role' => $payload['role']]);
+    }, 'admin_test');
+}
 
 
 // -----------------------------------------------------------------------

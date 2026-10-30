@@ -6,6 +6,8 @@ use App\Models\UserModel;
 use App\Middlewares\AuthMiddleware;
 use App\Core\PasswordPolicy;
 use App\Core\NamePolicy;
+use App\Core\Input;
+use App\Core\SessionCookie;
 
 class UserController
 {
@@ -48,19 +50,22 @@ class UserController
     public function update(): void
     {
         $payload = AuthMiddleware::authenticate();
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
+        $data = Input::json() ?? [];
 
-        if (empty($data['first_name']) || empty($data['last_name']) || empty($data['email'])) {
+        $firstName = Input::string($data, 'first_name', 100);
+        $lastName  = Input::string($data, 'last_name', 100);
+
+        if (empty($firstName) || empty($lastName) || empty($data['email'])) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
-                'message' => 'Les champs Prénom, non, email sont obligatoires.'
+                'message' => 'Les champs Prénom, nom, email sont obligatoires.'
             ], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        $email = Input::email($data);
+        if ($email === null) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
@@ -69,26 +74,16 @@ class UserController
             return;
         }
 
-        $nameError = NamePolicy::validate($data['first_name']);
-        if ($nameError) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
-            return;
+        foreach ([$firstName, $lastName] as $name) {
+            $nameError = NamePolicy::validate($name);
+            if ($nameError) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
+                return;
+            }
         }
 
-        $nameError = NamePolicy::validate($data['last_name']);
-        if ($nameError) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        $updated = $this->userModel->update(
-            $payload['id'],
-            $data['first_name'],
-            $data['last_name'],
-            $data['email']
-        );
+        $updated = $this->userModel->update($payload['id'], $firstName, $lastName, $email);
 
         if (!$updated) {
             http_response_code(409);
@@ -113,10 +108,13 @@ class UserController
     public function updatePassword(): void
     {
         $payload = AuthMiddleware::authenticate();
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
+        $data = Input::json() ?? [];
 
-        if (empty($data['current_password']) || empty($data['new_password']) || empty($data['confirm_new_password'])) {
+        $currentPassword = Input::string($data, 'current_password', 200, trim: false);
+        $newPassword     = Input::string($data, 'new_password', 200, trim: false);
+        $confirmPassword = Input::string($data, 'confirm_new_password', 200, trim: false);
+
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
@@ -125,7 +123,9 @@ class UserController
             return;
         }
 
-        $passwordError = PasswordPolicy::validate($data['new_password']);
+        $user = $this->userModel->findById($payload['id']);
+
+        $passwordError = PasswordPolicy::validate($newPassword, $user['email'] ?? null);
         if ($passwordError) {
             http_response_code(400);
             echo json_encode([
@@ -135,7 +135,7 @@ class UserController
             return;
         }
 
-        if ($data['confirm_new_password'] !== $data['new_password']) {
+        if ($confirmPassword !== $newPassword) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
@@ -144,9 +144,7 @@ class UserController
             return;
         }
 
-        $user = $this->userModel->findById($payload['id']);
-
-        if (!$user || !password_verify($data['current_password'], $user['password'])) {
+        if (!$user || !password_verify($currentPassword, $user['password'])) {
             http_response_code(401);
             echo json_encode([
                 'success' => false,
@@ -155,7 +153,7 @@ class UserController
             return;
         }
 
-        $this->userModel->updatePassword($payload['id'], $data['new_password']);
+        $this->userModel->updatePassword($payload['id'], $newPassword);
 
         http_response_code(200);
         echo json_encode([
@@ -232,12 +230,7 @@ class UserController
         }
 
         // Supprimer le cookie de session côté serveur
-        setcookie('jardinerie_session', '', [
-            'expires'  => time() - 3600,
-            'path'     => '/',
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
+        SessionCookie::clear();
 
         http_response_code(200);
         echo json_encode([
