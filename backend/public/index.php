@@ -205,6 +205,9 @@ $router->map('GET', '/api/admin/orders', 'AdminOrderController#index', 'admin_or
 $router->map('GET', '/api/admin/orders/[i:id]', 'AdminOrderController#show', 'admin_orders_show');
 $router->map('PATCH', '/api/admin/orders/[i:id]/status', 'AdminOrderController#updateStatus', 'admin_orders_update_status');
 
+// ADMIN — JOURNAL DE SÉCURITÉ
+$router->map('GET', '/api/admin/security-events', 'AdminSecurityController#index', 'admin_security_events');
+
 // ADMIN — GESTION DES CLIENTS
 $router->map('GET',   '/api/admin/clients',                        'AdminClientController#index',            'admin_clients_list');
 $router->map('GET',   '/api/admin/clients/[i:id]',                 'AdminClientController#show',              'admin_clients_show');

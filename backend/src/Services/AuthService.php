@@ -7,6 +7,7 @@ use App\Models\AccountTokenModel;
 use App\Core\PasswordPolicy;
 use App\Core\NamePolicy;
 use App\Core\DeferredWork;
+use App\Core\SecurityLog;
 
 class AuthService
 {
@@ -257,6 +258,7 @@ class AuthService
             $this->tokenModel->invalidateAll((int) $user['id'], AccountTokenModel::PURPOSE_PASSWORD_RESET);
 
             $secureUrl = "{$this->frontendUrl()}/mot-de-passe-oublie";
+            SecurityLog::record(SecurityLog::PASSWORD_RESET_DONE, (int) $user['id']);
             DeferredWork::run(fn() => $this->emailService->sendPasswordChangedNotice($user['email'], $user['first_name'], $secureUrl));
 
             return [
@@ -292,6 +294,7 @@ class AuthService
         try {
             $this->userModel->markEmailVerified($tokenData['user_id']);
             $this->tokenModel->markAsUsed($token);
+            SecurityLog::record(SecurityLog::EMAIL_VERIFIED, (int) $tokenData['user_id']);
 
             return [
                 'success' => true,
@@ -344,6 +347,7 @@ class AuthService
             $secureUrl  = "{$this->frontendUrl()}/mot-de-passe-oublie";
             $masked     = EmailService::maskEmail($newEmail);
 
+            SecurityLog::record(SecurityLog::EMAIL_CHANGE_REQUESTED, $userId);
             DeferredWork::run(fn() => $this->emailService->sendEmailChangeVerification($newEmail, $user['first_name'], $confirmUrl));
             DeferredWork::run(fn() => $this->emailService->sendEmailChangeAlert($user['email'], $user['first_name'], $masked, $secureUrl));
         } catch (\Exception $e) {
@@ -390,6 +394,7 @@ class AuthService
             }
 
             $this->tokenModel->invalidateAll((int) $user['id'], AccountTokenModel::PURPOSE_EMAIL_CHANGE);
+            SecurityLog::record(SecurityLog::EMAIL_CHANGED, (int) $user['id']);
 
             DeferredWork::run(fn() => $this->emailService->sendEmailChangedNotice($user['email'], $user['first_name'], EmailService::maskEmail($newEmail)));
 

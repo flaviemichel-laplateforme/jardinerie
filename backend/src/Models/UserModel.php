@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Core\Database;
 use App\Core\PasswordPolicy;
+use App\Core\SecurityLog;
 
 class UserModel
 {
@@ -152,6 +153,10 @@ class UserModel
         $db->beginTransaction();
 
         try {
+            // L'adresse d'origine, avant qu'elle ne soit remplacée : sert à retrouver les tentatives de connexion du journal
+            $oldEmail = $db->prepare("SELECT email FROM users WHERE id = :id");
+            $oldEmail->execute([':id' => $id]);
+            $emailBefore = $oldEmail->fetchColumn();
 
             $sql = "UPDATE users SET
                 first_name       = 'Compte',
@@ -173,6 +178,10 @@ class UserModel
 
 
             $db->prepare("DELETE FROM addresses WHERE user_id = :id")->execute([':id' => $id]);
+
+            // Droit à l'oubli : l'IP et l'agent du journal de sécurité disparaissent aussi
+            (new \App\Models\SecurityEventModel())->scrubUser($id, $emailBefore ? SecurityLog::hashEmail($emailBefore) : null);
+
             $db->commit();
             return $stmt->rowCount() > 0;
         } catch (\Exception $e) {
