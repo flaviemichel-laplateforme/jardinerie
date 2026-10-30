@@ -18,3 +18,34 @@ export const WATER_REQUIREMENT_CONFIG = {
 };
 
 export const WATER_COLOR = '#3B82C4';
+
+// --- Fiche botanique détaillée (Lot A) : clés = valeurs des ENUM en base (plants / products) ---
+
+export const FOLIAGE_LABELS = {
+  'Deciduous':      'Caduc',
+  'Evergreen':      'Persistant',
+  'Semi-evergreen': 'Semi-persistant',
+};
+
+export const DROUGHT_LABELS = {
+  'Low':    'Faible',
+  'Medium': 'Moyenne',
+  'High':   'Forte',
+};
+
+export const DIFFICULTY_LABELS = {
+  'Beginner':     'Facile (débutant)',
+  'Intermediate': 'Intermédiaire',
+  'Expert':       'Exigeant (expert)',
+};
+
+export const PACKAGING_LABELS = {
+  'Pot':       'En pot',
+  'Plug':      'En godet',
+  'Bare root': 'Racines nues',
+  'Root ball': 'En motte',
+};
+
+// Index 0 = janvier (le mois 1 en base)
+export const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+export const MONTHS_SHORT = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
