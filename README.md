@@ -165,6 +165,21 @@ Une valeur contenant un espace (comme `MAIL_FROM_NAME`) doit être **entre guill
 6. Activation d'un certificat SSL (Let's Encrypt) sur le domaine, avec redirection automatique HTTP → HTTPS.
 7. Configuration d'un webhook Stripe pointant vers `https://<domaine-back-end>/api/webhooks/stripe`, écoutant l'événement `payment_intent.succeeded` — indispensable, car c'est ce webhook (et non la page de confirmation) qui déclenche la création de la commande en base de données.
 
+### Version de PHP
+
+| Environnement | Version | Remarque |
+|---|---|---|
+| Docker (local) | **8.5** (`PHP_VERSION` dans `docker-compose.yml` ou en variable d'environnement) | Les tests (PHPUnit 12) exigent PHP 8.3 minimum |
+| Production (Plesk étudiant) | **8.1** | Plus supportée par php.net (plus de correctifs de sécurité) ; l'hébergement ne permet pas de la changer |
+
+Tant que la production reste en PHP 8.1, le code ne doit utiliser aucune nouveauté de PHP 8.2 ou plus récent (classes `readonly`, constantes typées, `json_validate`…) : il passerait les tests en local mais ferait planter le site une fois déployé. **Avant chaque déploiement**, lancer le contrôle qui lit tout le backend avec PHP 8.1 :
+
+```
+MSYS_NO_PATHCONV=1 sh scripts/verifier-php81.sh
+```
+
+Un changement d'hébergement vers un serveur en PHP 8.3 ou plus récent est à prévoir. Calendrier officiel : https://www.php.net/supported-versions.php
+
 ### Sécurité de l'API
 
 - **Requêtes qui modifient des données** (POST, PUT, PATCH, DELETE) : l'en-tête `Origin` doit être un site autorisé et le corps doit être du JSON (`RequestGuard`), ce qui bloque le CSRF même avec un cookie `SameSite=None`. Exceptions : le webhook Stripe (signé) et l'envoi d'image (multipart, origine contrôlée).
