@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\PasswordPolicy;
 
 class UserModel
 {
@@ -98,7 +99,7 @@ class UserModel
         $sql = "UPDATE users SET password = :password WHERE id = :id";
         $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':password' => password_hash($newPassword, PASSWORD_BCRYPT),
+            ':password' => PasswordPolicy::hash($newPassword),
             ':id' => $id
         ]);
     }

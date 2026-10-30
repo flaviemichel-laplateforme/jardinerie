@@ -141,6 +141,7 @@ DB_NAME=...
 DB_USER=...
 DB_PASSWORD=...
 JWT_SECRET=...
+ALLOWED_ORIGINS=https://jardinerie.vercel.app,https://jardinerie-next.vercel.app
 STRIPE_SECRET_KEY=...
 STRIPE_WEBHOOK_SECRET=...
 BREVO_API_KEY=...
@@ -150,6 +151,12 @@ MAIL_TAG=jardinerie
 FRONTEND_URL=https://mondomaine.vercel.app
 ```
 
+**`JWT_SECRET`** signe les jetons de connexion : quiconque la connaît peut se faire passer pour n'importe quel utilisateur, administrateur compris. Elle doit faire **32 caractères au minimum**, être propre à la production (jamais la valeur d'exemple de `.env.example`, qui est publique : l'API refuse de démarrer avec elle en production) et rester secrète. Génération : `php -r "echo bin2hex(random_bytes(32));"`. La changer déconnecte tous les utilisateurs, sans autre conséquence.
+
+**`ALLOWED_ORIGINS`** liste les sites autorisés à appeler l'API avec le cookie de session (séparés par des virgules, sans `/` final). Un site absent de la liste ne reçoit aucun en-tête CORS et ses requêtes qui modifient des données sont refusées (403). À mettre à jour pour tout nouveau domaine.
+
+**`COOKIE_SAMESITE`** (facultatif) : `None` par défaut en production, car l'ancien front-end est sur un autre domaine. À passer à `Lax` quand le navigateur ne parle plus qu'au site (relais Next.js) : le cookie ne part alors plus lors d'une requête POST venue d'un autre site.
+
 Une valeur contenant un espace (comme `MAIL_FROM_NAME`) doit être **entre guillemets** : sans eux, tout le fichier `.env` devient illisible et l'API ne démarre plus.
 
 `MAIL_FROM_EMAIL` doit être un expéditeur **vérifié** dans Brevo (Paramètres, Expéditeurs, domaine, IP). Si une de ces variables est absente, les e-mails ne partent pas (l'erreur est journalisée), mais les commandes et les comptes restent créés.
@@ -157,6 +164,14 @@ Une valeur contenant un espace (comme `MAIL_FROM_NAME`) doit être **entre guill
 5. Import de la base de données via phpMyAdmin (intégré à Plesk) : d'abord le script de structure, puis le script de données.
 6. Activation d'un certificat SSL (Let's Encrypt) sur le domaine, avec redirection automatique HTTP → HTTPS.
 7. Configuration d'un webhook Stripe pointant vers `https://<domaine-back-end>/api/webhooks/stripe`, écoutant l'événement `payment_intent.succeeded` — indispensable, car c'est ce webhook (et non la page de confirmation) qui déclenche la création de la commande en base de données.
+
+### Sécurité de l'API
+
+- **Requêtes qui modifient des données** (POST, PUT, PATCH, DELETE) : l'en-tête `Origin` doit être un site autorisé et le corps doit être du JSON (`RequestGuard`), ce qui bloque le CSRF même avec un cookie `SameSite=None`. Exceptions : le webhook Stripe (signé) et l'envoi d'image (multipart, origine contrôlée).
+- **Jetons de connexion** (`JwtHelper`) : algorithme `HS256` imposé, émetteur, date d'émission et expiration obligatoires, secret d'au moins 32 caractères.
+- **Mots de passe** (`PasswordPolicy`) : 8 à 72 caractères, majuscule, minuscule, chiffre et symbole, refus des mots de passe courants (même déguisés : `P@ssw0rd!`) et de ceux qui contiennent l'adresse e-mail ; bcrypt coût 12, recalculé automatiquement à la connexion pour les anciens comptes.
+- **Erreurs** : une erreur imprévue renvoie un JSON générique ; le détail reste dans le journal du serveur. Les routes `/api/test*` n'existent qu'en développement.
+- **Entrées** : tout champ doit être du texte de longueur raisonnable (`Input`) ; les adresses e-mail sont normalisées en minuscules.
 
 ### Différences entre environnement local et production
 

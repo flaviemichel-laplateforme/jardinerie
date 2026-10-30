@@ -2,8 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Core\Input;
+use App\Core\SessionCookie;
 use App\Services\AuthService;
-use App\Core\JwtHelper;
 use App\Middlewares\AuthMiddleware;
 
 class AuthController
@@ -12,99 +13,72 @@ class AuthController
         private AuthService $authService = new AuthService()
     ) {}
 
-
     /**
      * Point d'entrée pour l'inscription (POST /api/auth/register)
      */
     public function register(): void
     {
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
-
-        if (!is_array($data)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Format de données invalide. JSON attendu."]);
+        $data = Input::json();
+        if ($data === null) {
+            $this->respond(400, "Format de données invalide. JSON attendu.");
             return;
         }
 
-        // Nettoyage des espaces avant/après — un champ rempli uniquement d'espaces
-        // ne doit pas être considéré comme valide.
-        $data['first_name'] = trim($data['first_name'] ?? '');
-        $data['last_name']  = trim($data['last_name'] ?? '');
-        $data['email']      = trim($data['email'] ?? '');
+        // Chaque champ doit être du texte (un tableau JSON ferait planter trim()). Nettoyage des espaces avant/après :
+        // un champ rempli uniquement d'espaces ne doit pas être considéré comme valide. Pas de trim sur le mot de passe.
+        $firstName = Input::string($data, 'first_name', 100);
+        $lastName  = Input::string($data, 'last_name', 100);
+        $password  = Input::string($data, 'password', 200, trim: false);
 
-        if (
-            empty($data['first_name']) ||
-            empty($data['last_name']) ||
-            empty($data['email']) ||
-            empty($data['password'])
-        ) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Tous les champs sont obligatoires."
-            ]);
+        if (empty($firstName) || empty($lastName) || empty($data['email']) || empty($password)) {
+            $this->respond(400, "Tous les champs sont obligatoires.");
             return;
         }
 
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Adresse email invalide."
-            ]);
+        $email = Input::email($data);
+        if ($email === null) {
+            $this->respond(400, "Adresse email invalide.");
             return;
         }
 
-        $result = $this->authService->register($data);
+        $result = $this->authService->register([
+            'first_name'   => $firstName,
+            'last_name'    => $lastName,
+            'email'        => $email,
+            'password'     => $password,
+            'gdpr_consent' => $data['gdpr_consent'] ?? false,
+        ]);
 
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
-
 
     /**
      * Point d'entrée pour la connexion (POST /api/auth/login)
      */
     public function login(): void
     {
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
+        $data = Input::json() ?? [];
 
-        if (empty($data['email']) || empty($data['password'])) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "L'adresse email et le mot de passe sont requis."
-            ]);
+        // L'adresse n'est pas validée ici (juste normalisée) : un format invalide ne doit pas se distinguer d'un compte inconnu.
+        $email    = Input::string($data, 'email', 254);
+        $password = Input::string($data, 'password', 200, trim: false);
+
+        if (empty($email) || empty($password)) {
+            $this->respond(400, "L'adresse email et le mot de passe sont requis.");
             return;
         }
 
         // Appel au service pour vérifier les identifiants et générer le JWT
-        $result = $this->authService->login($data['email'], $data['password']);
+        $result = $this->authService->login(strtolower($email), $password);
 
         if (!$result['success']) {
-            http_response_code($result['code']);
-            echo json_encode([
-                "success" => false,
-                "message" => $result['message']
-            ]);
+            $this->respond($result['code'], $result['message']);
             return;
         }
 
-        // Sécurisation JWT dans le cookie HttpOnly
-        // En production, Front-end et Back-end sont sur des domaines différents (cross-site) :
-        // le cookie doit être SameSite=None + Secure pour être accepté par le navigateur.
-        $isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
-        $cookieOptions = [
-            'expires' => time() + 86400, // Expire dans 24h
-            'path' => '/',
-            'secure' => $isProduction,
-            'httponly' => true,
-            'samesite' => $isProduction ? 'None' : 'Lax'
-        ];
-
-        setcookie('jardinerie_session', $result['data']['token'], $cookieOptions);
+        // Sécurisation JWT dans le cookie HttpOnly (attributs : voir SessionCookie)
+        SessionCookie::set($result['data']['token']);
 
         http_response_code($result['code']); // Code 200 OK
         echo json_encode([
@@ -116,7 +90,6 @@ class AuthController
         ]);
     }
 
-
     public function me(): void
     {
         $payload = AuthMiddleware::authenticate();
@@ -125,8 +98,7 @@ class AuthController
         $result = $this->authService->getUserById($payload['id']);
 
         if (!$result['success']) {
-            http_response_code($result['code']);
-            echo json_encode(["success" => false, "message" => $result['message']]);
+            $this->respond($result['code'], $result['message']);
             return;
         }
 
@@ -145,14 +117,7 @@ class AuthController
      */
     public function logout(): void
     {
-        $isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
-        setcookie('jardinerie_session', '', [
-            'expires' => time() - 3600,
-            'path' => '/',
-            'secure' => $isProduction,
-            'httponly' => true,
-            'samesite' => $isProduction ? 'None' : 'Lax'
-        ]);
+        SessionCookie::clear();
 
         http_response_code(200);
         echo json_encode([
@@ -166,18 +131,14 @@ class AuthController
      */
     public function requestPasswordReset(): void
     {
-        $data = json_decode(file_get_contents("php://input"), true);
+        $email = Input::string(Input::json() ?? [], 'email', 254);
 
-        if (empty($data['email'])) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "L'adresse email est obligatoire."
-            ]);
+        if (empty($email)) {
+            $this->respond(400, "L'adresse email est obligatoire.");
             return;
         }
 
-        $result = $this->authService->requestPasswordReset($data['email']);
+        $result = $this->authService->requestPasswordReset(strtolower($email));
 
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
@@ -188,18 +149,16 @@ class AuthController
      */
     public function resetPassword(): void
     {
-        $data = json_decode(file_get_contents("php://input"), true);
+        $data        = Input::json() ?? [];
+        $token       = Input::string($data, 'token', 128);
+        $newPassword = Input::string($data, 'new_password', 200, trim: false);
 
-        if (empty($data['token']) || empty($data['new_password'])) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Le jeton et le nouveau mot de passe sont obligatoires."
-            ]);
+        if (empty($token) || empty($newPassword)) {
+            $this->respond(400, "Le jeton et le nouveau mot de passe sont obligatoires.");
             return;
         }
 
-        $result = $this->authService->resetPassword($data['token'], $data['new_password']);
+        $result = $this->authService->resetPassword($token, $newPassword);
 
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
@@ -210,14 +169,10 @@ class AuthController
      */
     public function verifyEmail(): void
     {
-        $token = $_GET['token'] ?? null;
+        $token = is_string($_GET['token'] ?? null) ? $_GET['token'] : '';
 
-        if (empty($token)) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Le jeton de vérification est manquant."
-            ]);
+        if ($token === '' || strlen($token) > 128) {
+            $this->respond(400, "Le jeton de vérification est manquant.");
             return;
         }
 
@@ -225,5 +180,11 @@ class AuthController
 
         http_response_code($result['code']);
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    private function respond(int $code, string $message): void
+    {
+        http_response_code($code);
+        echo json_encode(["success" => false, "message" => $message], JSON_UNESCAPED_UNICODE);
     }
 }
