@@ -4,9 +4,21 @@ Nouvelle version du site, construite à côté de l'ancienne (`../frontend`, Rea
 n'est pas terminée. Objectif : un vrai référencement (SEO) — le serveur envoie des pages complètes, avec un titre et une description
 propres à chaque page, au lieu d'une page vide remplie par JavaScript.
 
-État : **étape 1 en cours**. Mise en page commune, accueil, catalogues (`/produits`, `/vegetaux`, `/jardinage`), pages
-légales, contact, page 404 et page d'erreur. La fiche produit arrive dans la PR suivante. Les liens vers les pages pas
-encore portées (fiche produit, panier, connexion, compte…) mènent temporairement à la page 404.
+État : **étape 1 terminée**. Mise en page commune, accueil, catalogues (`/produits`, `/vegetaux`, `/jardinage`), fiche
+produit, pages légales, contact, page 404, page d'erreur et sitemap. Les liens vers les pages pas encore portées (panier,
+connexion, compte…) mènent temporairement à la page 404.
+
+### Fiche produit : ce qu'il faut savoir
+- **Adresse** : `/produit/12-monstera-deliciosa` (identifiant + nom). Seul l'identifiant compte : un nom erroné affiche quand
+  même la fiche, avec l'adresse canonique pour Google. Les anciennes adresses (`/produit/12`) sont redirigées en 308 par
+  `src/proxy.js`, **avant** l'affichage : une redirection décidée pendant l'affichage arrive trop tard pour les robots.
+- **Données** : lues sur le serveur et mises en cache une minute (`services/productData.js`). Le stock, lui, est vérifié en
+  temps réel dans le navigateur (`ProductBuyBox`) : il peut avoir bougé depuis la mise en cache.
+- **Générée au build** (`generateStaticParams`) pour les produits existants ; un produit ajouté ensuite est généré à sa première visite.
+- **Fiche botanique** (`ProductBotanicalSheet`) : caractéristiques, calendrier de floraison et de récolte, conseils d'entretien et
+  critères. Chaque partie n'apparaît que si elle est renseignée dans l'administration.
+- **Référencement** : titre, description et image de partage propres au produit, données structurées `Product` (prix,
+  disponibilité) et `sitemap.xml` listant toutes les fiches.
 
 ### Catalogue : ce qui a changé par rapport à l'ancienne version
 - La **1re page** (12 produits) est calculée par le serveur, pour chaque jeu de filtres (`components/catalog/CatalogPage.jsx`) :

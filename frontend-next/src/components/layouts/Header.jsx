@@ -287,7 +287,7 @@ export default function Header() {
                 {(vegetauxFilters?.categories || []).map((cat) => (
                   <Link
                     key={cat.id}
-                    to={`/vegetaux?categories=${cat.id}`}
+                    href={`/vegetaux?categories=${cat.id}`}
                     onClick={() => setOpenSection(null)}
                     className="block px-4 py-2 text-sm text-jardinerie-text hover:bg-jardinerie-bg hover:text-jardinerie-primary"
                   >
@@ -315,7 +315,7 @@ export default function Header() {
                 {(jardinageFilters?.categories || []).map((cat) => (
                   <Link
                     key={cat.id}
-                    to={`/jardinage?categories=${cat.id}`}
+                    href={`/jardinage?categories=${cat.id}`}
                     onClick={() => setOpenSection(null)}
                     className="block px-4 py-2 text-sm text-jardinerie-text hover:bg-jardinerie-bg hover:text-jardinerie-primary"
                   >

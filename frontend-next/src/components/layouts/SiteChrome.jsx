@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import AnnouncementBar from './AnnouncementBar';
 import Header from './Header';
 import Footer from './Footer';
 import BackToTop from '../ui/BackToTop';
+import { recordPageView } from '../../utils/navigationHistory';
 
 /**
  * Habillage commun à toutes les pages (remplace MainLayout de l'ancienne version) : bandeau, en-tête, pied de page,
@@ -15,6 +17,11 @@ import BackToTop from '../ui/BackToTop';
  */
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
+
+  // Compte les pages vues sur le site : le bouton « Retour » de la fiche produit sait ainsi s'il y a une page avant
+  useEffect(() => {
+    recordPageView();
+  }, [pathname]);
 
   const isAdminSpace = pathname.startsWith('/admin');
   const isPrivateSpace = isAdminSpace || pathname.startsWith('/compte');
