@@ -1,5 +1,8 @@
-# Utilisation de l'image officielle PHP 8.2 avec le serveur Apache
-FROM php:8.3-apache
+# Version de PHP : doit rester identique à celle du serveur de production (Plesk), pour que les tests locaux reflètent la réalité.
+# Modifiable sans toucher à ce fichier : PHP_VERSION=8.4 docker compose build api
+# Calendrier de support : https://www.php.net/supported-versions.php
+ARG PHP_VERSION=8.5
+FROM php:${PHP_VERSION}-apache
 
 # Installation des extensions PHP nécessaires
 RUN docker-php-ext-install pdo pdo_mysql
@@ -28,7 +31,7 @@ RUN apt-get update && apt-get install -y \
 
 # Installation de Composer (gestionnaire de paquets PHP)
 # On copie directement depuis l'image officielle Composer — la méthode recommandée
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Activation du module de réécriture d'URL (indispensable pour AltoRouter)
 RUN a2enmod rewrite
