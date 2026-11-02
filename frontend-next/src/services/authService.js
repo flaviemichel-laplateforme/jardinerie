@@ -21,16 +21,21 @@ export const authService = {
     },
 
     buildRequestPasswordResetUrl() {
-    return `${AUTH_ENDPOINT}/request-password-reset`;
+        return `${AUTH_ENDPOINT}/request-password-reset`;
     },
 
     buildResetPasswordUrl() {
-    return `${AUTH_ENDPOINT}/reset-password`;
+        return `${AUTH_ENDPOINT}/reset-password`;
     },
 
-    buildVerifyEmailUrl(token) {
-    return `${AUTH_ENDPOINT}/verify-email?token=${encodeURIComponent(token)}`;
+    // Les liens des e-mails (vérification, changement d'adresse) sont validés par un POST qui porte le jeton dans le corps :
+    // un robot qui ouvre le lien (antivirus, aperçu d'e-mail) ne l'utilise donc pas à la place de la personne.
+    buildVerifyEmailUrl() {
+        return `${AUTH_ENDPOINT}/verify-email`;
     },
-  
+
+    buildConfirmEmailChangeUrl() {
+        return `${AUTH_ENDPOINT}/confirm-email-change`;
+    },
 
 }

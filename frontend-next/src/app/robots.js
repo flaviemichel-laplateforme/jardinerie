@@ -8,7 +8,21 @@ export default function robots() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://jardinerie.vercel.app';
 
   return {
-    rules: { userAgent: '*', allow: '/', disallow: ['/admin', '/compte'] },
+    // Espace privé et pages de compte : sans intérêt pour un moteur de recherche (les pages portent aussi une balise noindex)
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: [
+        '/admin',
+        '/compte',
+        '/connexion',
+        '/inscription',
+        '/mot-de-passe-oublie',
+        '/reinitialiser-mot-de-passe',
+        '/verifier-email',
+        '/confirmer-changement-email',
+      ],
+    },
     sitemap: `${siteUrl}/sitemap.xml`,
   };
 }
