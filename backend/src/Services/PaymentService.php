@@ -26,11 +26,17 @@ class PaymentService
     public function createPaymentIntent(int $amountInCents, int $userId, array $cartItems = [], int $shippingAddressId = 0, int $billingAddressId = 0, int $lastOrderId = 0): array
     {
         $cartHash = md5(json_encode($cartItems));
-        $idempotencyKey = "pi_user_{$userId}_amount_{$amountInCents}_{$cartHash}_{$shippingAddressId}_{$billingAddressId}_after_{$lastOrderId}";
+        // « v2 » : les paramètres de l'intention ont changé (carte seulement) ; Stripe refuse de réutiliser une clé d'idempotence avec
+        // d'autres paramètres, et une intention créée la veille avec l'ancienne clé ferait échouer le paiement d'un client qui revient.
+        $idempotencyKey = "pi_v2_user_{$userId}_amount_{$amountInCents}_{$cartHash}_{$shippingAddressId}_{$billingAddressId}_after_{$lastOrderId}";
 
         $paymentIntent = PaymentIntent::create([
             'amount'   => $amountInCents,
             'currency' => 'eur',
+            // Carte bancaire UNIQUEMENT : la commande est enregistrée avec le moyen de paiement « carte », et les moyens différés
+            // (Klarna, Bancontact, virement...) renvoient un statut « en cours » que le tunnel ne sait pas encore traiter.
+            // Sans cette ligne, Stripe propose tous les moyens activés sur le compte (PayPal, Klarna, Amazon Pay...).
+            'payment_method_types' => ['card'],
             'metadata' => [
                 'cart_hash' => $cartHash,
                 'user_id'   => $userId,

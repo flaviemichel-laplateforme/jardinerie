@@ -13,17 +13,20 @@ const isProduction = process.env.NODE_ENV === 'production';
 // - 'unsafe-inline' pour les styles : les notifications (react-hot-toast) posent des styles en ligne.
 // - 'unsafe-eval' seulement en développement : le rechargement à chaud de Next.js en a besoin.
 // - Turnstile (contrôle anti-robots de Cloudflare) : son script et son cadre viennent de challenges.cloudflare.com.
-// - Stripe sera ajouté ici avec le tunnel de paiement : js.stripe.com.
+// - Stripe (paiement par carte) : son script et son cadre de saisie viennent de js.stripe.com, la validation 3D Secure de hooks.stripe.com,
+//   et ses appels de js.stripe.com vers api.stripe.com. Les numéros de carte restent DANS le cadre de Stripe : ils ne touchent pas le site.
 const turnstileOrigin = 'https://challenges.cloudflare.com';
+const stripeScriptOrigin = 'https://js.stripe.com';
+const stripeFrameOrigins = 'https://js.stripe.com https://hooks.stripe.com';
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${isProduction ? '' : " 'unsafe-eval'"}`,
-  `frame-src ${turnstileOrigin}`,
+  `script-src 'self' 'unsafe-inline' ${turnstileOrigin} ${stripeScriptOrigin}${isProduction ? '' : " 'unsafe-eval'"}`,
+  `frame-src ${turnstileOrigin} ${stripeFrameOrigins}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${assetOrigin}`,
+  `img-src 'self' data: blob: ${assetOrigin} https://*.stripe.com`,
   "font-src 'self'",
-  `connect-src 'self'${isProduction ? '' : ' ws:'}`,
+  `connect-src 'self' https://api.stripe.com${isProduction ? '' : ' ws:'}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
