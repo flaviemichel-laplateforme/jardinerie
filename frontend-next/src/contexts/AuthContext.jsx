@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { authService } from '../services/authService';
 
 const AuthContext = createContext();
@@ -45,12 +45,14 @@ export function AuthProvider({ children }) {
 
   // 2. Fonction de connexion (Appelée par votre formulaire de login)
   // Plus besoin de gérer le token ici, le navigateur s'en occupe tout seul !
-  const login = (userData) => {
+  // useCallback : ces deux fonctions gardent la même identité d'un rendu à l'autre, donc les pages peuvent les citer
+  // dans les dépendances d'un useEffect sans le relancer à chaque affichage.
+  const login = useCallback((userData) => {
     setUser(userData);
-  };
+  }, []);
 
   // 3. Fonction de déconnexion
-  const logout = async () => {
+  const logout = useCallback(async () => {
     // Optionnel mais recommandé : appeler une route PHP /api/auth/logout pour détruire le cookie côté serveur
     try {
       await fetch(authService.buildLogoutUrl(), {
@@ -63,7 +65,14 @@ export function AuthProvider({ children }) {
     
     // Nettoyage de l'état React
     setUser(null);
-  };
+  }, []);
+
+  // 4. Fermer la session PUIS recharger le site sur une page donnée. Le rechargement complet est voulu : l'état de la session
+  // repart de zéro, et la garde de l'espace client n'a pas le temps de renvoyer vers /connexion avant le départ.
+  const endSession = useCallback(async (destination) => {
+    await logout();
+    window.location.assign(destination);
+  }, [logout]);
 
   // On n'affiche PLUS d'écran d'attente ici (contrairement à l'ancienne version Vite) : le serveur doit pouvoir envoyer
   // la page complète à Google, qui n'exécute pas la vérification de session. Les pages qui dépendent de la connexion
@@ -74,7 +83,8 @@ export function AuthProvider({ children }) {
       loading,
       user,
       login,
-      logout
+      logout,
+      endSession
     }}>
       {children}
     </AuthContext.Provider>

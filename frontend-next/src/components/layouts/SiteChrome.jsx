@@ -64,7 +64,8 @@ export default function SiteChrome({ children }) {
 
       <Header />
 
-      <main className="min-w-0 flex-grow bg-jardinerie-bg/10 p-6 md:p-8">
+      {/* Espaces privés : sur mobile, la barre de navigation fixe en bas de l'écran ne doit pas masquer la fin du contenu */}
+      <main className={`min-w-0 flex-grow bg-jardinerie-bg/10 p-6 md:p-8 ${isPrivateSpace ? 'pb-24 md:pb-8' : ''}`}>
         <BackToTop bottomClass={backToTopBottomClass} />
         {children}
       </main>

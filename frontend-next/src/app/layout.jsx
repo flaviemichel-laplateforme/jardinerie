@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Lato } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
@@ -43,7 +44,12 @@ export default function RootLayout({ children }) {
     <html lang="fr" className={lato.variable}>
       <body className="font-sans antialiased">
         <Providers>
-          <SiteChrome>{children}</SiteChrome>
+          {/* Suspense : SiteChrome lit l'adresse de la page (usePathname). Pour une page à identifiant libre (/compte/commandes/12),
+              cette adresse n'est connue qu'à la requête ; Next.js exige alors cette limite. Les autres pages ne sont pas
+              concernées : leur adresse est connue à la construction, elles restent entièrement prérendues. */}
+          <Suspense fallback={null}>
+            <SiteChrome>{children}</SiteChrome>
+          </Suspense>
         </Providers>
       </body>
     </html>
