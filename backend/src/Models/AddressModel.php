@@ -27,6 +27,23 @@ class AddressModel
     }
 
     /**
+     * Cette adresse appartient-elle à cet utilisateur ?
+     * Sans ce contrôle, un client pourrait mettre l'identifiant de l'adresse d'un autre dans sa commande : le texte de cette adresse
+     * (nom, rue, téléphone) serait alors copié dans SA commande et lisible par lui (faille IDOR).
+     */
+    public function belongsToUser(int $id, int $userId): bool
+    {
+        if ($id < 1) {
+            return false;
+        }
+
+        $stmt = Database::getConnection()->prepare('SELECT 1 FROM addresses WHERE id = :id AND user_id = :user_id LIMIT 1');
+        $stmt->execute([':id' => $id, ':user_id' => $userId]);
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
      * Crée une nouvelle adresse pour un utilisateur.
      */
     public function create(int $userId, array $data): int
