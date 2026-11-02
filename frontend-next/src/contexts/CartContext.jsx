@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const STORAGE_KEY = 'jardinerie_cart';
 
@@ -85,6 +85,29 @@ export function CartProvider({ children }) {
   // Vider le panier
   const clearCart = () => setCartItems([]);
 
+  // Aligne les articles enregistrés dans le navigateur sur ce que la base dit AUJOURD'HUI (POST /api/cart/summary) : le panier peut dater
+  // de plusieurs jours, avec un ancien prix, un ancien stock ou une ancienne TVA. Les articles absents de la réponse (retirés de la vente,
+  // en rupture) restent tels quels : c'est au panier de les signaler et de laisser le client les retirer.
+  const syncWithServer = useCallback((serverItems) => {
+    const byId = new Map(serverItems.map((item) => [item.product_id, item]));
+
+    setCartItems((prevItems) =>
+      prevItems.map((item) => {
+        const fresh = byId.get(item.id);
+        if (!fresh) return item;
+
+        return {
+          ...item,
+          name: fresh.name,
+          price: fresh.unit_price,
+          tax_rate: fresh.tax_rate,
+          stock_max: fresh.stock_quantity,
+          quantity: Math.min(item.quantity, fresh.quantity),
+        };
+      })
+    );
+  }, []);
+
   // Calculs automatiques
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
@@ -97,6 +120,7 @@ export function CartProvider({ children }) {
       removeFromCart,
       updateQuantity,
       clearCart,
+      syncWithServer,
       cartTotal,
       cartCount
     }}>
