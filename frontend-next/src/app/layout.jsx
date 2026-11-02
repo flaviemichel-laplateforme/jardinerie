@@ -43,14 +43,17 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr" className={lato.variable}>
       <body className="font-sans antialiased">
-        <Providers>
-          {/* Suspense : SiteChrome lit l'adresse de la page (usePathname). Pour une page à identifiant libre (/compte/commandes/12),
-              cette adresse n'est connue qu'à la requête ; Next.js exige alors cette limite. Les autres pages ne sont pas
-              concernées : leur adresse est connue à la construction, elles restent entièrement prérendues. */}
-          <Suspense fallback={null}>
+        {/* Suspense : SiteChrome lit l'adresse de la page (usePathname). Pour une page à identifiant libre (/compte/commandes/12),
+            cette adresse n'est connue qu'à la requête ; Next.js exige alors cette limite. Les autres pages ne sont pas
+            concernées : leur adresse est connue à la construction, elles restent entièrement prérendues.
+            Providers DOIT rester DANS le Suspense : s'il était dehors, le panier lirait le localStorage avant que l'en-tête
+            (dans le Suspense) ait fini de s'afficher, et celui-ci montrerait un badge que le serveur n'a pas écrit
+            (erreur d'hydratation React #418, visible avec un panier non vide). */}
+        <Suspense fallback={null}>
+          <Providers>
             <SiteChrome>{children}</SiteChrome>
-          </Suspense>
-        </Providers>
+          </Providers>
+        </Suspense>
       </body>
     </html>
   );

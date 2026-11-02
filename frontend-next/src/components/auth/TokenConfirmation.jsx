@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { sendJson } from '../../services/requestJson';
+import { authService } from '../../services/authService';
 import AuthCard from './AuthCard';
 import Spinner from '../ui/Spinner';
 
@@ -14,11 +15,20 @@ import Spinner from '../ui/Spinner';
  * d'e-mail qui prévisualise la page) ne suffit pas à l'utiliser, il faut que cette page tourne dans un navigateur.
  *
  * Props :
- * - url : route de l'API qui valide le jeton
+ * - action : quelle route de l'API valide le jeton ('verify-email' ou 'confirm-email-change')
  * - successTitle / successText : écran de réussite
  * - closeSession : le changement d'adresse ferme toutes les sessions côté API, on vide aussi l'état de la page
+ *
+ * On passe le NOM de l'action, pas l'adresse de l'API : la page serveur qui appelle ce composant connaîtrait l'adresse
+ * INTERNE de l'API (http://localhost:8000...). Le navigateur doit au contraire appeler « /api/... », relayé par le site.
  */
-export default function TokenConfirmation({ url, successTitle, successText, closeSession = false }) {
+const ENDPOINTS = {
+  'verify-email': () => authService.buildVerifyEmailUrl(),
+  'confirm-email-change': () => authService.buildConfirmEmailChangeUrl(),
+};
+
+export default function TokenConfirmation({ action, successTitle, successText, closeSession = false }) {
+  const url = ENDPOINTS[action]();
   const searchParams = useSearchParams();
   const { logout } = useAuth();
 

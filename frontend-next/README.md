@@ -4,9 +4,25 @@ Nouvelle version du site, construite à côté de l'ancienne (`../frontend`, Rea
 n'est pas terminée. Objectif : un vrai référencement (SEO) — le serveur envoie des pages complètes, avec un titre et une description
 propres à chaque page, au lieu d'une page vide remplie par JavaScript.
 
-État : **étape 1 terminée**. Mise en page commune, accueil, catalogues (`/produits`, `/vegetaux`, `/jardinage`), fiche
-produit, pages légales, contact, page 404, page d'erreur et sitemap. Les liens vers les pages pas encore portées (panier,
-connexion, compte…) mènent temporairement à la page 404.
+État : **étapes 1 et 2 terminées**. Mise en page commune, accueil, catalogues (`/produits`, `/vegetaux`, `/jardinage`), fiche
+produit, pages légales, contact, page 404, page d'erreur, sitemap, **comptes** (connexion, inscription, mot de passe oublié,
+liens des e-mails, espace client) et en-têtes de sécurité. Les liens vers les pages pas encore portées (panier, admin)
+mènent temporairement à la page 404.
+
+### Comptes : ce qu'il faut savoir
+- **Pages publiques** : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/reinitialiser-mot-de-passe`, `/verifier-email`,
+  `/confirmer-changement-email`. Les trois chemins « avec jeton » sont ceux écrits dans les e-mails envoyés par l'API
+  (paramètre `?token=`) : ne pas les renommer sans changer `AuthService` côté PHP.
+- **Liens d'e-mail** : le jeton est lu, **effacé de la barre d'adresse**, puis envoyé en POST (`TokenConfirmation`). Un robot qui ouvre
+  le lien (antivirus, aperçu) ne le consomme donc pas.
+- **Après la connexion** : `?redirect=/chemin` ramène à la page demandée, mais seulement un chemin **du site** (`utils/safeRedirect.js`),
+  sinon un lien piégé renverrait vers un faux site.
+- **Trop de tentatives** : l'API répond 429 avec `retry_after` ; les formulaires affichent le délai et bloquent le bouton (`useFormRequest`).
+- **Espace client** (`/compte/*`) : `RequireAuth` renvoie vers la connexion sans session ; la vraie protection reste côté API (401).
+  Changer le **mot de passe** ferme toutes les sessions (y compris celle en cours) : l'écran renvoie vers `/connexion`.
+  Changer l'**adresse e-mail** demande le mot de passe actuel et ne s'applique qu'après le clic sur le lien envoyé à la nouvelle adresse.
+- **Adresse de l'API** : un composant du navigateur doit construire lui-même ses adresses (`authService`, `accountService`). Une page
+  serveur qui lui passerait l'adresse ferait appeler l'adresse INTERNE de l'API (`http://localhost:8000`), en contournant le relais.
 
 ### Fiche produit : ce qu'il faut savoir
 - **Adresse** : `/produit/12-monstera-deliciosa` (identifiant + nom). Seul l'identifiant compte : un nom erroné affiche quand
@@ -56,6 +72,20 @@ Le site est alors accessible sur `http://localhost:3000`.
 | `NEXT_PUBLIC_SITE_URL`          | Adresse publique du site (liens canoniques, partage sur les réseaux)                          |
 | `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` | Clé publique Stripe (tunnel de paiement, étape 3)                                             |
 | `SITE_INDEXABLE`                | `false` tant que l'ancien site est en ligne ; `true` seulement à la bascule (voir ci-dessous) |
+| `PROXY_SHARED_SECRET`           | Secret partagé avec l'API : le relais l'ajoute aux appels `/api` pour que PHP connaisse l'IP réelle |
+| `CSP_REPORT_ONLY`               | `true` : la politique de sécurité du contenu signale au lieu de bloquer (filet de sécurité)   |
+
+## En-têtes de sécurité
+
+Posés sur toutes les pages par `next.config.mjs` : politique de sécurité du contenu (**CSP**), `X-Content-Type-Options`, `X-Frame-Options`,
+`Referrer-Policy`, `Permissions-Policy` et `Strict-Transport-Security` (production seulement).
+
+- **CSP** : le navigateur ne charge que le site lui-même, plus les images de l'API (`NEXT_PUBLIC_ASSET_BASE_URL`). `'unsafe-inline'` reste
+  nécessaire pour les scripts et styles en ligne de Next.js (les pages prérendues ne peuvent pas recevoir de nonce).
+- **Ajouter un service externe** (Turnstile, Stripe) : compléter la CSP dans `next.config.mjs`, sinon le navigateur le bloque.
+- **Page cassée après un changement ?** Mettre `CSP_REPORT_ONLY=true` sur Vercel et redéployer : les infractions s'affichent dans la
+  console du navigateur (« Refused to … ») sans rien bloquer. Corriger, puis retirer la variable.
+- **Vérifier** : `npm run build && npm run start`, ouvrir les pages, console du navigateur sans message « Refused ».
 
 ## Référencement pendant la migration
 
