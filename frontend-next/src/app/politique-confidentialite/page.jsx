@@ -41,6 +41,14 @@ export default function PolitiqueConfidentialite() {
           le nombre d’essais successifs (pour empêcher de deviner un mot de
           passe) et enquêter en cas d’incident.
         </p>
+        <p className="legal-paragraph">
+          Pour distinguer les visiteurs des robots, les formulaires d’inscription,
+          de « mot de passe oublié » et de connexion (après plusieurs échecs)
+          utilisent le service Cloudflare Turnstile. Il analyse le navigateur
+          et l’adresse IP du visiteur pendant le contrôle ; Cloudflare agit
+          comme prestataire technique et n’utilise pas ces données à des fins
+          publicitaires.
+        </p>
       </section>
 
       <section>
@@ -78,7 +86,8 @@ export default function PolitiqueConfidentialite() {
           Vos données sont destinées exclusivement à La Jardinerie et à ses
           prestataires techniques nécessaires au bon fonctionnement du site :
           l’hébergement du site et de l’API, l’envoi des e-mails liés à votre
-          compte et à vos commandes (Brevo) et le paiement en ligne (Stripe).
+          compte et à vos commandes (Brevo), le contrôle anti-robots des formulaires
+          (Cloudflare Turnstile) et le paiement en ligne (Stripe).
           Elles ne sont jamais vendues à des tiers.
         </p>
       </section>

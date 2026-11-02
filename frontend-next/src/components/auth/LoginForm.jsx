@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFormRequest } from '../../hooks/useFormRequest';
+import { useTurnstile } from '../../hooks/useTurnstile';
 import { authService } from '../../services/authService';
 import { validateEmail, formatWait } from '../../utils/validation';
 import { safeRedirect } from '../../utils/safeRedirect';
@@ -13,6 +14,7 @@ import AuthCard from './AuthCard';
 import TextField from '../forms/TextField';
 import PasswordField from '../forms/PasswordField';
 import SubmitButton from '../forms/SubmitButton';
+import TurnstileWidget from '../forms/TurnstileWidget';
 import FormMessage from '../forms/FormMessage';
 
 // Messages affichés d'après le paramètre ?motif= (valeurs connues seulement : jamais de texte venu de l'adresse)
@@ -29,6 +31,11 @@ export default function LoginForm() {
 
   const { isAuthenticated, loading, login } = useAuth();
   const { send, submitting, error, secondsLeft } = useFormRequest();
+  const captcha = useTurnstile();
+
+  // Le contrôle anti-robots n'apparaît qu'après plusieurs échecs : c'est l'API qui le demande (captchaRequired)
+  const [captchaNeeded, setCaptchaNeeded] = useState(false);
+  const showCaptcha = captchaNeeded && captcha.enabled;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,13 +63,21 @@ export default function LoginForm() {
       return;
     }
 
-    const result = await send(authService.buildLoginUrl(), { email: email.trim(), password });
+    const result = await send(authService.buildLoginUrl(), {
+      email: email.trim(),
+      password,
+      ...(showCaptcha && { turnstile_token: captcha.token }),
+    });
 
     if (result.ok) {
       const user = result.data.user;
       login(user);
       toast.success(`Bienvenue ${user.first_name || ''} !`);
+      return;
     }
+
+    if (result.captchaRequired) setCaptchaNeeded(true);
+    captcha.reset(); // un jeton ne sert qu'une fois : nouveau contrôle pour la prochaine tentative
   };
 
   const waiting = secondsLeft > 0;
@@ -104,7 +119,9 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <SubmitButton loading={submitting} loadingLabel="Connexion en cours..." disabled={waiting}>
+        {showCaptcha && <TurnstileWidget onToken={captcha.setToken} resetKey={captcha.resetKey} />}
+
+        <SubmitButton loading={submitting} loadingLabel="Connexion en cours..." disabled={waiting || (showCaptcha && !captcha.token)}>
           {waiting ? `Réessayer dans ${formatWait(secondsLeft)}` : 'Se connecter'}
         </SubmitButton>
 

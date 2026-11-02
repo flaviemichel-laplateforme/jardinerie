@@ -18,7 +18,35 @@ class LoginThrottle
     public const EMAIL_MAX = 20;
     public const IP_MAX = 30;
 
+    // Avant le blocage, un contrôle anti-robots (Turnstile) : un humain qui se trompe 2 fois ne le voit jamais, un robot qui
+    // enchaîne les essais le rencontre bien avant d'atteindre les seuils de blocage ci-dessus.
+    public const CAPTCHA_PAIR = 3;
+    public const CAPTCHA_EMAIL = 10;
+    public const CAPTCHA_IP = 10;
+
     public function __construct(private RateLimiter $limiter) {}
+
+    /**
+     * Faut-il exiger le contrôle anti-robots avant de vérifier le mot de passe ? (ne compte rien)
+     * Oui dès que les échecs récents atteignent le seuil pour cet e-mail depuis cette IP, pour cet e-mail seul (attaquant qui
+     * change d'IP) ou pour cette IP seule (poste qui balaie plusieurs comptes).
+     */
+    public function captchaRequired(string $email, string $ip): bool
+    {
+        $thresholds = [
+            ['login_pair', "$email|$ip", self::CAPTCHA_PAIR],
+            ['login_email', $email, self::CAPTCHA_EMAIL],
+            ['login_ip', $ip, self::CAPTCHA_IP],
+        ];
+
+        foreach ($thresholds as [$action, $value, $max]) {
+            if ($this->limiter->check($action, $value, $max, self::WINDOW_SECONDS)['blocked']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * À appeler AVANT de vérifier le mot de passe.

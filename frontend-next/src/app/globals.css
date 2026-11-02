@@ -25,3 +25,9 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-sheet-up { animation: none; }
 }
+
+/* Edge ajoute sa propre icône « afficher le mot de passe » : on la masque, le champ a déjà la sienne (PasswordField). */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

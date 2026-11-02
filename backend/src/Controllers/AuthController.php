@@ -9,6 +9,7 @@ use App\Core\LoginThrottle;
 use App\Core\RateLimiter;
 use App\Core\SecurityLog;
 use App\Core\SessionCookie;
+use App\Core\TurnstileGuard;
 use App\Services\AuthService;
 use App\Middlewares\AuthMiddleware;
 
@@ -18,13 +19,16 @@ class AuthController
 
     private RateLimiter $limiter;
     private LoginThrottle $loginThrottle;
+    private TurnstileGuard $turnstile;
 
     public function __construct(
         private AuthService $authService = new AuthService(),
-        ?RateLimiter $limiter = null
+        ?RateLimiter $limiter = null,
+        ?TurnstileGuard $turnstile = null
     ) {
         $this->limiter = $limiter ?? RateLimiter::fromEnvironment();
         $this->loginThrottle = new LoginThrottle($this->limiter);
+        $this->turnstile = $turnstile ?? TurnstileGuard::fromEnvironment();
     }
 
     /**
@@ -57,6 +61,11 @@ class AuthController
 
         // Chaque inscription envoie un e-mail : sans limite, on pourrait inonder une boîte mail (ou vider le quota Brevo)
         if ($this->tooMany('register_ip', ClientIp::current(), 5, self::HOUR) || $this->tooMany('register_email', $email, 3, self::HOUR)) {
+            return;
+        }
+
+        // Contrôle anti-robots, APRÈS la limitation : un robot qui envoie de faux jetons est lui aussi compté et bloqué
+        if ($this->captchaRefused($data, 'register')) {
             return;
         }
 
@@ -97,6 +106,18 @@ class AuthController
         if ($throttle['blocked']) {
             ApiResponse::tooManyRequests($throttle['retryAfter']);
             return;
+        }
+
+        // Après quelques échecs récents, on exige le contrôle anti-robots AVANT de vérifier le mot de passe : sans lui, un robot
+        // continuerait de deviner. Un visiteur normal (0 à 2 fautes de frappe) ne le rencontre jamais.
+        if ($this->loginThrottle->captchaRequired($email, $ip)) {
+            // Un jeton faux compte comme une tentative : sans cela, on pourrait inonder le serveur (et le journal) de faux jetons
+            if (!empty($data['turnstile_token']) && $this->tooMany('captcha_login_ip', $ip, 30, LoginThrottle::WINDOW_SECONDS)) {
+                return;
+            }
+            if ($this->captchaRefused($data, 'login')) {
+                return;
+            }
         }
 
         // Appel au service pour vérifier les identifiants et générer le JWT
@@ -180,7 +201,8 @@ class AuthController
      */
     public function requestPasswordReset(): void
     {
-        $email = Input::string(Input::json() ?? [], 'email', 254);
+        $data  = Input::json() ?? [];
+        $email = Input::string($data, 'email', 254);
 
         if (empty($email)) {
             $this->respond(400, "L'adresse email est obligatoire.");
@@ -192,6 +214,10 @@ class AuthController
         // Chaque demande envoie un e-mail à l'adresse visée : le compteur par adresse protège son propriétaire (et le quota Brevo),
         // le compteur par IP empêche de balayer de nombreuses adresses. Le compte est le même que l'adresse existe ou non.
         if ($this->tooMany('reset_request_email', $email, 3, self::HOUR) || $this->tooMany('reset_request_ip', ClientIp::current(), 10, self::HOUR)) {
+            return;
+        }
+
+        if ($this->captchaRefused($data, 'password_reset')) {
             return;
         }
 
@@ -312,6 +338,49 @@ class AuthController
         }
 
         ApiResponse::tooManyRequests($state['retryAfter']);
+
+        return true;
+    }
+
+    /**
+     * Contrôle anti-robots (Turnstile). Renvoie true si la requête est REFUSÉE (la réponse est alors déjà envoyée : l'appelant
+     * doit s'arrêter). Ne fait rien tant que TURNSTILE_SECRET n'est pas configuré.
+     *
+     * Réponses : 403 + captcha_required (jeton absent ou refusé : le site affiche alors le contrôle, ou en redemande un nouveau,
+     * car un jeton ne sert qu'une fois) ; 503 si Cloudflare est injoignable.
+     * Seul un jeton refusé est journalisé : un jeton absent n'est pas une attaque, juste un contrôle pas encore résolu.
+     */
+    private function captchaRefused(array $data, string $action): bool
+    {
+        $token = $data['turnstile_token'] ?? null;
+        $check = $this->turnstile->verify(is_string($token) ? $token : null, ClientIp::current());
+
+        if ($check['ok']) {
+            return false;
+        }
+
+        if ($check['reason'] === 'unreachable') {
+            http_response_code(503);
+            echo json_encode([
+                'success' => false,
+                'message' => 'La vérification de sécurité est momentanément indisponible. Réessayez dans quelques instants.',
+            ], JSON_UNESCAPED_UNICODE);
+
+            return true;
+        }
+
+        if ($check['reason'] === 'invalid') {
+            SecurityLog::record(SecurityLog::TURNSTILE_FAILED, null, null, ['action' => $action]);
+        }
+
+        http_response_code(403);
+        echo json_encode([
+            'success'          => false,
+            'captcha_required' => true,
+            'message'          => $check['reason'] === 'missing'
+                ? 'Merci de valider la vérification de sécurité.'
+                : 'La vérification de sécurité a échoué. Merci de la refaire.',
+        ], JSON_UNESCAPED_UNICODE);
 
         return true;
     }

@@ -2,7 +2,7 @@ import { buildRequestOptions } from './apiClient';
 
 /**
  * Envoie une requête JSON à l'API et renvoie TOUJOURS un objet (ne lève jamais d'exception) :
- * { ok, status, message, data, errors, retryAfter }
+ * { ok, status, message, data, errors, retryAfter, captchaRequired }
  *
  * Pourquoi pas useApi : un formulaire a besoin du code HTTP (429 = trop de tentatives, 403 = adresse non vérifiée, 409...)
  * et du délai d'attente (`retry_after`), que useApi ne remonte pas.
@@ -27,6 +27,8 @@ export async function sendJson(url, { method = 'POST', body, signal } = {}) {
             data: payload?.data ?? null,
             errors: Array.isArray(payload?.errors) ? payload.errors : [],
             retryAfter: Number(payload?.retry_after ?? response.headers.get('Retry-After') ?? 0) || 0,
+            // L'API demande le contrôle anti-robots (Turnstile) : jeton absent, refusé ou déjà utilisé
+            captchaRequired: payload?.captcha_required === true,
         };
     } catch {
         return {
@@ -36,6 +38,7 @@ export async function sendJson(url, { method = 'POST', body, signal } = {}) {
             data: null,
             errors: [],
             retryAfter: 0,
+            captchaRequired: false,
         };
     }
 }

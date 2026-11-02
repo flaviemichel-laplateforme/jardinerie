@@ -3,15 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useFormRequest } from '../../hooks/useFormRequest';
+import { useTurnstile } from '../../hooks/useTurnstile';
 import { authService } from '../../services/authService';
 import { validateEmail, formatWait } from '../../utils/validation';
 import AuthCard from './AuthCard';
 import TextField from '../forms/TextField';
 import SubmitButton from '../forms/SubmitButton';
+import TurnstileWidget from '../forms/TurnstileWidget';
 import FormMessage from '../forms/FormMessage';
 
 export default function ForgotPasswordForm() {
   const { send, submitting, error, secondsLeft } = useFormRequest();
+  const captcha = useTurnstile();
 
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
@@ -24,8 +27,13 @@ export default function ForgotPasswordForm() {
     setTouched(true);
     if (emailError) return;
 
-    const result = await send(authService.buildRequestPasswordResetUrl(), { email: email.trim() });
+    const result = await send(authService.buildRequestPasswordResetUrl(), {
+      email: email.trim(),
+      ...(captcha.enabled && { turnstile_token: captcha.token }),
+    });
+
     if (result.ok) setSentTo(email.trim());
+    else captcha.reset(); // le jeton a été consommé : un nouveau contrôle est nécessaire pour réessayer
   };
 
   // Même réponse que le compte existe ou non : on ne révèle pas quelles adresses sont inscrites.
@@ -69,7 +77,9 @@ export default function ForgotPasswordForm() {
           required
         />
 
-        <SubmitButton loading={submitting} loadingLabel="Envoi en cours..." disabled={waiting}>
+        <TurnstileWidget onToken={captcha.setToken} resetKey={captcha.resetKey} />
+
+        <SubmitButton loading={submitting} loadingLabel="Envoi en cours..." disabled={waiting || (captcha.enabled && !captcha.token)}>
           {waiting ? `Réessayer dans ${formatWait(secondsLeft)}` : 'Envoyer le lien'}
         </SubmitButton>
 
