@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useFormRequest } from '../../hooks/useFormRequest';
+import { useTurnstile } from '../../hooks/useTurnstile';
 import { authService } from '../../services/authService';
 import { validateEmail, validateName, getPasswordRules, formatWait } from '../../utils/validation';
 import AuthCard from './AuthCard';
@@ -11,6 +12,7 @@ import TextField from '../forms/TextField';
 import PasswordField from '../forms/PasswordField';
 import PasswordRules from '../forms/PasswordRules';
 import Checkbox from '../forms/Checkbox';
+import TurnstileWidget from '../forms/TurnstileWidget';
 import SubmitButton from '../forms/SubmitButton';
 import FormMessage from '../forms/FormMessage';
 
@@ -18,6 +20,7 @@ const EMPTY_FORM = { first_name: '', last_name: '', email: '', password: '', con
 
 export default function RegisterForm() {
   const { send, submitting, error, secondsLeft } = useFormRequest();
+  const captcha = useTurnstile();
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [touched, setTouched] = useState({});
@@ -56,9 +59,11 @@ export default function RegisterForm() {
       email: form.email.trim(),
       password: form.password,
       gdpr_consent: form.gdpr_consent,
+      ...(captcha.enabled && { turnstile_token: captcha.token }),
     });
 
     if (result.ok) setRegisteredEmail(form.email.trim());
+    else captcha.reset(); // le jeton a été consommé : un nouveau contrôle est nécessaire pour réessayer
   };
 
   // L'API répond la même chose que l'adresse soit déjà inscrite ou non (pour ne pas révéler qui a un compte) :
@@ -163,7 +168,9 @@ export default function RegisterForm() {
           .
         </Checkbox>
 
-        <SubmitButton loading={submitting} loadingLabel="Création en cours..." disabled={waiting}>
+        <TurnstileWidget onToken={captcha.setToken} resetKey={captcha.resetKey} />
+
+        <SubmitButton loading={submitting} loadingLabel="Création en cours..." disabled={waiting || (captcha.enabled && !captcha.token)}>
           {waiting ? `Réessayer dans ${formatWait(secondsLeft)}` : 'Créer mon compte'}
         </SubmitButton>
 

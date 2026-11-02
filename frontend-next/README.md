@@ -17,6 +17,10 @@ mènent temporairement à la page 404.
   le lien (antivirus, aperçu) ne le consomme donc pas.
 - **Après la connexion** : `?redirect=/chemin` ramène à la page demandée, mais seulement un chemin **du site** (`utils/safeRedirect.js`),
   sinon un lien piégé renverrait vers un faux site.
+- **Contrôle anti-robots (Cloudflare Turnstile)** : composant `TurnstileWidget` + hook `useTurnstile`, sur l'inscription et « mot de passe oublié »
+  (toujours) et sur la connexion (seulement quand l'API le demande après plusieurs échecs : réponse 403 avec `captcha_required`).
+  Un jeton ne sert qu'une fois : après un envoi refusé, `reset()` relance le contrôle. Sans `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, rien ne s'affiche
+  ni ne s'envoie. Clé de test locale (réussit toujours) : `1x00000000000000000000AA`. La clé SECRÈTE ne va jamais ici, seulement dans le `.env` de l'API.
 - **Trop de tentatives** : l'API répond 429 avec `retry_after` ; les formulaires affichent le délai et bloquent le bouton (`useFormRequest`).
 - **Espace client** (`/compte/*`) : `RequireAuth` renvoie vers la connexion sans session ; la vraie protection reste côté API (401).
   Changer le **mot de passe** ferme toutes les sessions (y compris celle en cours) : l'écran renvoie vers `/connexion`.
@@ -73,6 +77,7 @@ Le site est alors accessible sur `http://localhost:3000`.
 | `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` | Clé publique Stripe (tunnel de paiement, étape 3)                                             |
 | `SITE_INDEXABLE`                | `false` tant que l'ancien site est en ligne ; `true` seulement à la bascule (voir ci-dessous) |
 | `PROXY_SHARED_SECRET`           | Secret partagé avec l'API : le relais l'ajoute aux appels `/api` pour que PHP connaisse l'IP réelle |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`| Clé publique Cloudflare Turnstile (contrôle anti-robots) ; vide = pas de contrôle affiché      |
 | `CSP_REPORT_ONLY`               | `true` : la politique de sécurité du contenu signale au lieu de bloquer (filet de sécurité)   |
 
 ## En-têtes de sécurité
@@ -82,7 +87,8 @@ Posés sur toutes les pages par `next.config.mjs` : politique de sécurité du c
 
 - **CSP** : le navigateur ne charge que le site lui-même, plus les images de l'API (`NEXT_PUBLIC_ASSET_BASE_URL`). `'unsafe-inline'` reste
   nécessaire pour les scripts et styles en ligne de Next.js (les pages prérendues ne peuvent pas recevoir de nonce).
-- **Ajouter un service externe** (Turnstile, Stripe) : compléter la CSP dans `next.config.mjs`, sinon le navigateur le bloque.
+- **Services externes déjà autorisés** : Cloudflare Turnstile (`challenges.cloudflare.com`, script et cadre).
+- **Ajouter un service externe** (Stripe, par exemple) : compléter la CSP dans `next.config.mjs`, sinon le navigateur le bloque.
 - **Page cassée après un changement ?** Mettre `CSP_REPORT_ONLY=true` sur Vercel et redéployer : les infractions s'affichent dans la
   console du navigateur (« Refused to … ») sans rien bloquer. Corriger, puis retirer la variable.
 - **Vérifier** : `npm run build && npm run start`, ouvrir les pages, console du navigateur sans message « Refused ».

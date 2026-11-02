@@ -12,10 +12,14 @@ const isProduction = process.env.NODE_ENV === 'production';
 //   recevoir de jeton à usage unique (nonce). Les scripts venus d'AUTRES sites restent bloqués.
 // - 'unsafe-inline' pour les styles : les notifications (react-hot-toast) posent des styles en ligne.
 // - 'unsafe-eval' seulement en développement : le rechargement à chaud de Next.js en a besoin.
-// - Turnstile (Cloudflare) et Stripe seront ajoutés ici quand ils arriveront : challenges.cloudflare.com, js.stripe.com.
+// - Turnstile (contrôle anti-robots de Cloudflare) : son script et son cadre viennent de challenges.cloudflare.com.
+// - Stripe sera ajouté ici avec le tunnel de paiement : js.stripe.com.
+const turnstileOrigin = 'https://challenges.cloudflare.com';
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProduction ? '' : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${isProduction ? '' : " 'unsafe-eval'"}`,
+  `frame-src ${turnstileOrigin}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${assetOrigin}`,
   "font-src 'self'",
