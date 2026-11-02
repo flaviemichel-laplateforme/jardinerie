@@ -9,6 +9,13 @@ produit, pages légales, contact, page 404, page d'erreur, sitemap, **comptes** 
 liens des e-mails, espace client) et en-têtes de sécurité. Les liens vers les pages pas encore portées (panier, admin)
 mènent temporairement à la page 404.
 
+### Panier et commande : ce qu'il faut savoir
+- **Le panier est public** (`/panier`, enregistré dans le navigateur) ; **la connexion est exigée dès la livraison** (`/commande/*` est protégé par `RequireAuth`) : « Valider » envoie à la connexion, puis revient à l'étape de livraison avec le panier intact.
+- **Les montants viennent de l'API**, jamais du navigateur : `POST /api/cart/summary` (panier) et la réponse de `POST /api/checkout/payment-intent` (paiement : articles + livraison). Le panier enregistré peut dater de plusieurs jours : `useCartSummary` l'aligne sur la base (prix, TVA, stock) et signale chaque changement. Livraison : règle unique côté API (`ShippingPolicy`), `constants/shipping.js` n'est qu'un repli.
+- **Étapes** : `/commande/livraison` (adresses, `AddressForm` partagé avec « Mes adresses »), `/commande/paiement` (Stripe `PaymentElement`, carte uniquement), `/commande/confirmation`. Les choix d'adresse sont gardés dans `sessionStorage` (`useCheckoutState`) : un rechargement ne casse rien. Le secret du paiement (`clientSecret`) n'est jamais stocké : la page de paiement crée une intention à chaque ouverture (l'API réutilise la même si rien n'a changé).
+- **Confirmation** : la page n'écoute PAS `?redirect_status=…` (on peut le taper à la main) : elle interroge `GET /api/checkout/confirmation`, qui relit le paiement chez Stripe. La commande est créée par le **webhook**, qui arrive après la redirection : la page réessaie pendant ~30 s. Le panier n'est vidé qu'une fois le paiement confirmé ; une carte refusée le conserve.
+- **Stripe** : `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` (clé **publique**, `pk_test_…` / `pk_live_…`). Une valeur qui n'est pas une vraie clé (modèle du `.env.example` non remplacé) est ignorée : la page affiche « paiement indisponible ». Le script de Stripe n'est chargé que sur la page de paiement ; la CSP autorise `js.stripe.com`, `hooks.stripe.com` et `api.stripe.com`. Cartes de test : `4242 4242 4242 4242` (réussit), `4000 0000 0000 0002` (refusée), `4000 0025 0000 3155` (3D Secure).
+
 ### Comptes : ce qu'il faut savoir
 - **Pages publiques** : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/reinitialiser-mot-de-passe`, `/verifier-email`,
   `/confirmer-changement-email`. Les trois chemins « avec jeton » sont ceux écrits dans les e-mails envoyés par l'API
@@ -87,7 +94,7 @@ Posés sur toutes les pages par `next.config.mjs` : politique de sécurité du c
 
 - **CSP** : le navigateur ne charge que le site lui-même, plus les images de l'API (`NEXT_PUBLIC_ASSET_BASE_URL`). `'unsafe-inline'` reste
   nécessaire pour les scripts et styles en ligne de Next.js (les pages prérendues ne peuvent pas recevoir de nonce).
-- **Services externes déjà autorisés** : Cloudflare Turnstile (`challenges.cloudflare.com`, script et cadre).
+- **Services externes déjà autorisés** : Cloudflare Turnstile (`challenges.cloudflare.com`, script et cadre) et Stripe (`js.stripe.com`, `hooks.stripe.com`, `api.stripe.com`, images `*.stripe.com`).
 - **Ajouter un service externe** (Stripe, par exemple) : compléter la CSP dans `next.config.mjs`, sinon le navigateur le bloque.
 - **Page cassée après un changement ?** Mettre `CSP_REPORT_ONLY=true` sur Vercel et redéployer : les infractions s'affichent dans la
   console du navigateur (« Refused to … ») sans rien bloquer. Corriger, puis retirer la variable.
