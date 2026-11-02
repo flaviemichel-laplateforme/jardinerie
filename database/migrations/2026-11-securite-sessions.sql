@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `security_events` (
   `ip` VARCHAR(45) NULL DEFAULT NULL,
   `user_agent` VARCHAR(255) NULL DEFAULT NULL,
   `details` TEXT NULL DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   INDEX `created_at_idx` (`created_at` ASC),
   INDEX `event_created_idx` (`event` ASC, `created_at` ASC),
