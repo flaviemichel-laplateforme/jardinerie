@@ -3,10 +3,20 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\ShippingPolicy;
 use PDO;
 
 class OrderModel
 {
+    /**
+     * Référence de commande, dérivée de l'identifiant Stripe du paiement : deux livraisons du même webhook donnent la même
+     * référence, ce qui permet de ne créer qu'une commande. (La base la déclare UNIQUE : voir la migration.)
+     */
+    public static function referenceFor(string $paymentIntentId): string
+    {
+        return 'REF-' . strtoupper(substr($paymentIntentId, 3, 12));
+    }
+
     /**
      * Crée une commande complète en base de données.
      * Utilise une transaction SQL pour garantir l'atomicité :
@@ -62,9 +72,9 @@ class OrderModel
                 ':billing_address_id'    => $billingAddressId ?: null,
                 ':shipping_address_text' => $shippingText,
                 ':billing_address_text'  => $billingText,
-                ':order_reference'       => 'REF-' . strtoupper(substr($paymentIntentId, 3, 12)),
+                ':order_reference'       => self::referenceFor($paymentIntentId),
                 ':total'                 => $cart['total'],
-                ':shipping'              => $cart['total'] >= 50 ? 0.00 : 7.90,
+                ':shipping'              => ShippingPolicy::cost($cart['total']),
             ]);
 
             $orderId = (int) $db->lastInsertId();
@@ -107,13 +117,39 @@ class OrderModel
     public function existsByPaymentIntent(string $paymentIntentId): bool
     {
         $db = Database::getConnection();
-        $orderRef = 'REF-' . strtoupper(substr($paymentIntentId, 3, 12));
 
         $sql = "SELECT id FROM orders WHERE order_reference = :ref LIMIT 1";
         $stmt = $db->prepare($sql);
-        $stmt->execute([':ref' => $orderRef]);
+        $stmt->execute([':ref' => self::referenceFor($paymentIntentId)]);
 
         return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * La commande créée pour ce paiement, à condition qu'elle appartienne à cet utilisateur (page de confirmation).
+     * @return array{id:int, order_reference:string, total_amount_tax_incl:string, shipping_cost_tax_incl:string, status:string}|false
+     */
+    public function findByPaymentIntentForUser(string $paymentIntentId, int $userId): array|false
+    {
+        $stmt = Database::getConnection()->prepare(
+            "SELECT id, order_reference, total_amount_tax_incl, shipping_cost_tax_incl, status
+             FROM orders WHERE order_reference = :ref AND user_id = :user_id LIMIT 1"
+        );
+        $stmt->execute([':ref' => self::referenceFor($paymentIntentId), ':user_id' => $userId]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Identifiant de la dernière commande de l'utilisateur (0 s'il n'en a pas). Entre dans la clé d'idempotence du paiement :
+     * une fois une commande passée, un achat identique le même jour doit créer un NOUVEAU paiement, pas rendre l'ancien.
+     */
+    public function lastOrderIdForUser(int $userId): int
+    {
+        $stmt = Database::getConnection()->prepare('SELECT COALESCE(MAX(id), 0) FROM orders WHERE user_id = :user_id');
+        $stmt->execute([':user_id' => $userId]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     /**

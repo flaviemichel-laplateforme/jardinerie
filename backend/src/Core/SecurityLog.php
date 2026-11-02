@@ -28,6 +28,7 @@ class SecurityLog
     public const ROLE_CHANGED = 'role_changed';
     public const ACCOUNT_ANONYMIZED = 'account_anonymized';
     public const TURNSTILE_FAILED = 'turnstile_failed';
+    public const PAYMENT_MISMATCH = 'payment_mismatch';
 
     private const MAX_USER_AGENT_LENGTH = 255;
     private const MAX_DETAILS_LENGTH = 1000;

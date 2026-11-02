@@ -231,6 +231,10 @@ if (!$isProduction) {
 // -----------------------------------------------------------------------
 // 1. Création de l'intention de paiement (Appelé par React lors du clic sur "Payer")
 $router->map('POST', '/api/checkout/payment-intent', 'CheckoutController#createIntent', 'api_checkout_intent');
+// 1 bis. Résumé du panier d'après la base (prix, stock, livraison) : public, le panier se remplit avant la connexion
+$router->map('POST', '/api/cart/summary', 'CartController#summary', 'api_cart_summary');
+// 1 ter. État d'un paiement pour la page de confirmation (l'API interroge Stripe : on ne croit pas l'adresse de la page)
+$router->map('GET', '/api/checkout/confirmation', 'CheckoutController#confirmation', 'api_checkout_confirmation');
 // 2. Webhook Stripe (Appelé par les serveurs de Stripe en arrière-plan)
 $router->map('POST', '/api/webhooks/stripe', 'CheckoutController#handleWebhook', 'api_stripe_webhook');
 
