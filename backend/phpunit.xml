@@ -5,6 +5,8 @@
          colors="true">
          <php>
             <env name="BREVO_API_KEY" value="" force="true" />
+            <env name="RATE_LIMIT_DISABLED" value="true" force="true" />
+            <env name="SECURITY_LOG_DISABLED" value="true" force="true" />
          </php>
          
          

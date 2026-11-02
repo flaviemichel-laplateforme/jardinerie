@@ -11,6 +11,9 @@ services:
     build: 
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        # Même version que le serveur de production (Plesk). Défaut dans le Dockerfile.
+        PHP_VERSION: ${PHP_VERSION:-8.5}
     container_name: jardinerie_api
     restart: unless-stopped
    

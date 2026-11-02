@@ -14,7 +14,7 @@ class AuthControllerIntegrationTest extends TestCase
             'first_name' => 'Test',
             'last_name'  => 'Integration',
             'email'      => $emailUnique,
-            'password'   => 'MotDePasse123*',
+            'password'   => 'Rz7!vTq92#mK',
             'gdpr_consent' => true,
         ];
 

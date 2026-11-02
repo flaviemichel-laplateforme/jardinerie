@@ -51,6 +51,12 @@ class AdminUploadService
             );
         }
 
+        // Le type annoncé par finfo ne suffit pas : le fichier doit aussi être une image que PHP sait lire
+        // (écarte un fichier qui commence comme une image et contient autre chose derrière).
+        if (@getimagesize($file['tmp_name']) === false) {
+            throw new \InvalidArgumentException('Le fichier n\'est pas une image valide.');
+        }
+
         return $mimeType;
     }
 
@@ -76,6 +82,7 @@ class AdminUploadService
         if (!is_dir(self::UPLOAD_DIR)) {
             mkdir(self::UPLOAD_DIR, 0755, true);
         }
+        $this->blockScriptExecution();
 
         $path = self::UPLOAD_DIR . $filename;
 
@@ -88,6 +95,18 @@ class AdminUploadService
         }
 
         return 'uploads/products/' . $filename;
+    }
+
+    /**
+     * Interdit l'exécution de scripts dans le dossier des images : défense en plus du nom de fichier choisi par le serveur
+     * (aléatoire, extension imposée). Créé ici plutôt que versionné, car le dossier des images n'est pas dans Git.
+     */
+    private function blockScriptExecution(): void
+    {
+        $htaccess = self::UPLOAD_DIR . '.htaccess';
+        if (!file_exists($htaccess)) {
+            file_put_contents($htaccess, "# Aucune exécution de script dans ce dossier\nRemoveHandler .php .phtml .php3 .php4 .php5 .php7 .phps\nRemoveType .php .phtml\n<FilesMatch \"\\.(php|phtml|php[0-9]?|phps)$\">\n    Require all denied\n</FilesMatch>\n");
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 import { Lato } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
+import SiteChrome from '../components/layouts/SiteChrome';
 
 // La police est téléchargée au moment du build et servie par le site lui-même (plus de requête vers Google Fonts).
 const lato = Lato({
@@ -41,7 +42,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr" className={lato.variable}>
       <body className="font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <SiteChrome>{children}</SiteChrome>
+        </Providers>
       </body>
     </html>
   );

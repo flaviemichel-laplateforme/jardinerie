@@ -7,6 +7,7 @@ use App\Models\AddressModel;
 use App\Models\OrderModel;
 use App\Models\UserModel;
 use App\Models\AccountTokenModel;
+use App\Core\SecurityLog;
 
 class AdminClientService
 {
@@ -136,6 +137,8 @@ class AdminClientService
 
         try {
             $this->model->updateRole($id, $newRole);
+            // L'acteur est l'administrateur : son événement n'est pas effacé si le compte visé est anonymisé plus tard
+            SecurityLog::record(SecurityLog::ROLE_CHANGED, $currentAdminId, null, ['target' => $id, 'role' => $newRole]);
             return [
                 'success' => true,
                 'code'    => 200,
@@ -184,6 +187,7 @@ class AdminClientService
 
         try {
             $this->userModel->anonymize($id);
+            SecurityLog::record(SecurityLog::ACCOUNT_ANONYMIZED, $currentAdminId, null, ['target' => $id]);
             return [
                 'success' => true,
                 'code'    => 200,

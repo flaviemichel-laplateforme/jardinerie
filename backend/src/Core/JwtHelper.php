@@ -4,16 +4,28 @@ namespace App\Core;
 
 class JwtHelper
 {
+    public const ISSUER = 'jardinerie';
+    public const MIN_SECRET_LENGTH = 32;
+
+    // Valeur d'exemple publiée dans .env.example (donc dans le dépôt Git, lisible par tous) : jamais acceptée en production.
+    private const PUBLISHED_EXAMPLE_SECRET = 'Key_Jardinerie_Secret_Key_2026_Super_Secure!*';
+
+    // Tolérance entre l'horloge du serveur qui signe et celle qui vérifie (secondes)
+    private const CLOCK_SKEW = 60;
+
     /**
      * Génère un token JWT signé
      */
     public static function generate(array $payload, string $secret, int $expirationSeconds = 86400): string
     {
+        self::assertStrongSecret($secret);
+
         // 1. En-tête (Header)
         $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
 
-        // 2. Charge utile (Payload) - On ajoute l'expiration
-        $payload['iat'] = time(); // Issued At
+        // 2. Charge utile (Payload) - émetteur, date d'émission et expiration
+        $payload['iss'] = self::ISSUER;
+        $payload['iat'] = time();
         $payload['exp'] = time() + $expirationSeconds;
         $payloadJson = json_encode($payload);
 
@@ -30,10 +42,13 @@ class JwtHelper
     }
 
     /**
-     * Vérifie la validité et la signature d'un token JWT
+     * Vérifie la validité et la signature d'un token JWT.
+     * Renvoie la charge utile, ou null pour tout jeton falsifié, mal formé, d'un autre émetteur, expiré ou daté du futur.
      */
     public static function verify(string $jwt, string $secret): ?array
     {
+        self::assertStrongSecret($secret);
+
         $parts = explode('.', $jwt);
         if (count($parts) !== 3) {
             return null;
@@ -49,15 +64,45 @@ class JwtHelper
             return null; // Signature invalide
         }
 
+        // L'algorithme annoncé doit être celui qu'on utilise vraiment (protection contre les jetons « alg: none » ou « alg: RS256 »)
+        $decodedHeader = json_decode(self::base64UrlDecode($header), true);
+        if (!is_array($decodedHeader) || ($decodedHeader['alg'] ?? null) !== 'HS256') {
+            return null;
+        }
+
         // Décodage du payload
         $decodedPayload = json_decode(self::base64UrlDecode($payload), true);
+        if (!is_array($decodedPayload)) {
+            return null;
+        }
 
-        // Vérification de l'expiration
-        if (isset($decodedPayload['exp']) && $decodedPayload['exp'] < time()) {
-            return null; // Token expiré
+        // Émetteur, date d'émission et expiration sont obligatoires
+        if (($decodedPayload['iss'] ?? null) !== self::ISSUER) {
+            return null;
+        }
+        if (!is_int($decodedPayload['iat'] ?? null) || !is_int($decodedPayload['exp'] ?? null)) {
+            return null;
+        }
+        if ($decodedPayload['exp'] < time() || $decodedPayload['iat'] > time() + self::CLOCK_SKEW) {
+            return null; // Token expiré, ou émis dans le futur
         }
 
         return $decodedPayload;
+    }
+
+    /**
+     * Un secret court ou connu rend les jetons falsifiables : mieux vaut un site qui refuse de démarrer qu'un site vulnérable.
+     * @throws \RuntimeException
+     */
+    private static function assertStrongSecret(string $secret): void
+    {
+        if (strlen($secret) < self::MIN_SECRET_LENGTH) {
+            throw new \RuntimeException('JWT_SECRET trop court : ' . self::MIN_SECRET_LENGTH . ' caractères minimum.');
+        }
+
+        if (($_ENV['APP_ENV'] ?? 'development') === 'production' && hash_equals(self::PUBLISHED_EXAMPLE_SECRET, $secret)) {
+            throw new \RuntimeException('JWT_SECRET est la valeur d\'exemple publiée dans le dépôt : générez-en une nouvelle.');
+        }
     }
 
     // --- Fonctions utilitaires d'encodage JWT ---

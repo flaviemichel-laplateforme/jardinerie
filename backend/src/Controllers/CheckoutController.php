@@ -116,7 +116,6 @@ class CheckoutController
                 //Email de confirmation (non bloquant — la commande est déjà créée)
                 $user = $this->userModel->findById($userId);
                 if ($user) {
-                    error_log("EMAIL DEBUG: user=" . json_encode($user) . " | items=" . count($cart['items']));
                     $shippingCost = $cart['total'] >= 50 ? 0.00 : 7.90;
                     $this->emailService->sendOrderConfirmation(
                         $user['email'],

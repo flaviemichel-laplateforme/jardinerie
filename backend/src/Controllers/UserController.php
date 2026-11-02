@@ -6,12 +6,24 @@ use App\Models\UserModel;
 use App\Middlewares\AuthMiddleware;
 use App\Core\PasswordPolicy;
 use App\Core\NamePolicy;
+use App\Core\Input;
+use App\Core\SessionCookie;
+use App\Core\ApiResponse;
+use App\Core\RateLimiter;
+use App\Core\SecurityLog;
+use App\Services\AuthService;
 
 class UserController
 {
+    private RateLimiter $limiter;
+
     public function __construct(
-        private Usermodel $userModel = new UserModel()
-    ) {}
+        private UserModel $userModel = new UserModel(),
+        private AuthService $authService = new AuthService(),
+        ?RateLimiter $limiter = null
+    ) {
+        $this->limiter = $limiter ?? RateLimiter::fromEnvironment();
+    }
 
     /**
      * GET /api/me
@@ -31,8 +43,8 @@ class UserController
             return;
         }
 
-        // On ne renvoie jamais le mot de passe
-        unset($user['password']);
+        // On ne renvoie jamais le mot de passe ni les données internes de session
+        $user = UserModel::withoutSecrets($user);
 
         http_response_code(200);
         echo json_encode([
@@ -48,19 +60,22 @@ class UserController
     public function update(): void
     {
         $payload = AuthMiddleware::authenticate();
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
+        $data = Input::json() ?? [];
 
-        if (empty($data['first_name']) || empty($data['last_name']) || empty($data['email'])) {
+        $firstName = Input::string($data, 'first_name', 100);
+        $lastName  = Input::string($data, 'last_name', 100);
+
+        if (empty($firstName) || empty($lastName) || empty($data['email'])) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
-                'message' => 'Les champs Prénom, non, email sont obligatoires.'
+                'message' => 'Les champs Prénom, nom, email sont obligatoires.'
             ], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        $email = Input::email($data);
+        if ($email === null) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
@@ -69,40 +84,67 @@ class UserController
             return;
         }
 
-        $nameError = NamePolicy::validate($data['first_name']);
-        if ($nameError) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
+        foreach ([$firstName, $lastName] as $name) {
+            $nameError = NamePolicy::validate($name);
+            if ($nameError) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+        }
+
+        $user = $this->userModel->findById($payload['id']);
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur introuvable'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        $nameError = NamePolicy::validate($data['last_name']);
-        if ($nameError) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $nameError], JSON_UNESCAPED_UNICODE);
-            return;
+        $message = 'Profil mis à jour avec succès!';
+
+        // Changer d'adresse prend le contrôle du compte (« mot de passe oublié » part vers cette adresse) : le mot de passe
+        // actuel est exigé, et l'adresse ne change qu'après confirmation depuis la nouvelle boîte mail. Les noms, eux,
+        // se modifient librement. Le mot de passe est vérifié AVANT toute modification.
+        if ($email !== strtolower($user['email'])) {
+            $currentPassword = Input::string($data, 'current_password', 200, trim: false);
+
+            if (empty($currentPassword)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => "Votre mot de passe actuel est requis pour changer d'adresse email."
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // Cette route vérifie le mot de passe actuel : sans limite, une session volée permettrait de le deviner
+            $attempt = $this->limiter->attempt('email_change_user', (string) $payload['id'], 5, 3600);
+            if (!$attempt['allowed']) {
+                if ($attempt['justBlocked']) {
+                    SecurityLog::record(SecurityLog::RATE_LIMITED, (int) $payload['id'], null, ['action' => 'email_change_user']);
+                }
+                ApiResponse::tooManyRequests($attempt['retryAfter']);
+                return;
+            }
+
+            $result = $this->authService->requestEmailChange((int) $payload['id'], $email, $currentPassword);
+
+            if (!$result['success']) {
+                http_response_code($result['code']);
+                echo json_encode(['success' => false, 'message' => $result['message']], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $message = 'Profil mis à jour. ' . $result['message'];
         }
 
-        $updated = $this->userModel->update(
-            $payload['id'],
-            $data['first_name'],
-            $data['last_name'],
-            $data['email']
-        );
-
-        if (!$updated) {
-            http_response_code(409);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Cet email est déjà utilisé par un autre compte.'
-            ], JSON_UNESCAPED_UNICODE);
-            return;
-        }
+        // Les noms sont enregistrés avec l'adresse ACTUELLE : la nouvelle n'est appliquée qu'à la confirmation
+        $this->userModel->update($payload['id'], $firstName, $lastName, $user['email']);
 
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'message' => 'Profil mis à jour avec succès!'
+            'message' => $message
         ], JSON_UNESCAPED_UNICODE);
     }
 
@@ -113,10 +155,13 @@ class UserController
     public function updatePassword(): void
     {
         $payload = AuthMiddleware::authenticate();
-        $rawInput = file_get_contents("php://input");
-        $data = json_decode($rawInput, true);
+        $data = Input::json() ?? [];
 
-        if (empty($data['current_password']) || empty($data['new_password']) || empty($data['confirm_new_password'])) {
+        $currentPassword = Input::string($data, 'current_password', 200, trim: false);
+        $newPassword     = Input::string($data, 'new_password', 200, trim: false);
+        $confirmPassword = Input::string($data, 'confirm_new_password', 200, trim: false);
+
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
@@ -125,7 +170,9 @@ class UserController
             return;
         }
 
-        $passwordError = PasswordPolicy::validate($data['new_password']);
+        $user = $this->userModel->findById($payload['id']);
+
+        $passwordError = PasswordPolicy::validate($newPassword, $user['email'] ?? null);
         if ($passwordError) {
             http_response_code(400);
             echo json_encode([
@@ -135,7 +182,7 @@ class UserController
             return;
         }
 
-        if ($data['confirm_new_password'] !== $data['new_password']) {
+        if ($confirmPassword !== $newPassword) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
@@ -144,9 +191,19 @@ class UserController
             return;
         }
 
-        $user = $this->userModel->findById($payload['id']);
+        // Cette route vérifie le mot de passe actuel : sans limite, une session volée permettrait de le deviner
+        $state = $this->limiter->check('password_change_user', (string) $payload['id'], 5, 900);
+        if ($state['blocked']) {
+            ApiResponse::tooManyRequests($state['retryAfter']);
+            return;
+        }
 
-        if (!$user || !password_verify($data['current_password'], $user['password'])) {
+        if (!$user || !password_verify($currentPassword, $user['password'])) {
+            $failure = $this->limiter->fail('password_change_user', (string) $payload['id'], 5, 900);
+            if ($failure['justLocked']) {
+                SecurityLog::record(SecurityLog::RATE_LIMITED, (int) $payload['id'], null, ['action' => 'password_change_user']);
+            }
+
             http_response_code(401);
             echo json_encode([
                 'success' => false,
@@ -155,7 +212,9 @@ class UserController
             return;
         }
 
-        $this->userModel->updatePassword($payload['id'], $data['new_password']);
+        $this->userModel->updatePassword($payload['id'], $newPassword);
+        $this->limiter->clear('password_change_user', (string) $payload['id']);
+        SecurityLog::record(SecurityLog::PASSWORD_CHANGED, (int) $payload['id']);
 
         http_response_code(200);
         echo json_encode([
@@ -185,7 +244,7 @@ class UserController
         $orderModel = new \App\Models\OrderModel();
         $dashboardData = $orderModel->getDashboardData($payload['id']);
 
-        unset($user['password']);
+        $user = UserModel::withoutSecrets($user);
 
         http_response_code(200);
         echo json_encode([
@@ -220,6 +279,7 @@ class UserController
             return;
         }
 
+        SecurityLog::record(SecurityLog::ACCOUNT_ANONYMIZED, (int) $payload['id']);
         $anonymized = $this->userModel->anonymize($payload['id']);
 
         if (!$anonymized) {
@@ -232,12 +292,7 @@ class UserController
         }
 
         // Supprimer le cookie de session côté serveur
-        setcookie('jardinerie_session', '', [
-            'expires'  => time() - 3600,
-            'path'     => '/',
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
+        SessionCookie::clear();
 
         http_response_code(200);
         echo json_encode([
