@@ -15,6 +15,8 @@ export default function robots() {
       disallow: [
         '/admin',
         '/compte',
+        '/panier',
+        '/commande',
         '/connexion',
         '/inscription',
         '/mot-de-passe-oublie',
