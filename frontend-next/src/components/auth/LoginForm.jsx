@@ -15,9 +15,15 @@ import PasswordField from '../forms/PasswordField';
 import SubmitButton from '../forms/SubmitButton';
 import FormMessage from '../forms/FormMessage';
 
+// Messages affichés d'après le paramètre ?motif= (valeurs connues seulement : jamais de texte venu de l'adresse)
+const NOTICES = {
+  'mot-de-passe-modifie': 'Votre mot de passe a été modifié. Par sécurité, reconnectez-vous avec le nouveau.',
+};
+
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const notice = NOTICES[searchParams.get('motif')];
   // Où revenir après la connexion (ex. /connexion?redirect=/compte/commandes) : toujours un chemin du site, jamais un autre domaine
   const target = safeRedirect(searchParams.get('redirect'));
 
@@ -63,6 +69,7 @@ export default function LoginForm() {
 
   return (
     <AuthCard title="Se connecter">
+      <FormMessage type="success">{notice}</FormMessage>
       <FormMessage>{error}</FormMessage>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
