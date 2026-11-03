@@ -56,7 +56,7 @@ class AdminProductController
      */
     public function store(): void
     {
-        AdminMiddleware::authenticate();
+        $payload = AdminMiddleware::authenticate();
 
         $data = json_decode(file_get_contents("php://input"), true);
         if (!is_array($data)) {
@@ -64,7 +64,7 @@ class AdminProductController
             return;
         }
 
-        $this->respond($this->service->create($data));
+        $this->respond($this->service->create($data, (int) $payload['id']));
     }
 
     /**
@@ -73,11 +73,11 @@ class AdminProductController
      */
     public function update(int $id): void
     {
-        AdminMiddleware::authenticate();
+        $payload = AdminMiddleware::authenticate();
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        $this->respond($this->service->update($id, is_array($data) ? $data : []));
+        $this->respond($this->service->update($id, is_array($data) ? $data : [], (int) $payload['id']));
     }
 
     /**

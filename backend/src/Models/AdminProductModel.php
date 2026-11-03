@@ -35,7 +35,8 @@ class AdminProductModel
     ];
 
     public function __construct(
-        private SoilModel $soils = new SoilModel()
+        private SoilModel $soils = new SoilModel(),
+        private StockMovementModel $movements = new StockMovementModel()
     ) {}
 
     /**
@@ -164,8 +165,9 @@ class AdminProductModel
     /**
      * Crée un produit et optionnellement ses données botaniques.
      * Utilise une transaction pour garantir l'atomicité.
+     * Un stock initial est historisé (mouvement « inventory », auteur $adminId).
      */
-    public function create(array $data): int
+    public function create(array $data, ?int $adminId = null): int
     {
         $db = Database::getConnection();
         $db->beginTransaction();
@@ -205,6 +207,11 @@ class AdminProductModel
             ]);
             $productId = (int) $db->lastInsertId();
 
+            $stock = (int) ($data['stock_quantity'] ?? 0);
+            if ($stock > 0) {
+                $this->movements->record($db, $productId, 'inventory', $stock, $stock, $adminId, 'Stock initial');
+            }
+
             if (!empty($data['plant']) && is_array($data['plant'])) {
                 $this->savePlant($db, $productId, $data['plant']);
             }
@@ -221,13 +228,23 @@ class AdminProductModel
      * Met à jour un produit existant.
      * PATCH sémantique : seuls les champs envoyés sont mis à jour.
      * « plant » : objet = la fiche est réécrite EN ENTIER (clé absente -> vidée) ; null = la fiche est supprimée ; absent = inchangée.
+     * Un stock modifié ici (ancien admin : champ du formulaire) est historisé comme un inventaire ; le nouvel admin passe par
+     * POST /api/admin/products/{id}/stock.
      */
-    public function update(int $id, array $data): void
+    public function update(int $id, array $data, ?int $adminId = null): void
     {
         $db = Database::getConnection();
         $db->beginTransaction();
 
         try {
+            // Stock laissé vide : inchangé (la colonne est un entier, '' n'a pas de sens)
+            if (array_key_exists('stock_quantity', $data) && ($data['stock_quantity'] === null || $data['stock_quantity'] === '')) {
+                unset($data['stock_quantity']);
+            }
+
+            // Stock avant modification, ligne verrouillée : l'écart enregistré est exact même si une vente arrive en même temps
+            $stockBefore = array_key_exists('stock_quantity', $data) ? $this->movements->lockStock($db, $id) : null;
+
             // Construction dynamique du SET — seuls les champs présents sont modifiés
             $allowed = [
                 'subcategory_id',
@@ -262,6 +279,13 @@ class AdminProductModel
             // Une requête qui ne contient que la fiche botanique est valable : on ne touche alors pas à products
             if ($sets !== []) {
                 $db->prepare("UPDATE products SET " . implode(', ', $sets) . " WHERE id = :id")->execute($params);
+            }
+
+            if ($stockBefore !== null) {
+                $stockAfter = (int) $data['stock_quantity'];
+                if ($stockAfter !== $stockBefore) {
+                    $this->movements->record($db, $id, 'inventory', $stockAfter - $stockBefore, $stockAfter, $adminId, 'Modifié depuis la fiche produit');
+                }
             }
 
             if (array_key_exists('plant', $data)) {

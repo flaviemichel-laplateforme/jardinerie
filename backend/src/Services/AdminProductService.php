@@ -24,7 +24,8 @@ class AdminProductService
         private SoilModel $soils = new SoilModel()
     ) {}
 
-    public function create(array $data): array
+    /** @param int|null $adminId auteur, pour l'historique du stock */
+    public function create(array $data, ?int $adminId = null): array
     {
         $data   = $this->trimName($data);
         $errors = ProductPolicy::validate($data, true);
@@ -36,7 +37,7 @@ class AdminProductService
         }
 
         try {
-            $id = $this->model->create($data);
+            $id = $this->model->create($data, $adminId);
         } catch (\PDOException $e) {
             return $this->duplicateSkuOr($e);
         }
@@ -44,7 +45,7 @@ class AdminProductService
         return ['code' => 201, 'message' => 'Produit créé avec succès.', 'data' => ['id' => $id]];
     }
 
-    public function update(int $id, array $data): array
+    public function update(int $id, array $data, ?int $adminId = null): array
     {
         $current = $this->model->findById($id);
         if (!$current) {
@@ -65,7 +66,7 @@ class AdminProductService
         }
 
         try {
-            $this->model->update($id, $data);
+            $this->model->update($id, $data, $adminId);
         } catch (\PDOException $e) {
             return $this->duplicateSkuOr($e);
         }

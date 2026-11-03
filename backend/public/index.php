@@ -214,6 +214,8 @@ $router->map('POST', '/api/admin/upload', 'AdminUploadController#store', 'admin_
 $router->map('GET', '/api/admin/kpis/sales', 'AdminKpiController#sales', 'admin_kpis');
 // Route pour les alertes de stock admin
 $router->map('GET', '/api/admin/stock/alerts', 'AdminStockController#getAlerts', 'admin_stock_alerts');
+$router->map('GET', '/api/admin/stock/movements', 'AdminStockController#movements', 'admin_stock_movements');
+$router->map('POST', '/api/admin/products/[i:id]/stock', 'AdminStockController#adjust', 'admin_stock_adjust');
 // ADMIN — GESTION DES COMMANDES (Issue #42)
 $router->map('GET', '/api/admin/orders', 'AdminOrderController#index', 'admin_orders_list');
 $router->map('GET', '/api/admin/orders/[i:id]', 'AdminOrderController#show', 'admin_orders_show');
