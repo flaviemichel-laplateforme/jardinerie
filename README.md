@@ -93,6 +93,13 @@ L'application est alors accessible sur `http://localhost:5173`.
 docker compose exec api vendor/bin/phpunit
 ```
 
+Les tests d'**intégration** (groupe `integration` : API admin) envoient de vraies requêtes HTTP à l'API locale et utilisent la base locale. Prérequis : les conteneurs tournent, et `RATE_LIMIT_DISABLED=true` dans `backend/.env` (sinon les connexions répétées des tests sont limitées). Chaque classe crée ses propres comptes et données préfixés `zz-tadm-` et les supprime à la fin. Pour ne lancer qu'eux, ou seulement les autres :
+
+```
+docker compose exec api vendor/bin/phpunit --group integration
+docker compose exec api vendor/bin/phpunit --exclude-group integration
+```
+
 Pour générer un rapport de couverture de code, consultable ensuite via `backend/coverage/index.html` :
 
 ```
