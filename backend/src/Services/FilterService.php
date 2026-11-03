@@ -11,10 +11,10 @@ class FilterService
         private FilterModel $filterModel = new FilterModel()
     ) {}
 
-    public function getFiltersConfiguration(?string $type = null, ?string $categoryIds = null): array
+    public function getFiltersConfiguration(?string $type = null, ?string $categoryIds = null, bool $v2 = false): array
     {
         try {
-            $filtersData = $this->filterModel->getAllFilters($type, $categoryIds);
+            $filtersData = $this->filterModel->getAllFilters($type, $categoryIds, $v2);
 
             return [
                 'success' => true,

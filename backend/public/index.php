@@ -188,10 +188,24 @@ $router->map('PATCH',  '/api/admin/products/[i:id]', 'AdminProductController#upd
 $router->map('DELETE', '/api/admin/products/[i:id]', 'AdminProductController#destroy', 'admin_products_delete');
 
 // ADMIN — CATÉGORIES & TAXES
-$router->map('GET',  '/api/admin/categories',   'AdminCategoryController#tree',             'admin_cat_tree');
-$router->map('GET',  '/api/admin/taxes',         'AdminCategoryController#taxes',            'admin_taxes');
-$router->map('POST', '/api/admin/categories',    'AdminCategoryController#createCategory',   'admin_cat_create');
-$router->map('POST', '/api/admin/subcategories', 'AdminCategoryController#createSubcategory', 'admin_subcat_create');
+$router->map('GET',    '/api/admin/categories',              'AdminCategoryController#tree',              'admin_cat_tree');
+$router->map('GET',    '/api/admin/taxes',                   'AdminCategoryController#taxes',             'admin_taxes');
+$router->map('POST',   '/api/admin/categories',              'AdminCategoryController#createCategory',    'admin_cat_create');
+$router->map('POST',   '/api/admin/subcategories',           'AdminCategoryController#createSubcategory', 'admin_subcat_create');
+$router->map('PATCH',  '/api/admin/departments/[i:id]',      'AdminCategoryController#updateDepartment',  'admin_dept_update');
+$router->map('PATCH',  '/api/admin/categories/[i:id]',       'AdminCategoryController#renameCategory',    'admin_cat_rename');
+$router->map('DELETE', '/api/admin/categories/[i:id]',       'AdminCategoryController#deleteCategory',    'admin_cat_delete');
+$router->map('PATCH',  '/api/admin/subcategories/[i:id]',    'AdminCategoryController#renameSubcategory', 'admin_subcat_rename');
+$router->map('DELETE', '/api/admin/subcategories/[i:id]',    'AdminCategoryController#deleteSubcategory', 'admin_subcat_delete');
+
+// ADMIN — SOLS (nature et pH)
+$router->map('GET',    '/api/admin/soils',                   'AdminSoilController#index',      'admin_soils');
+$router->map('POST',   '/api/admin/soil-types',              'AdminSoilController#createType', 'admin_soil_type_create');
+$router->map('PATCH',  '/api/admin/soil-types/[i:id]',       'AdminSoilController#renameType', 'admin_soil_type_rename');
+$router->map('DELETE', '/api/admin/soil-types/[i:id]',       'AdminSoilController#deleteType', 'admin_soil_type_delete');
+$router->map('POST',   '/api/admin/soil-ph',                 'AdminSoilController#createPh',   'admin_soil_ph_create');
+$router->map('PATCH',  '/api/admin/soil-ph/[i:id]',          'AdminSoilController#renamePh',   'admin_soil_ph_rename');
+$router->map('DELETE', '/api/admin/soil-ph/[i:id]',          'AdminSoilController#deletePh',   'admin_soil_ph_delete');
 
 // ADMIN -- UPLOAD
 $router->map('POST', '/api/admin/upload', 'AdminUploadController#store', 'admin_upload');

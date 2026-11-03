@@ -2,155 +2,249 @@
 
 namespace App\Services;
 
+use App\Core\UploadUnavailableException;
+
+/**
+ * Envoi d'une image de produit depuis l'admin.
+ *
+ * Principe : on ne fait JAMAIS confiance au fichier reçu. Il est contrôlé (taille, type réel lu dans le contenu, dimensions),
+ * puis l'image est DÉCODÉE et RÉ-ENCODÉE par GD : seuls les pixels sont conservés. Un script caché dans le fichier, des données
+ * ajoutées à la fin, les métadonnées (EXIF, position GPS de la photo) ne survivent pas. Les octets d'origine ne sont jamais stockés.
+ *
+ * Sortie : WebP (qualité 82) si GD sait l'encoder, sinon JPEG ; sans GD, l'envoi est refusé (UploadUnavailableException, 503).
+ * Nom et extension choisis par le serveur (32 caractères aléatoires). Le dossier interdit l'exécution de scripts (.htaccess).
+ */
 class AdminUploadService
 {
-    private const MAX_SIZE  = 5 * 1024 * 1024;
-    private const ALLOWED   = ['image/jpeg', 'image/png', 'image/webp'];
+    private const MAX_SIZE   = 5 * 1024 * 1024;
+    private const ALLOWED    = ['image/jpeg' => IMAGETYPE_JPEG, 'image/png' => IMAGETYPE_PNG, 'image/webp' => IMAGETYPE_WEBP];
     private const UPLOAD_DIR = __DIR__ . '/../../public/uploads/products/';
 
-    // Aucune fiche produit n'affiche l'image à plus de ~800px de large :
-    // inutile de conserver une résolution supérieure, ça n'alourdit que le chargement.
-    private const MAX_WIDTH = 1200;
-    private const WEBP_QUALITY = 80;
+    // Dimensions : lues dans l'en-tête AVANT de décoder (une image piégée de 20 000 × 20 000 px saturerait la mémoire)
+    private const MAX_PIXELS = 24_000_000;
+    private const MIN_SIDE   = 100;
+    // Le navigateur réduit déjà l'image à 1 600 px avant l'envoi ; le serveur l'applique aussi, pour tout autre envoi
+    private const MAX_SIDE   = 1600;
+
+    private const WEBP_QUALITY = 82;
+    private const JPEG_QUALITY = 85;
+
+    /** Règles du dossier des images : aucun script exécuté, ni type deviné, ni contenu actif dans une page */
+    private const HTACCESS = <<<'HTACCESS'
+# Généré par l'API (AdminUploadService) : ne pas modifier à la main, il serait réécrit.
+# Aucune exécution de script dans ce dossier
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .phar .cgi .pl .py .sh
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .phar
+<FilesMatch "\.(php[0-9]?|phtml|phps|phar|cgi|pl|py|sh|htaccess|html?|svg|js)$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'"
+</IfModule>
+
+HTACCESS;
 
     /**
-     * Valide et déplace un fichier uploadé.
-     * Retourne l'URL publique relative.
+     * Valide l'image reçue, la ré-encode et la stocke. Retourne son adresse relative (uploads/products/…).
      *
-     * @throws \InvalidArgumentException si le fichier est invalide
-     * @throws \RuntimeException         si l'écriture échoue
+     * @throws \InvalidArgumentException  fichier refusé (message destiné à l'administrateur)
+     * @throws UploadUnavailableException le serveur ne sait pas traiter les images (GD absent)
+     * @throws \RuntimeException          écriture impossible
      */
     public function store(array $file): string
     {
-        $this->validateSize($file);
-        $mimeType = $this->validateMime($file);
-        return $this->move($file, $mimeType);
-    }
-
-    private function validateSize(array $file): void
-    {
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new \InvalidArgumentException(
-                'Erreur lors de la réception du fichier (code ' . $file['error'] . ').'
-            );
+        if (!function_exists('imagecreatetruecolor')) {
+            throw new UploadUnavailableException("Le traitement des images n'est pas disponible sur le serveur.");
         }
 
-        if ($file['size'] > self::MAX_SIZE) {
+        $this->checkReception($file);
+        $mime = $this->checkType($file['tmp_name']);
+        [$width, $height] = $this->checkDimensions($file['tmp_name'], $mime);
+
+        $image = $this->decode($file['tmp_name'], $mime);
+        $image = $this->orient($image, $file['tmp_name'], $mime);
+        $image = $this->shrink($image);
+
+        return $this->save($image);
+    }
+
+    private function checkReception(array $file): void
+    {
+        $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+        if (is_array($error) || $error !== UPLOAD_ERR_OK) {
+            throw new \InvalidArgumentException(match (is_array($error) ? -1 : $error) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Le fichier dépasse 5 Mo.',
+                UPLOAD_ERR_NO_FILE                        => 'Aucun fichier reçu.',
+                -1                                        => 'Envoyez une seule image à la fois.',
+                default                                   => 'Erreur lors de la réception du fichier (code ' . $error . ').',
+            });
+        }
+
+        // Le fichier doit provenir d'un envoi HTTP (jamais un chemin du serveur glissé dans la requête)
+        if (!is_uploaded_file($file['tmp_name'])) {
+            throw new \InvalidArgumentException('Fichier reçu invalide.');
+        }
+
+        if ((int) $file['size'] > self::MAX_SIZE || filesize($file['tmp_name']) > self::MAX_SIZE) {
             throw new \InvalidArgumentException('Le fichier dépasse 5 Mo.');
         }
     }
 
-    private function validateMime(array $file): string
+    /** Type lu dans le CONTENU du fichier (le type et le nom annoncés par le navigateur ne sont pas fiables). */
+    private function checkType(string $path): string
     {
-        $finfo    = new \finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->file($file['tmp_name']);
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($path);
 
-        if (!in_array($mimeType, self::ALLOWED, true)) {
-            throw new \InvalidArgumentException(
-                'Format non autorisé. Utilisez JPG, PNG ou WebP.'
-            );
+        if (!isset(self::ALLOWED[$mime])) {
+            throw new \InvalidArgumentException('Format non autorisé. Utilisez JPG, PNG ou WebP.');
         }
 
-        // Le type annoncé par finfo ne suffit pas : le fichier doit aussi être une image que PHP sait lire
-        // (écarte un fichier qui commence comme une image et contient autre chose derrière).
-        if (@getimagesize($file['tmp_name']) === false) {
-            throw new \InvalidArgumentException('Le fichier n\'est pas une image valide.');
+        // WebP animé : refusé (GD ne garderait que la première image, sans prévenir)
+        if ($mime === 'image/webp' && str_contains((string) file_get_contents($path, false, null, 0, 4096), 'ANIM')) {
+            throw new \InvalidArgumentException('Les images animées ne sont pas acceptées.');
         }
 
-        return $mimeType;
+        return $mime;
     }
 
-    private function move(array $file, string $mimeType): string
+    /** @return array{0:int, 1:int} largeur, hauteur */
+    private function checkDimensions(string $path, string $mime): array
     {
-        // On ne promet la conversion WebP que si GD est réellement disponible.
-        // Sinon, on retombe sur le format d'origine — le nom du fichier reflète
-        // toujours fidèlement son contenu réel, jamais une extension mensongère.
-        $canConvertToWebp = function_exists('imagewebp') && match ($mimeType) {
-            'image/jpeg' => function_exists('imagecreatefromjpeg'),
-            'image/png'  => function_exists('imagecreatefrompng'),
-            'image/webp' => function_exists('imagecreatefromwebp'),
-        };
-
-        $extension = $canConvertToWebp ? 'webp' : match ($mimeType) {
-            'image/jpeg' => 'jpg',
-            'image/png'  => 'png',
-            'image/webp' => 'webp',
-        };
-
-        $filename = 'product_' . bin2hex(random_bytes(16)) . '.' . $extension;
-
-        if (!is_dir(self::UPLOAD_DIR)) {
-            mkdir(self::UPLOAD_DIR, 0755, true);
+        $info = @getimagesize($path);
+        if ($info === false || $info[2] !== self::ALLOWED[$mime]) {
+            throw new \InvalidArgumentException("Le fichier n'est pas une image valide.");
         }
-        $this->blockScriptExecution();
 
-        $path = self::UPLOAD_DIR . $filename;
+        [$width, $height] = $info;
 
-        if (!move_uploaded_file($file['tmp_name'], $path)) {
+        if ($width < self::MIN_SIDE || $height < self::MIN_SIDE) {
+            throw new \InvalidArgumentException('Image trop petite : au moins ' . self::MIN_SIDE . ' × ' . self::MIN_SIDE . ' pixels.');
+        }
+
+        if ($width * $height > self::MAX_PIXELS || !$this->fitsInMemory($width, $height)) {
+            throw new \InvalidArgumentException("Image trop grande ({$width} × {$height} pixels) : réduisez-la avant de l'envoyer.");
+        }
+
+        return [$width, $height];
+    }
+
+    /** GD décode environ 5 octets par pixel : on refuse plutôt que de faire planter la requête faute de mémoire. */
+    private function fitsInMemory(int $width, int $height): bool
+    {
+        $limit = $this->bytes((string) ini_get('memory_limit'));
+
+        return $limit <= 0 || memory_get_usage() + $width * $height * 5 + 16 * 1024 * 1024 < $limit;
+    }
+
+    private function bytes(string $value): int
+    {
+        $value = trim($value);
+        $number = (int) $value;
+
+        return match (strtolower(substr($value, -1))) {
+            'g'     => $number * 1024 ** 3,
+            'm'     => $number * 1024 ** 2,
+            'k'     => $number * 1024,
+            default => $number,
+        };
+    }
+
+    private function decode(string $path, string $mime): \GdImage
+    {
+        $decoder = ['image/jpeg' => 'imagecreatefromjpeg', 'image/png' => 'imagecreatefrompng', 'image/webp' => 'imagecreatefromwebp'][$mime];
+
+        $image = function_exists($decoder) ? @$decoder($path) : false;
+        if (!$image instanceof \GdImage) {
+            throw new \InvalidArgumentException("Le fichier n'est pas une image valide.");
+        }
+
+        imagepalettetotruecolor($image);
+
+        return $image;
+    }
+
+    /** Photo de téléphone : l'orientation est une métadonnée (EXIF), qui va disparaître : on tourne les pixels avant. */
+    private function orient(\GdImage $image, string $path, string $mime): \GdImage
+    {
+        if ($mime !== 'image/jpeg' || !function_exists('exif_read_data')) {
+            return $image;
+        }
+
+        $orientation = (int) (@exif_read_data($path)['Orientation'] ?? 1);
+        $angle = [3 => 180, 6 => -90, 8 => 90][$orientation] ?? 0;
+
+        return $angle === 0 ? $image : (imagerotate($image, $angle, 0) ?: $image);
+    }
+
+    /** Côté le plus long ramené à MAX_SIDE, proportions conservées (transparence comprise). */
+    private function shrink(\GdImage $image): \GdImage
+    {
+        $width  = imagesx($image);
+        $height = imagesy($image);
+        $ratio  = self::MAX_SIDE / max($width, $height);
+
+        if ($ratio >= 1) {
+            return $image;
+        }
+
+        $newWidth  = max(1, (int) round($width * $ratio));
+        $newHeight = max(1, (int) round($height * $ratio));
+
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
+        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        return $resized;
+    }
+
+    /** Encode en WebP (ou JPEG) dans un fichier temporaire, puis le renomme : jamais de fichier à moitié écrit visible. */
+    private function save(\GdImage $image): string
+    {
+        $this->prepareDirectory();
+
+        $webp      = function_exists('imagewebp');
+        $filename  = 'product_' . bin2hex(random_bytes(16)) . ($webp ? '.webp' : '.jpg');
+        $temporary = self::UPLOAD_DIR . '.tmp_' . bin2hex(random_bytes(8));
+
+        if ($webp) {
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+            $written = imagewebp($image, $temporary, self::WEBP_QUALITY);
+        } else {
+            // JPEG n'a pas de transparence : fond blanc plutôt que noir
+            $flat = imagecreatetruecolor(imagesx($image), imagesy($image));
+            imagefill($flat, 0, 0, imagecolorallocate($flat, 255, 255, 255));
+            imagecopy($flat, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
+            $written = imagejpeg($flat, $temporary, self::JPEG_QUALITY);
+        }
+
+        if (!$written || !rename($temporary, self::UPLOAD_DIR . $filename)) {
+            @unlink($temporary);
             throw new \RuntimeException('Erreur lors de la sauvegarde du fichier.');
-        }
-
-        if ($canConvertToWebp) {
-            $this->resizeAndConvertToWebp($path, $mimeType);
         }
 
         return 'uploads/products/' . $filename;
     }
 
     /**
-     * Interdit l'exécution de scripts dans le dossier des images : défense en plus du nom de fichier choisi par le serveur
-     * (aléatoire, extension imposée). Créé ici plutôt que versionné, car le dossier des images n'est pas dans Git.
+     * Dossier des images, son .htaccess (réécrit s'il diffère : un ancien serveur reçoit ainsi les nouvelles règles)
+     * et une page d'index vide (pas de liste des fichiers, même si le serveur l'autorise).
      */
-    private function blockScriptExecution(): void
+    private function prepareDirectory(): void
     {
-        $htaccess = self::UPLOAD_DIR . '.htaccess';
-        if (!file_exists($htaccess)) {
-            file_put_contents($htaccess, "# Aucune exécution de script dans ce dossier\nRemoveHandler .php .phtml .php3 .php4 .php5 .php7 .phps\nRemoveType .php .phtml\n<FilesMatch \"\\.(php|phtml|php[0-9]?|phps)$\">\n    Require all denied\n</FilesMatch>\n");
+        if (!is_dir(self::UPLOAD_DIR) && !mkdir(self::UPLOAD_DIR, 0755, true) && !is_dir(self::UPLOAD_DIR)) {
+            throw new \RuntimeException('Erreur lors de la sauvegarde du fichier.');
         }
-    }
 
-    /**
-     * Redimensionne l'image si elle dépasse MAX_WIDTH, et la convertit en WebP
-     * (meilleur rapport qualité/poids que JPEG ou PNG, largement supporté par
-     * les navigateurs actuels). Écrase le fichier sur place.
-     *
-     * N'est appelée que si move() a confirmé que GD sait lire ce format et
-     * encoder en WebP — pas de risque d'incohérence entre extension et contenu.
-     */
-    private function resizeAndConvertToWebp(string $path, string $mimeType): void
-    {
-        try {
-            $source = match ($mimeType) {
-                'image/jpeg' => imagecreatefromjpeg($path),
-                'image/png'  => imagecreatefrompng($path),
-                'image/webp' => imagecreatefromwebp($path),
-            };
+        $htaccess = self::UPLOAD_DIR . '.htaccess';
+        if (!is_file($htaccess) || file_get_contents($htaccess) !== self::HTACCESS) {
+            file_put_contents($htaccess, self::HTACCESS);
+        }
 
-            if ($source === false) {
-                return;
-            }
-
-            $width  = imagesx($source);
-            $height = imagesy($source);
-
-            if ($width > self::MAX_WIDTH) {
-                $newWidth  = self::MAX_WIDTH;
-                $newHeight = (int) round($height * ($newWidth / $width));
-
-                $resized = imagescale($source, $newWidth, $newHeight);
-                imagedestroy($source);
-                $source = $resized;
-            }
-
-            // PNG avec transparence : on la préserve avant l'encodage WebP.
-            imagepalettetotruecolor($source);
-            imagealphablending($source, true);
-            imagesavealpha($source, true);
-
-            imagewebp($source, $path, self::WEBP_QUALITY);
-            imagedestroy($source);
-        } catch (\Throwable $e) {
-            // Le fichier original (déjà sauvegardé, avec la bonne extension) reste utilisable.
+        if (!is_file(self::UPLOAD_DIR . 'index.html')) {
+            file_put_contents(self::UPLOAD_DIR . 'index.html', '');
         }
     }
 }

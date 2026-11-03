@@ -29,6 +29,8 @@ class SecurityLog
     public const ACCOUNT_ANONYMIZED = 'account_anonymized';
     public const TURNSTILE_FAILED = 'turnstile_failed';
     public const PAYMENT_MISMATCH = 'payment_mismatch';
+    // Suppression d'un élément du classement (catégorie, sous-catégorie, nature ou pH du sol) : details.type, details.id, details.name
+    public const CATEGORY_DELETED = 'category_deleted';
 
     private const MAX_USER_AGENT_LENGTH = 255;
     private const MAX_DETAILS_LENGTH = 1000;

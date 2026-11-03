@@ -116,6 +116,7 @@ class AdminProductApiTest extends AdminApiTestCase
     public function testUneReferenceVideDevientNulle(): void
     {
         $id = $this->create(['sku' => '']);
+        self::trackProduct($id);
 
         $this->assertNull(self::$admin->get("/admin/products/$id")['body']['data']['product']['sku']);
     }
@@ -292,16 +293,15 @@ class AdminProductApiTest extends AdminApiTestCase
         $this->assertEqualsCanonicalizing([self::$criteriaIds[1], self::$criteriaIds[2]], array_map('intval', $product['criteria_ids']));
     }
 
-    public function testUneModificationQuiNeContientQueLaFicheNEstPasEnregistree(): void
+    public function testUneModificationQuiNeContientQueLaFicheEstEnregistree(): void
     {
-        // DÉFAUT ACTUEL, caractérisé ici pour être corrigé (N4-api-catalogue) : sans aucun champ « produit » dans la requête,
-        // le modèle sort avant d'écrire la fiche, et l'API répond pourtant 200.
+        // Corrigé en N4-api-catalogue : avant, sans champ « produit » dans la requête, la fiche était ignorée (et l'API répondait 200)
         $id = $this->create();
 
         $response = self::$admin->patch("/admin/products/$id", ['plant' => ['family' => 'Rosaceae']]);
 
         $this->assertSame(200, $response['status']);
-        $this->assertNull(self::$admin->get("/admin/products/$id")['body']['data']['product']['plant_id']);
+        $this->assertSame('Rosaceae', self::$admin->get("/admin/products/$id")['body']['data']['product']['family']);
     }
 
     public function testLaFicheBotaniqueSeCreeAvecLeProduit(): void

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\SoilLegacy;
 
 class FilterModel
 {
@@ -10,20 +11,20 @@ class FilterModel
      * Récupère la configuration des filtres.
      * @param string|null $type Optionnel : 'vegetaux', 'jardinage', etc.
      * @param string|null $categoryIds Optionnel : liste d'IDs de catégories cochées, séparés par des virgules (ex: "1,3")
+     * @param bool $v2 Nouveau site : la nature et le pH du sol ont leurs propres listes (soil_types, soil_ph), et les anciens
+     *                 critères « Sol … » sont retirés de criteria. Sans v2 (ancien site), la réponse ne change pas.
      */
-    public function getAllFilters(?string $type = null, ?string $categoryIds = null): array
+    public function getAllFilters(?string $type = null, ?string $categoryIds = null, bool $v2 = false): array
     {
         $db = Database::getConnection();
 
-        // 1. REQUÊTE DYNAMIQUE POUR LES CATÉGORIES (Ultra-rapide grâce à l'ID direct)
+        // 1. Catégories du rayon demandé : « végétaux » = rayons avec fiche botanique, « jardinage » = les autres (réglé dans l'admin)
         $catSql = "SELECT id, name AS label FROM categories";
 
         if ($type === 'vegetaux') {
-            // ID 1 = Végétaux
-            $catSql .= " WHERE department_id = 1";
+            $catSql .= " WHERE department_id IN (SELECT id FROM departments WHERE has_plant_sheet = 1)";
         } elseif ($type === 'jardinage') {
-            // ID 2 = Jardinage & Entretien
-            $catSql .= " WHERE department_id = 2";
+            $catSql .= " WHERE department_id IN (SELECT id FROM departments WHERE has_plant_sheet = 0)";
         }
 
         $catSql .= " ORDER BY name ASC";
@@ -65,6 +66,10 @@ class FilterModel
         $stmtCriteria->execute();
         $criteria = $stmtCriteria->fetchAll(\PDO::FETCH_ASSOC);
 
+        if ($v2) {
+            $criteria = array_values(array_filter($criteria, fn(array $row) => !SoilLegacy::isLegacyCriterion($row['label'])));
+        }
+
         $stmtExpositions = $db->prepare("SELECT DISTINCT sun_exposure AS id, sun_exposure AS label FROM plants WHERE sun_exposure IS NOT NULL");
         $stmtExpositions->execute();
         $expositions = $stmtExpositions->fetchAll(\PDO::FETCH_ASSOC);
@@ -73,12 +78,20 @@ class FilterModel
         $stmtWater->execute();
         $water = $stmtWater->fetchAll(\PDO::FETCH_ASSOC);
 
-        return [
+        $filters = [
             'categories' => $categories,
             'subcategories' => $subcategories,
             'criteria' => $criteria,
             'expositions' => $expositions,
             'water' => $water
         ];
+
+        if ($v2) {
+            foreach (['soil_types' => 'soil_types', 'soil_ph' => 'soil_ph'] as $key => $table) {
+                $filters[$key] = $db->query("SELECT id, name AS label FROM $table ORDER BY name ASC")->fetchAll(\PDO::FETCH_ASSOC);
+            }
+        }
+
+        return $filters;
     }
 }

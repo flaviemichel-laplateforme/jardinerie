@@ -75,6 +75,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`departments` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
+  `has_plant_sheet` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE)
 ENGINE = InnoDB;
@@ -126,6 +127,7 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`products` (
   `description` TEXT NULL DEFAULT NULL,
   `price_tax_incl` DECIMAL(10,2) NOT NULL,
   `purchase_price_tax_incl` DECIMAL(10,2) NULL DEFAULT NULL,
+  `purchase_price_excl_tax` DECIMAL(10,2) NULL DEFAULT NULL,
   `stock_quantity` INT NULL DEFAULT 0,
   `main_image_url` VARCHAR(255) NULL DEFAULT NULL,
   `secondary_image_url` VARCHAR(255) NULL DEFAULT NULL,
@@ -216,6 +218,46 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`plant_criterion` (
     FOREIGN KEY (`criterion_id`)
     REFERENCES `flavie-michel_jardinerie_db`.`criteria` (`id`)
     ON DELETE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Tables `soil_types` et `soil_ph` (nature et pH du sol) et leurs liens avec les plantes
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`soil_types` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `soil_types_name_UNIQUE` (`name`))
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`soil_ph` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `soil_ph_name_UNIQUE` (`name`))
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`plant_soil_type` (
+  `plant_id` INT NOT NULL,
+  `soil_type_id` INT NOT NULL,
+  PRIMARY KEY (`plant_id`, `soil_type_id`),
+  INDEX `plant_soil_type_soil_idx` (`soil_type_id`),
+  CONSTRAINT `fk_plant_soil_type_plants` FOREIGN KEY (`plant_id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`plants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_plant_soil_type_soil_types` FOREIGN KEY (`soil_type_id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`soil_types` (`id`) ON DELETE CASCADE)
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`plant_soil_ph` (
+  `plant_id` INT NOT NULL,
+  `soil_ph_id` INT NOT NULL,
+  PRIMARY KEY (`plant_id`, `soil_ph_id`),
+  INDEX `plant_soil_ph_ph_idx` (`soil_ph_id`),
+  CONSTRAINT `fk_plant_soil_ph_plants` FOREIGN KEY (`plant_id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`plants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_plant_soil_ph_soil_ph` FOREIGN KEY (`soil_ph_id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`soil_ph` (`id`) ON DELETE CASCADE)
 ENGINE = InnoDB;
 
 
