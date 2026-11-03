@@ -63,11 +63,11 @@ class ProductService
      * Récupère les détails d'un produit spécifique.
      * Gère les erreurs métier (404) et techniques (500).
      */
-    public function getProductDetails(int $id): array
+    public function getProductDetails(int $id, bool $v2 = false): array
     {
         try {
             // 1. Appel au Modèle (le magasinier)
-            $product = $this->productModel->findById($id);
+            $product = $this->productModel->findById($id, $v2);
 
             // 2. Règle métier : Que faire si le produit n'existe pas ?
             if (!$product) {

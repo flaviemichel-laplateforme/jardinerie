@@ -18,6 +18,10 @@ TRUNCATE TABLE `cart_items`;
 TRUNCATE TABLE `carts`;
 TRUNCATE TABLE `stock_movements`;
 TRUNCATE TABLE `plant_criterion`;
+TRUNCATE TABLE `plant_soil_type`;
+TRUNCATE TABLE `plant_soil_ph`;
+TRUNCATE TABLE `soil_types`;
+TRUNCATE TABLE `soil_ph`;
 TRUNCATE TABLE `criteria`;
 TRUNCATE TABLE `plants`;
 TRUNCATE TABLE `products`;
@@ -70,9 +74,10 @@ INSERT INTO `delivery_methods` (`id`, `name`, `base_cost_tax_incl`, `free_shippi
 -- =====================================================================
 
 -- Rayons
-INSERT INTO `departments` (`id`, `name`) VALUES
-(1, 'Végétaux'),
-(2, 'Jardinage & Entretien');
+-- has_plant_sheet : le formulaire produit propose (et l'API accepte) une fiche botanique dans ce rayon
+INSERT INTO `departments` (`id`, `name`, `has_plant_sheet`) VALUES
+(1, 'Végétaux', 1),
+(2, 'Jardinage & Entretien', 0);
 
 -- Catégories 
 INSERT INTO `categories` (`id`, `department_id`, `name`, `icon_url`) VALUES
@@ -251,8 +256,19 @@ INSERT INTO `criteria` (`id`, `name`) VALUES
 INSERT INTO `plant_criterion` (`plant_id`, `criterion_id`) VALUES
 (4, 8), (4, 11), (19, 7), (19, 9), (20, 6), (21, 8), (21, 11), (25, 8), (26, 8);
 
+-- Nature et pH du sol (tables dédiées, utilisées par le nouveau site). Les critères « Sol … » ci-dessus restent jusqu'à la bascule,
+-- pour l'ancien site : mêmes plantes, « Sol calcaire » correspondant à la nature Calcaire ET au pH Alcalin.
+INSERT INTO `soil_types` (`id`, `name`) VALUES (1, 'Argileux'), (2, 'Sableux'), (3, 'Humifère'), (4, 'Calcaire'), (5, 'Drainé');
+INSERT INTO `soil_ph` (`id`, `name`) VALUES (1, 'Acide'), (2, 'Neutre'), (3, 'Alcalin');
+INSERT INTO `plant_soil_type` (`plant_id`, `soil_type_id`) VALUES
+(4, 5), (4, 4), (19, 3), (20, 2), (21, 5), (21, 4), (25, 5), (26, 5);
+INSERT INTO `plant_soil_ph` (`plant_id`, `soil_ph_id`) VALUES
+(4, 3), (19, 1), (21, 3);
+
 -- Référence unique de chaque produit, et conditionnement des plantes
 UPDATE `products` SET `sku` = CONCAT('JAR-', LPAD(`id`, 4, '0'));
+-- Prix d'achat HT (l'ancienne colonne purchase_price_tax_incl contient déjà un prix HT, malgré son nom)
+UPDATE `products` SET `purchase_price_excl_tax` = `purchase_price_tax_incl`;
 UPDATE `products` SET `packaging_type` = 'Pot' WHERE `id` IN (SELECT `product_id` FROM `plants`);
 UPDATE `products` SET `pot_diameter_cm` = 17, `volume_l` = 2.00, `weight_g` = 1500 WHERE `id` = 1;
 UPDATE `products` SET `pot_diameter_cm` = 12, `volume_l` = 0.50, `weight_g` = 400 WHERE `id` = 5;

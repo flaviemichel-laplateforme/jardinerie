@@ -55,6 +55,16 @@ class ProductController
             $filters['criteria'] = htmlspecialchars(trim($_GET['criteria']));
         }
 
+        // Filtres de sol (nouveau site) : identifiants séparés par des virgules ; tout ce qui n'est pas un identifiant est ignoré
+        foreach (['soil_types', 'soil_ph'] as $key) {
+            if (isset($_GET[$key]) && is_string($_GET[$key])) {
+                $ids = array_values(array_unique(array_filter(array_map('intval', explode(',', $_GET[$key])), fn(int $id) => $id > 0)));
+                if ($ids !== []) {
+                    $filters[$key] = array_slice($ids, 0, 20);
+                }
+            }
+        }
+
         // Filtre par Prix minimun
         if (isset($_GET['price_min']) && is_numeric($_GET['price_min'])) {
             $filters['price_min'] = (float) $_GET['price_min'];
@@ -116,8 +126,8 @@ class ProductController
     {
         header('content-type: application/json; charset utf-8');
 
-        // On appelle le service
-        $result = $this->productService->getProductDetails($id);
+        // On appelle le service (?v=2 : nouveau site, les sols ne sont plus répétés parmi les critères)
+        $result = $this->productService->getProductDetails($id, ($_GET['v'] ?? '') === '2');
 
         //On applique le code HTTP décidé par le service
         $code = $result['code'] ?? 500;

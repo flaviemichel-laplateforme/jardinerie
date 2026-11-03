@@ -3,10 +3,21 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\SoilLegacy;
 use PDO;
 
 class ProductModel
 {
+    /** Filtres de sol : clé du filtre => [table de liaison, colonne] (valeurs fixes, jamais lues dans la requête) */
+    private const SOIL_FILTERS = [
+        'soil_types' => ['plant_soil_type', 'soil_type_id'],
+        'soil_ph'    => ['plant_soil_ph', 'soil_ph_id'],
+    ];
+
+    public function __construct(
+        private SoilModel $soils = new SoilModel()
+    ) {}
+
     /**
      * Récupère les produits actifs avec leurs catégories et détails botaniques.
      * Applique dynamiquement les filtres de recherche, catégories et expositions.
@@ -139,6 +150,19 @@ class ProductModel
                     WHERE pc.plant_id = pl.id
                     AND pc.criterion_id IN (" . implode(',', $critPlaceholders) . ")
                 )";
+            }
+
+            // Nature et pH du sol : la plante doit avoir au moins une des valeurs cochées (OU dans le groupe, ET entre les groupes)
+            foreach (self::SOIL_FILTERS as $key => [$link, $column]) {
+                if (!empty($filters[$key])) {
+                    $soilPlaceholders = [];
+                    foreach ($filters[$key] as $index => $id) {
+                        $paramName = $key . $index;
+                        $soilPlaceholders[] = ':' . $paramName;
+                        $params[$paramName] = (int) $id;
+                    }
+                    $conditions[] = "EXISTS (SELECT 1 FROM $link sl WHERE sl.plant_id = pl.id AND sl.$column IN (" . implode(',', $soilPlaceholders) . "))";
+                }
             }
 
             if (!empty($conditions)) {
@@ -296,6 +320,19 @@ class ProductModel
                 )";
             }
 
+            // Nature et pH du sol : la plante doit avoir au moins une des valeurs cochées (OU dans le groupe, ET entre les groupes)
+            foreach (self::SOIL_FILTERS as $key => [$link, $column]) {
+                if (!empty($filters[$key])) {
+                    $soilPlaceholders = [];
+                    foreach ($filters[$key] as $index => $id) {
+                        $paramName = $key . $index;
+                        $soilPlaceholders[] = ':' . $paramName;
+                        $params[$paramName] = (int) $id;
+                    }
+                    $conditions[] = "EXISTS (SELECT 1 FROM $link sl WHERE sl.plant_id = pl.id AND sl.$column IN (" . implode(',', $soilPlaceholders) . "))";
+                }
+            }
+
             if (!empty($conditions)) {
                 $sql .= " AND " . implode(" AND ", $conditions);
             }
@@ -312,8 +349,10 @@ class ProductModel
 
     /**
      * Récupère un produit spécifique par son ID avec ses détails botaniques.
+     * Nature et pH du sol : listes soil_types et soil_ph. $v2 (nouveau site) : criteria sans les anciens critères « Sol … »,
+     * qui feraient doublon ; sans v2 (ancien site), criteria est inchangé.
      */
-    public function findById(int $id): ?array
+    public function findById(int $id, bool $v2 = false): ?array
     {
         $db = Database::getConnection();
 
@@ -370,7 +409,9 @@ class ProductModel
         }
 
         // Critères de la plante (sol, pH, comestible…) : ils s'affichent sur la fiche comme étiquettes
-        $product['criteria'] = [];
+        $product['criteria']  = [];
+        $product['soil_types'] = [];
+        $product['soil_ph']    = [];
         if ($product['plant_id']) {
             $critStmt = $db->prepare(
                 "SELECT c.id, c.name AS label
@@ -381,6 +422,13 @@ class ProductModel
             );
             $critStmt->execute(['plant_id' => $product['plant_id']]);
             $product['criteria'] = $critStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($v2) {
+                $product['criteria'] = array_values(array_filter($product['criteria'], fn(array $row) => !SoilLegacy::isLegacyCriterion($row['label'])));
+            }
+
+            $product['soil_types'] = $this->soils->labelsForPlant('type', (int) $product['plant_id']);
+            $product['soil_ph']    = $this->soils->labelsForPlant('ph', (int) $product['plant_id']);
         }
 
         return $product;

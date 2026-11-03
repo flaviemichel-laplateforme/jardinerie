@@ -2,14 +2,15 @@
 
 namespace App\Controllers;
 
-use App\Core\ProductPolicy;
 use App\Models\AdminProductModel;
 use App\Middlewares\AdminMiddleware;
+use App\Services\AdminProductService;
 
 class AdminProductController
 {
     public function __construct(
-        private AdminProductModel $model = new AdminProductModel()
+        private AdminProductModel $model = new AdminProductModel(),
+        private AdminProductService $service = new AdminProductService()
     ) {}
 
     /**
@@ -59,82 +60,24 @@ class AdminProductController
 
         $data = json_decode(file_get_contents("php://input"), true);
         if (!is_array($data)) {
-            $this->respondInvalid(['Format JSON invalide.']);
+            $this->respond(['code' => 400, 'message' => 'Données invalides.', 'errors' => ['Format JSON invalide.']]);
             return;
         }
 
-        $data   = $this->trimName($data);
-        $errors = ProductPolicy::validate($data, true);
-
-        if (!empty($errors)) {
-            $this->respondInvalid($errors);
-            return;
-        }
-
-        try {
-            $id = $this->model->create($data);
-        } catch (\PDOException $e) {
-            if ($this->isDuplicateSku($e)) {
-                $this->respondDuplicateSku();
-                return;
-            }
-            throw $e;
-        }
-
-        http_response_code(201);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Produit créé avec succès.',
-            'data'    => ['id' => $id]
-        ], JSON_UNESCAPED_UNICODE);
+        $this->respond($this->service->create($data));
     }
 
     /**
      * PATCH /api/admin/products/{id}
+     * Seuls les champs envoyés sont vérifiés et modifiés.
      */
     public function update(int $id): void
     {
         AdminMiddleware::authenticate();
 
-        // Vérifier que le produit existe
-        if (!$this->model->findById($id)) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Produit introuvable.'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!is_array($data) || empty($data)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Aucune donnée fournie.'], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        // Seuls les champs envoyés sont vérifiés (PATCH). Avant, la modification n'était pas validée du tout.
-        $data   = $this->trimName($data);
-        $errors = ProductPolicy::validate($data, false);
-
-        if (!empty($errors)) {
-            $this->respondInvalid($errors);
-            return;
-        }
-
-        try {
-            $this->model->update($id, $data);
-        } catch (\PDOException $e) {
-            if ($this->isDuplicateSku($e)) {
-                $this->respondDuplicateSku();
-                return;
-            }
-            throw $e;
-        }
-
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Produit mis à jour avec succès.'
-        ], JSON_UNESCAPED_UNICODE);
+        $this->respond($this->service->update($id, is_array($data) ? $data : []));
     }
 
     /**
@@ -145,13 +88,14 @@ class AdminProductController
     {
         AdminMiddleware::authenticate();
 
-        $deleted = $this->model->softDelete($id);
-
-        if (!$deleted) {
+        // Existence vérifiée à part : désactiver un produit déjà désactivé ne change aucune ligne, ce n'est pas pour autant un 404
+        if (!$this->model->findById($id)) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Produit introuvable.'], JSON_UNESCAPED_UNICODE);
             return;
         }
+
+        $this->model->softDelete($id);
 
         http_response_code(200);
         echo json_encode([
@@ -160,39 +104,13 @@ class AdminProductController
         ], JSON_UNESCAPED_UNICODE);
     }
 
-    /** Nettoie les espaces autour du nom : ils comptent dans la limite et n'ont aucun intérêt à être enregistrés. */
-    private function trimName(array $data): array
+    /** Réponse JSON d'après le résultat du service (success déduit du code). */
+    private function respond(array $result): void
     {
-        if (isset($data['name']) && is_string($data['name'])) {
-            $data['name'] = trim($data['name']);
-        }
+        $code = $result['code'];
+        unset($result['code']);
 
-        return $data;
-    }
-
-    /** Erreur MySQL 1062 (valeur en double) sur l'index unique de la référence. */
-    private function isDuplicateSku(\PDOException $e): bool
-    {
-        return ($e->errorInfo[1] ?? null) === 1062 && str_contains($e->getMessage(), 'sku_UNIQUE');
-    }
-
-    private function respondDuplicateSku(): void
-    {
-        http_response_code(409);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Cette référence (SKU) est déjà utilisée par un autre produit.'
-        ], JSON_UNESCAPED_UNICODE);
-    }
-
-    /** @param string[] $errors */
-    private function respondInvalid(array $errors): void
-    {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Données invalides.',
-            'errors'  => $errors
-        ], JSON_UNESCAPED_UNICODE);
+        http_response_code($code);
+        echo json_encode(['success' => $code < 400, ...$result], JSON_UNESCAPED_UNICODE);
     }
 }

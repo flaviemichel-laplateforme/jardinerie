@@ -342,4 +342,96 @@ class ProductPolicyTest extends TestCase
         $this->assertCount(1, ProductPolicy::validate(['weight_g' => 0], false));
         $this->assertCount(1, ProductPolicy::validate(['plant' => ['difficulty' => 'Facile']], false));
     }
+
+    // ---------------------------------------------------------------- Prix d'achat HT (N4-api-catalogue)
+
+    public function testLePrixDAchatHtSuitLesMemesBornesSousSesDeuxNoms(): void
+    {
+        foreach (['purchase_price_excl_tax', 'purchase_price_tax_incl'] as $field) {
+            $this->assertSame([], ProductPolicy::validate([$field => 0], false), $field);
+            $this->assertSame([], ProductPolicy::validate([$field => 9999.99], false), $field);
+            $this->assertSame([], ProductPolicy::validate([$field => null], false), "$field vide");
+            $this->assertCount(1, ProductPolicy::validate([$field => -0.01], false), $field);
+            $this->assertCount(1, ProductPolicy::validate([$field => 10000], false), $field);
+            $this->assertCount(1, ProductPolicy::validate([$field => 'douze'], false), $field);
+        }
+    }
+
+    // ---------------------------------------------------------------- Identifiants et état
+
+    public function testLesIdentifiantsDeTvaEtDeSousCategorieDoiventEtreDesEntiersPositifs(): void
+    {
+        $this->assertSame([], ProductPolicy::validate(['tax_id' => '2', 'subcategory_id' => 3], false));
+
+        foreach ([0, -1, 'abc', 1.5, true] as $bad) {
+            $this->assertNotEmpty(ProductPolicy::validate(['tax_id' => $bad], false), var_export($bad, true));
+            $this->assertNotEmpty(ProductPolicy::validate(['subcategory_id' => $bad], false), var_export($bad, true));
+        }
+    }
+
+    public function testLEtatEnLigneVautZeroOuUn(): void
+    {
+        foreach ([0, 1, '0', '1', true, false] as $ok) {
+            $this->assertSame([], ProductPolicy::validate(['is_active' => $ok], false), var_export($ok, true));
+        }
+        foreach ([2, 'oui', null, -1] as $bad) {
+            $this->assertCount(1, ProductPolicy::validate(['is_active' => $bad], false), var_export($bad, true));
+        }
+    }
+
+    // ---------------------------------------------------------------- Adresses d'image
+
+    public function testUneImageDoitVenirDuDossierDesEnvois(): void
+    {
+        $ok = 'uploads/products/product_0123456789abcdef0123456789abcdef.webp';
+        $this->assertSame([], ProductPolicy::validate(['main_image_url' => $ok, 'secondary_image_url' => ''], false));
+        $this->assertSame([], ProductPolicy::validate(['main_image_url' => null], false), 'pas d\'image');
+
+        foreach ([
+            'https://exemple.com/photo.jpg',
+            '//exemple.com/photo.jpg',
+            'uploads/products/../../index.php',
+            'uploads/products/product_a.php',
+            'uploads/products/product_a.webp.php',
+            'uploads/products/sous/product_a.webp',
+            'javascript:alert(1)',
+            '/etc/passwd',
+            'uploads/products/product_.webp',
+        ] as $bad) {
+            $this->assertCount(1, ProductPolicy::validate(['main_image_url' => $bad], false), $bad);
+        }
+        $this->assertCount(1, ProductPolicy::validate(['secondary_image_url' => ['x']], false));
+    }
+
+    public function testUneImageInchangeeResteAccepteeMemeAncienneFormule(): void
+    {
+        $legacy = 'https://ancien-hebergeur.example/plante.jpg';
+
+        $this->assertSame([], ProductPolicy::validate(['main_image_url' => $legacy], false, ['main_image_url' => $legacy]));
+        $this->assertCount(1, ProductPolicy::validate(['main_image_url' => 'https://autre.example/x.jpg'], false, ['main_image_url' => $legacy]));
+    }
+
+    // ---------------------------------------------------------------- Listes de la fiche (critères, sols)
+
+    public function testLesListesDeLaFicheSontDesListesDIdentifiants(): void
+    {
+        $this->assertSame([], ProductPolicy::validate(['plant' => ['criteria' => [1, '2'], 'soil_type_ids' => [], 'soil_ph_ids' => null]], false));
+
+        foreach ([
+            ['soil_type_ids' => 'Argileux'],
+            ['soil_type_ids' => [0]],
+            ['soil_ph_ids' => ['abc']],
+            ['soil_ph_ids' => [true]],
+            ['criteria' => ['a' => 1]],
+            ['criteria' => range(1, ProductPolicy::ID_LIST_MAX + 1)],
+        ] as $plant) {
+            $this->assertCount(1, ProductPolicy::validate(['plant' => $plant], false), json_encode($plant));
+        }
+    }
+
+    public function testIdListNettoieLesIdentifiants(): void
+    {
+        $this->assertSame([3, 1], ProductPolicy::idList(['soil_type_ids' => ['3', 1, 3]], 'soil_type_ids'));
+        $this->assertSame([], ProductPolicy::idList([], 'soil_type_ids'));
+    }
 }

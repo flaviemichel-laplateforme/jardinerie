@@ -20,8 +20,11 @@ class FilterController
         // 1bis. Catégories cochées (ex: ?categories=1,3)
         $categoryIds = $_GET['categories'] ?? null;
 
+        // 1ter. ?v=2 (nouveau site) : nature et pH du sol en listes séparées, sans les anciens critères « Sol … »
+        $v2 = ($_GET['v'] ?? '') === '2';
+
         // 2. On interroge le service avec ces filtres
-        $result = $this->filterService->getFiltersConfiguration($type, $categoryIds);
+        $result = $this->filterService->getFiltersConfiguration($type, $categoryIds, $v2);
 
         // 3. En cas d'erreur serveur ou SQL
         if (!$result['success']) {

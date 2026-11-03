@@ -143,6 +143,12 @@ abstract class AdminApiTestCase extends TestCase
         return $orderId;
     }
 
+    /** Produit créé par l'API sans référence (sku vide) : le nettoyage par préfixe de référence ne le trouverait pas. */
+    protected static function trackProduct(int $id): void
+    {
+        self::$productIds[] = $id;
+    }
+
     /** À appeler pour tout fichier déposé par l'API pendant un test : il sera supprimé en fin de classe. */
     protected static function trackFile(string $relativePath): void
     {

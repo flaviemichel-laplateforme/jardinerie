@@ -33,13 +33,26 @@ class ProductPolicy
     public const HARDINESS_MIN_C = -60;
     public const HARDINESS_MAX_C = 40;
 
+    // Listes d'identifiants de la fiche (critères, nature et pH du sol)
+    public const ID_LIST_FIELDS = ['criteria' => 'Les critères', 'soil_type_ids' => 'La nature du sol', 'soil_ph_ids' => 'Le pH du sol'];
+    public const ID_LIST_MAX = 50;
+
+    /**
+     * Adresse d'une image du produit : uniquement un fichier déposé par l'envoi d'image de l'admin (nom choisi par le serveur).
+     * Ni adresse externe (image hébergée ailleurs, pistage), ni chemin vers un autre dossier (« ../ »).
+     */
+    public const IMAGE_URL_PATTERN = '#^uploads/products/product_[A-Za-z0-9_-]{1,64}\.(webp|jpe?g|png)$#';
+    public const IMAGE_FIELDS = ['main_image_url' => "L'image principale", 'secondary_image_url' => "L'image secondaire"];
+
     /**
      * @param array $data       Données reçues (JSON décodé)
      * @param bool  $isCreation true à la création : certains champs sont obligatoires.
      *                          À la modification (PATCH), seuls les champs présents sont vérifiés.
+     * @param array $current    Produit tel qu'enregistré (modification) : une image inchangée est toujours acceptée,
+     *                          même si elle date d'avant la règle sur les adresses d'image.
      * @return string[] Messages d'erreur (tableau vide si tout est valide)
      */
-    public static function validate(array $data, bool $isCreation): array
+    public static function validate(array $data, bool $isCreation, array $current = []): array
     {
         $errors = [];
 
@@ -77,9 +90,27 @@ class ProductPolicy
             }
         }
 
-        // Prix d'achat : facultatif, mais s'il est renseigné il doit être raisonnable (0 autorisé)
-        if (array_key_exists('purchase_price_tax_incl', $data) && !self::isBlank($data['purchase_price_tax_incl'])) {
-            $error = self::checkAmount($data['purchase_price_tax_incl'], 0.0, "Le prix d'achat");
+        // Prix d'achat HT : facultatif, mais s'il est renseigné il doit être raisonnable (0 autorisé).
+        // purchase_price_tax_incl est l'ancien nom du même prix HT (envoyé par l'ancien admin).
+        foreach (['purchase_price_excl_tax', 'purchase_price_tax_incl'] as $field) {
+            if (array_key_exists($field, $data) && !self::isBlank($data[$field])) {
+                $error = self::checkAmount($data[$field], 0.0, "Le prix d'achat");
+                if ($error !== null) {
+                    $errors[] = $error;
+                }
+            }
+        }
+
+        if (array_key_exists('tax_id', $data) && !self::isBlank($data['tax_id']) && !self::isPositiveId($data['tax_id'])) {
+            $errors[] = "Le taux de TVA est invalide.";
+        }
+
+        if (array_key_exists('is_active', $data) && !in_array($data['is_active'], [0, 1, '0', '1', true, false], true)) {
+            $errors[] = "L'état « en ligne » doit valoir 0 ou 1.";
+        }
+
+        foreach (self::IMAGE_FIELDS as $field => $label) {
+            $error = self::checkImageUrl($data, $field, $current[$field] ?? null, $label);
             if ($error !== null) {
                 $errors[] = $error;
             }
@@ -94,7 +125,7 @@ class ProductPolicy
             }
         }
 
-        if (array_key_exists('subcategory_id', $data) && !self::isBlank($data['subcategory_id']) && !is_numeric($data['subcategory_id'])) {
+        if (array_key_exists('subcategory_id', $data) && !self::isBlank($data['subcategory_id']) && !self::isPositiveId($data['subcategory_id'])) {
             $errors[] = "L'identifiant de sous-catégorie est invalide.";
         }
 
@@ -153,7 +184,70 @@ class ProductPolicy
         $errors[] = self::checkText($plant, 'care_repotting', self::CARE_TEXT_MAX_LENGTH, 'Le conseil de rempotage');
         $errors[] = self::checkText($plant, 'care_pests_diseases', self::CARE_TEXT_MAX_LENGTH, 'Le conseil maladies et ravageurs');
 
+        foreach (self::ID_LIST_FIELDS as $field => $label) {
+            $errors[] = self::checkIdList($plant, $field, $label);
+        }
+
         return array_values(array_filter($errors));
+    }
+
+    /**
+     * Identifiants d'une liste de la fiche, nettoyés (entiers, sans doublon). Liste absente : [].
+     * À n'appeler qu'après validate() (les valeurs sont alors des identifiants valides).
+     * @return int[]
+     */
+    public static function idList(array $plant, string $field): array
+    {
+        return array_values(array_unique(array_map('intval', is_array($plant[$field] ?? null) ? $plant[$field] : [])));
+    }
+
+    /** Identifiant de base de données : entier strictement positif (nombre ou texte de chiffres, jamais un booléen). */
+    public static function isPositiveId(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return false;
+        }
+        $id = filter_var($value, FILTER_VALIDATE_INT);
+
+        return $id !== false && $id > 0;
+    }
+
+    private static function checkIdList(array $data, string $field, string $label): ?string
+    {
+        if (!array_key_exists($field, $data) || $data[$field] === null) {
+            return null;
+        }
+
+        if (!is_array($data[$field]) || !array_is_list($data[$field]) || count($data[$field]) > self::ID_LIST_MAX) {
+            return "$label : liste invalide.";
+        }
+
+        foreach ($data[$field] as $id) {
+            if (!self::isPositiveId($id)) {
+                return "$label : identifiant invalide.";
+            }
+        }
+
+        return null;
+    }
+
+    /** Vide (pas d'image), inchangée, ou fichier déposé par l'envoi d'image. */
+    private static function checkImageUrl(array $data, string $field, ?string $current, string $label): ?string
+    {
+        if (!array_key_exists($field, $data) || self::isBlank($data[$field])) {
+            return null;
+        }
+
+        if (!is_string($data[$field])) {
+            return "$label doit être une adresse.";
+        }
+
+        $url = trim($data[$field]);
+        if ($current !== null && $url === $current) {
+            return null;
+        }
+
+        return preg_match(self::IMAGE_URL_PATTERN, $url) ? null : "$label doit être une image envoyée depuis l'administration.";
     }
 
     /** Vide ou absent. Contrairement à empty(), un 0 n'est PAS considéré comme vide (c'est une valeur à valider). */

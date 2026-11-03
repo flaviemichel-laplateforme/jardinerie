@@ -109,23 +109,47 @@ class AdminServicesTest extends TestCase
     public function testUnNomDeCategorieVideEstRefuseSansEcrire(): void
     {
         $model = $this->createMock(AdminCategoryModel::class);
+        $model->method('findDepartment')->willReturn(['id' => 1, 'name' => 'Végétaux', 'has_plant_sheet' => 1]);
+        $model->method('findCategory')->willReturn(['id' => 1, 'department_id' => 1, 'name' => 'Plantes']);
         $model->expects($this->never())->method('createCategory');
         $model->expects($this->never())->method('createSubcategory');
 
         $service = new AdminCategoryService($model);
-        $this->assertSame(400, $service->createCategory(1, '   ')['code']);
-        $this->assertSame(400, $service->createSubcategory(1, '')['code']);
+        $this->assertSame('Le nom est obligatoire.', $service->createCategory(1, '   ')['message']);
+        $this->assertSame('Le nom est obligatoire.', $service->createSubcategory(1, '')['message']);
     }
 
     public function testLaCreationRenvoieLIdentifiant(): void
     {
         $model = $this->createStub(AdminCategoryModel::class);
+        $model->method('findDepartment')->willReturn(['id' => 1, 'name' => 'Végétaux', 'has_plant_sheet' => 1]);
+        $model->method('categoryNameTaken')->willReturn(false);
         $model->method('createCategory')->willReturn(42);
 
         $result = (new AdminCategoryService($model))->createCategory(1, 'Bulbes');
 
         $this->assertSame(201, $result['code']);
         $this->assertSame(42, $result['data']['id']);
+    }
+
+    public function testLeNomEnregistreEstNettoye(): void
+    {
+        $model = $this->createMock(AdminCategoryModel::class);
+        $model->method('findDepartment')->willReturn(['id' => 1, 'name' => 'Végétaux', 'has_plant_sheet' => 1]);
+        $model->method('categoryNameTaken')->willReturn(false);
+        $model->expects($this->once())->method('createCategory')->with(1, 'Plantes vertes')->willReturn(7);
+
+        (new AdminCategoryService($model))->createCategory('1', "  Plantes \t  vertes ");
+    }
+
+    public function testUnRayonInconnuEstRefuseAvantLEcriture(): void
+    {
+        $model = $this->createMock(AdminCategoryModel::class);
+        $model->method('findDepartment')->willReturn(null);
+        $model->expects($this->never())->method('createCategory');
+
+        $this->assertSame(400, (new AdminCategoryService($model))->createCategory(99, 'Bulbes')['code']);
+        $this->assertSame(400, (new AdminCategoryService($model))->createCategory(true, 'Bulbes')['code'], 'un booléen n\'est pas un identifiant');
     }
 
     public function testLesErreursDeLectureDuCatalogueDonnentUne500Generique(): void

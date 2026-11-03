@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\ProductPolicy;
 
 class AdminProductModel
 {
     /** Champs facultatifs de products : un champ laissé vide est enregistré NULL (jamais ''). */
-    private const PRODUCT_OPTIONAL_FIELDS = ['sku', 'packaging_type', 'pot_diameter_cm', 'volume_l', 'weight_g'];
+    private const PRODUCT_OPTIONAL_FIELDS = ['sku', 'packaging_type', 'pot_diameter_cm', 'volume_l', 'weight_g', 'main_image_url', 'secondary_image_url'];
 
     /** Colonnes de plants et leur type, dans l'ordre d'enregistrement. */
     private const PLANT_FIELDS = [
@@ -33,8 +34,12 @@ class AdminProductModel
         'care_pests_diseases' => 'text',
     ];
 
+    public function __construct(
+        private SoilModel $soils = new SoilModel()
+    ) {}
+
     /**
-     * Liste tous les produits avec leur catégorie et stock.
+     * Liste tous les produits avec leur classement et leur stock.
      * Inclut les produits inactifs (is_active = 0) — contrairement au catalogue public.
      */
     public function findAll(): array
@@ -47,14 +52,22 @@ class AdminProductModel
                     p.sku,
                     p.price_tax_incl,
                     p.purchase_price_tax_incl,
+                    p.purchase_price_excl_tax,
                     p.stock_quantity,
                     p.main_image_url,
                     p.is_active,
-                    s.name AS subcategory_name,
-                    c.name AS category_name
+                    t.rate     AS tax_rate,
+                    s.id       AS subcategory_id,
+                    s.name     AS subcategory_name,
+                    c.id       AS category_id,
+                    c.name     AS category_name,
+                    d.id       AS department_id,
+                    d.name     AS department_name
                 FROM products p
                 INNER JOIN subcategories s ON s.id = p.subcategory_id
                 INNER JOIN categories c    ON c.id = s.category_id
+                INNER JOIN departments d   ON d.id = c.department_id
+                LEFT JOIN taxes t          ON t.id = p.tax_id
                 ORDER BY p.id DESC";
 
         $stmt = $db->prepare($sql);
@@ -65,6 +78,8 @@ class AdminProductModel
 
     /**
      * Détail complet d'un produit avec ses données botaniques si existantes.
+     * La fiche botanique est renvoyée « à plat » (mêmes clés que les colonnes), ses listes sous criteria_ids, soil_type_ids, soil_ph_ids.
+     * criteria_ids contient aussi les anciens critères « Sol … » : l'ancien admin en a besoin jusqu'à la bascule.
      */
     public function findById(int $id): array|false
     {
@@ -78,6 +93,7 @@ class AdminProductModel
                     p.description,
                     p.price_tax_incl,
                     p.purchase_price_tax_incl,
+                    p.purchase_price_excl_tax,
                     p.stock_quantity,
                     p.main_image_url,
                     p.secondary_image_url,
@@ -87,8 +103,10 @@ class AdminProductModel
                     p.pot_diameter_cm,
                     p.volume_l,
                     p.weight_g,
+                    t.rate AS tax_rate,
                     s.category_id,
                     c.department_id,
+                    d.has_plant_sheet,
                     pl.id          AS plant_id,
                     pl.common_name,
                     pl.latin_name,
@@ -112,8 +130,10 @@ class AdminProductModel
                     pl.care_pests_diseases
                 FROM products p
                 LEFT JOIN plants pl ON pl.product_id = p.id
+                LEFT JOIN taxes t ON t.id = p.tax_id
                 LEFT JOIN subcategories s ON s.id = p.subcategory_id
                 LEFT JOIN categories c ON c.id = s.category_id
+                LEFT JOIN departments d ON d.id = c.department_id
                 WHERE p.id = :id
                 LIMIT 1";
 
@@ -121,13 +141,21 @@ class AdminProductModel
         $stmt->execute([':id' => $id]);
 
         $product = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$product) {
+            return false;
+        }
 
-        if ($product && $product['plant_id']) {
-            $critStmt = $db->prepare(
-                "SELECT criterion_id FROM plant_criterion WHERE plant_id = :plant_id"
-            );
-            $critStmt->execute([':plant_id' => $product['plant_id']]);
-            $product['criteria_ids'] = $critStmt->fetchAll(\PDO::FETCH_COLUMN);
+        $product['criteria_ids']  = [];
+        $product['soil_type_ids'] = [];
+        $product['soil_ph_ids']   = [];
+
+        if ($product['plant_id']) {
+            $plantId  = (int) $product['plant_id'];
+            $critStmt = $db->prepare("SELECT criterion_id FROM plant_criterion WHERE plant_id = :plant_id ORDER BY criterion_id");
+            $critStmt->execute([':plant_id' => $plantId]);
+            $product['criteria_ids']  = array_map('intval', $critStmt->fetchAll(\PDO::FETCH_COLUMN));
+            $product['soil_type_ids'] = $this->soils->idsForPlant('type', $plantId);
+            $product['soil_ph_ids']   = $this->soils->idsForPlant('ph', $plantId);
         }
 
         return $product;
@@ -145,38 +173,40 @@ class AdminProductModel
         try {
             $sql = "INSERT INTO products
                         (subcategory_id, tax_id, name, description,
-                         price_tax_incl, purchase_price_tax_incl,
+                         price_tax_incl, purchase_price_tax_incl, purchase_price_excl_tax,
                          stock_quantity, main_image_url, secondary_image_url, is_active,
                          sku, packaging_type, pot_diameter_cm, volume_l, weight_g)
                     VALUES
                         (:subcategory_id, :tax_id, :name, :description,
-                         :price_tax_incl, :purchase_price_tax_incl,
+                         :price_tax_incl, :purchase_legacy, :purchase_excl_tax,
                          :stock_quantity, :main_image_url, :secondary_image_url, :is_active,
                          :sku, :packaging_type, :pot_diameter_cm, :volume_l, :weight_g)";
 
+            $purchase = $this->purchasePrice($data);
+
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                ':subcategory_id'          => isset($data['subcategory_id']) ? (int) $data['subcategory_id'] : null,
-                ':tax_id'                  => (int) $data['tax_id'],
-                ':name'                    => (string) trim($data['name']),
-                ':description'             => isset($data['description']) ? (string) trim($data['description']) : null,
-                ':price_tax_incl'          => (float) $data['price_tax_incl'],
-                ':purchase_price_tax_incl' => isset($data['purchase_price_tax_incl']) ? (float) $data['purchase_price_tax_incl'] : null,
-                ':stock_quantity'          => (int) ($data['stock_quantity'] ?? 0),
-                ':main_image_url'          => isset($data['main_image_url']) ? (string) trim($data['main_image_url']) : null,
-                ':secondary_image_url'     => isset($data['secondary_image_url']) ? (string) trim($data['secondary_image_url']) : null,
-                ':is_active'               => isset($data['is_active']) ? (int) $data['is_active'] : 1,
-                ':sku'                     => $this->optional($data['sku'] ?? null),
-                ':packaging_type'          => $this->optional($data['packaging_type'] ?? null),
-                ':pot_diameter_cm'         => $this->optionalInt($data['pot_diameter_cm'] ?? null),
-                ':volume_l'                => $this->optionalFloat($data['volume_l'] ?? null),
-                ':weight_g'                => $this->optionalInt($data['weight_g'] ?? null),
+                ':subcategory_id'      => (int) $data['subcategory_id'],
+                ':tax_id'              => (int) $data['tax_id'],
+                ':name'                => (string) trim($data['name']),
+                ':description'         => isset($data['description']) ? (string) trim($data['description']) : null,
+                ':price_tax_incl'      => (float) $data['price_tax_incl'],
+                ':purchase_legacy'     => $purchase,
+                ':purchase_excl_tax'   => $purchase,
+                ':stock_quantity'      => (int) ($data['stock_quantity'] ?? 0),
+                ':main_image_url'      => $this->optional($data['main_image_url'] ?? null),
+                ':secondary_image_url' => $this->optional($data['secondary_image_url'] ?? null),
+                ':is_active'           => isset($data['is_active']) ? (int) $data['is_active'] : 1,
+                ':sku'                 => $this->optional($data['sku'] ?? null),
+                ':packaging_type'      => $this->optional($data['packaging_type'] ?? null),
+                ':pot_diameter_cm'     => $this->optionalInt($data['pot_diameter_cm'] ?? null),
+                ':volume_l'            => $this->optionalFloat($data['volume_l'] ?? null),
+                ':weight_g'            => $this->optionalInt($data['weight_g'] ?? null),
             ]);
             $productId = (int) $db->lastInsertId();
 
-            // Si des données botaniques sont fournies → insérer dans plants
-            if (!empty($data['plant'])) {
-                $this->insertPlant($db, $productId, $data['plant']);
+            if (!empty($data['plant']) && is_array($data['plant'])) {
+                $this->savePlant($db, $productId, $data['plant']);
             }
 
             $db->commit();
@@ -190,8 +220,9 @@ class AdminProductModel
     /**
      * Met à jour un produit existant.
      * PATCH sémantique : seuls les champs envoyés sont mis à jour.
+     * « plant » : objet = la fiche est réécrite EN ENTIER (clé absente -> vidée) ; null = la fiche est supprimée ; absent = inchangée.
      */
-    public function update(int $id, array $data): bool
+    public function update(int $id, array $data): void
     {
         $db = Database::getConnection();
         $db->beginTransaction();
@@ -204,10 +235,7 @@ class AdminProductModel
                 'name',
                 'description',
                 'price_tax_incl',
-                'purchase_price_tax_incl',
                 'stock_quantity',
-                'main_image_url',
-                'secondary_image_url',
                 'is_active',
                 ...self::PRODUCT_OPTIONAL_FIELDS,
             ];
@@ -224,22 +252,28 @@ class AdminProductModel
                 }
             }
 
-            if (empty($sets)) {
-                $db->rollBack();
-                return false; // Rien à modifier
+            // Prix d'achat HT : nouveau nom ou ancien nom (ancien admin), écrit dans les deux colonnes jusqu'à la bascule
+            if (array_key_exists('purchase_price_excl_tax', $data) || array_key_exists('purchase_price_tax_incl', $data)) {
+                $sets[] = 'purchase_price_excl_tax = :purchase_excl_tax';
+                $sets[] = 'purchase_price_tax_incl = :purchase_legacy';
+                $params[':purchase_excl_tax'] = $params[':purchase_legacy'] = $this->purchasePrice($data);
             }
 
-            $sql = "UPDATE products SET " . implode(', ', $sets) . " WHERE id = :id";
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
+            // Une requête qui ne contient que la fiche botanique est valable : on ne touche alors pas à products
+            if ($sets !== []) {
+                $db->prepare("UPDATE products SET " . implode(', ', $sets) . " WHERE id = :id")->execute($params);
+            }
 
-            // Mettre à jour les données botaniques si fournies
-            if (!empty($data['plant'])) {
-                $this->upsertPlant($db, $id, $data['plant']);
+            if (array_key_exists('plant', $data)) {
+                if ($data['plant'] === null) {
+                    // Les liens (critères, sols) partent avec la plante (ON DELETE CASCADE)
+                    $db->prepare("DELETE FROM plants WHERE product_id = :pid")->execute([':pid' => $id]);
+                } elseif (is_array($data['plant']) && $data['plant'] !== []) {
+                    $this->savePlant($db, $id, $data['plant']);
+                }
             }
 
             $db->commit();
-            return true;
         } catch (\Exception $e) {
             $db->rollBack();
             throw $e;
@@ -260,34 +294,75 @@ class AdminProductModel
         return $stmt->rowCount() > 0;
     }
 
-    /**
-     * Insère les données botaniques d'un nouveau produit.
-     */
-    private function insertPlant(\PDO $db, int $productId, array $plant): void
-    {
-        $stmt = $db->prepare($this->plantInsertSql());
-        $stmt->execute($this->plantParams($productId, $plant));
+    // ------------------------------------------------------------------ vérifications pour le service
 
-        $plantId = (int) $db->lastInsertId();
-        $this->syncPlantCriteria($db, $plantId, $plant['criteria'] ?? []);
+    /** Le rayon de cette sous-catégorie accepte-t-il une fiche botanique ? null si la sous-catégorie n'existe pas. */
+    public function subcategoryAllowsPlantSheet(int $subcategoryId): ?bool
+    {
+        $stmt = Database::getConnection()->prepare(
+            "SELECT d.has_plant_sheet FROM subcategories s
+             INNER JOIN categories c  ON c.id = s.category_id
+             INNER JOIN departments d ON d.id = c.department_id
+             WHERE s.id = :id"
+        );
+        $stmt->execute([':id' => $subcategoryId]);
+        $flag = $stmt->fetchColumn();
+
+        return $flag === false ? null : (bool) $flag;
+    }
+
+    public function taxExists(int $taxId): bool
+    {
+        $stmt = Database::getConnection()->prepare("SELECT COUNT(*) FROM taxes WHERE id = :id");
+        $stmt->execute([':id' => $taxId]);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     /**
-     * INSERT ou UPDATE des données botaniques (selon si la ligne existe déjà).
+     * @param int[] $ids
+     * @return int[] identifiants de critères inconnus
      */
-    private function upsertPlant(\PDO $db, int $productId, array $plant): void
+    public function unknownCriteria(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+        $known = Database::getConnection()->query("SELECT id FROM criteria")->fetchAll(\PDO::FETCH_COLUMN);
+
+        return array_values(array_diff($ids, array_map('intval', $known)));
+    }
+
+    /** Une image est-elle encore utilisée par un produit (actif ou non) ? Avant de supprimer son fichier. */
+    public function isImageUsed(string $url): bool
+    {
+        $stmt = Database::getConnection()->prepare("SELECT COUNT(*) FROM products WHERE main_image_url = :a OR secondary_image_url = :b");
+        $stmt->execute([':a' => $url, ':b' => $url]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    // ------------------------------------------------------------------ fiche botanique
+
+    /** INSERT ou UPDATE de la fiche (selon qu'elle existe déjà), puis ses critères et ses sols. */
+    private function savePlant(\PDO $db, int $productId, array $plant): void
     {
         $check = $db->prepare("SELECT id FROM plants WHERE product_id = :pid LIMIT 1");
         $check->execute([':pid' => $productId]);
-        $existing = $check->fetch(\PDO::FETCH_ASSOC);
+        $existing = $check->fetchColumn();
 
-        $sql = $existing ? $this->plantUpdateSql() : $this->plantInsertSql();
+        $db->prepare($existing ? $this->plantUpdateSql() : $this->plantInsertSql())->execute($this->plantParams($productId, $plant));
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute($this->plantParams($productId, $plant));
+        $plantId = $existing ? (int) $existing : (int) $db->lastInsertId();
 
-        $plantId = $existing ? (int) $existing['id'] : (int) $db->lastInsertId();
-        $this->syncPlantCriteria($db, $plantId, $plant['criteria'] ?? []);
+        // Sols absents de la requête (ancien admin) : null, ils sont alors déduits des anciens critères « Sol … »
+        $this->soils->syncPlant(
+            $db,
+            $plantId,
+            ProductPolicy::idList($plant, 'criteria'),
+            array_key_exists('soil_type_ids', $plant) ? ProductPolicy::idList($plant, 'soil_type_ids') : null,
+            array_key_exists('soil_ph_ids', $plant) ? ProductPolicy::idList($plant, 'soil_ph_ids') : null
+        );
     }
 
     private function plantInsertSql(): string
@@ -323,6 +398,16 @@ class AdminProductModel
         return $params;
     }
 
+    // ------------------------------------------------------------------ valeurs
+
+    /** Prix d'achat HT : nouveau nom (purchase_price_excl_tax) prioritaire, sinon ancien nom envoyé par l'ancien admin. */
+    private function purchasePrice(array $data): ?float
+    {
+        $value = array_key_exists('purchase_price_excl_tax', $data) ? $data['purchase_price_excl_tax'] : ($data['purchase_price_tax_incl'] ?? null);
+
+        return $this->optionalFloat($value);
+    }
+
     /** Texte nettoyé ; vide → NULL (deux références '' violeraient l'unicité du SKU). */
     private function optional(mixed $value): mixed
     {
@@ -344,32 +429,6 @@ class AdminProductModel
     {
         $value = $this->optional($value);
 
-        return $value === null ? null : (float) $value;
-    }
-
-    /**
-     * Remplace les critères associés à une plante : supprime les anciens liens,
-     * puis recrée ceux envoyés par le formulaire (delete-then-insert, simple et sûr
-     * aussi bien pour une création — rien à supprimer — que pour une modification).
-     */
-    private function syncPlantCriteria(\PDO $db, int $plantId, array $criteriaIds): void
-    {
-        $delete = $db->prepare("DELETE FROM plant_criterion WHERE plant_id = :plant_id");
-        $delete->execute([':plant_id' => $plantId]);
-
-        if (empty($criteriaIds)) {
-            return;
-        }
-
-        $insert = $db->prepare(
-            "INSERT INTO plant_criterion (plant_id, criterion_id) VALUES (:plant_id, :criterion_id)"
-        );
-
-        foreach ($criteriaIds as $criterionId) {
-            $insert->execute([
-                ':plant_id'     => $plantId,
-                ':criterion_id' => (int) $criterionId,
-            ]);
-        }
+        return $value === null ? null : round((float) $value, 2);
     }
 }
