@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\DateFilter;
 use App\Core\SecurityLog;
 use App\Middlewares\AdminMiddleware;
 use App\Models\SecurityEventModel;
@@ -50,18 +51,12 @@ class AdminSecurityController
             $filters['email_hash'] = SecurityLog::hashEmail($email);
         }
 
-        foreach (['from', 'to'] as $key) {
-            $value = $_GET[$key] ?? null;
-            if (is_string($value) && $value !== '') {
-                $date = $this->parseDate($value);
-                if ($date === null) {
-                    $this->respondInvalid("Filtre « $key » invalide (AAAA-MM-JJ attendu).");
-                    return;
-                }
-                // « to=2026-11-03 » doit inclure toute la journée du 3
-                $filters[$key] = $key === 'to' && strlen($value) === 10 ? substr($date, 0, 10) . ' 23:59:59' : $date;
-            }
+        $dates = DateFilter::fromQuery($_GET);
+        if ($dates['error'] !== null) {
+            $this->respondInvalid($dates['error']);
+            return;
         }
+        $filters += $dates['filters'];
 
         $page   = max(1, (int) ($_GET['page'] ?? 1));
         $limit  = max(1, min(self::MAX_LIMIT, (int) ($_GET['limit'] ?? self::DEFAULT_LIMIT)));
@@ -98,19 +93,6 @@ class AdminSecurityController
                 ],
             ],
         ], JSON_UNESCAPED_UNICODE);
-    }
-
-    /** « 2026-11-03 » ou « 2026-11-03 14:30:00 » -> « 2026-11-03 14:30:00 », ou null si la date n'existe pas. */
-    private function parseDate(string $value): ?string
-    {
-        foreach (['Y-m-d H:i:s', 'Y-m-d'] as $format) {
-            $date = \DateTimeImmutable::createFromFormat('!' . $format, $value);
-            if ($date !== false && $date->format($format) === $value) {
-                return $date->format('Y-m-d H:i:s');
-            }
-        }
-
-        return null;
     }
 
     private function respondInvalid(string $message): void

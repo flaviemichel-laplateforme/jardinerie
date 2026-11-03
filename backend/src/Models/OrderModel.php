@@ -83,13 +83,18 @@ class OrderModel
                     VALUES (:order_id, :product_id, :quantity, :unit_price)";
             $itemStmt = $db->prepare($itemSql);
 
-            // Décrémentation atomique du stock : le calcul se fait dans la requête SQL
-            // (stock_quantity - X) pour éviter toute race condition entre deux commandes
-            // concurrentes sur le même produit. GREATEST empêche un stock négatif.
-            $stockSql = "UPDATE products SET stock_quantity = GREATEST(stock_quantity - :quantity, 0) WHERE id = :product_id";
-            $stockStmt = $db->prepare($stockSql);
+            // Décrémentation du stock : la ligne du produit est verrouillée (lockStock) jusqu'à la fin de la transaction,
+            // deux commandes simultanées sur le même produit s'appliquent donc l'une après l'autre. Le stock ne descend
+            // jamais sous 0 (le paiement est déjà encaissé : la commande est créée quand même). Chaque vente est historisée.
+            $stockStmt = $db->prepare("UPDATE products SET stock_quantity = :stock WHERE id = :product_id");
+            $movements = new StockMovementModel();
+            $reference = self::referenceFor($paymentIntentId);
 
-            foreach ($cart['items'] as $item) {
+            // Toujours dans l'ordre des identifiants : deux commandes qui verrouillent les mêmes produits ne s'attendent jamais mutuellement
+            $items = $cart['items'];
+            usort($items, fn(array $a, array $b) => (int) $a['product_id'] <=> (int) $b['product_id']);
+
+            foreach ($items as $item) {
                 $itemStmt->execute([
                     ':order_id'   => $orderId,
                     ':product_id' => $item['product_id'],
@@ -97,10 +102,14 @@ class OrderModel
                     ':unit_price' => $item['unit_price'],
                 ]);
 
-                $stockStmt->execute([
-                    ':quantity'   => $item['quantity'],
-                    ':product_id' => $item['product_id'],
-                ]);
+                $current = $movements->lockStock($db, (int) $item['product_id']);
+                if ($current === null) {
+                    continue; // produit supprimé entre-temps : la ligne de commande reste, il n'y a pas de stock à tenir
+                }
+                $after = max(0, $current - (int) $item['quantity']);
+
+                $stockStmt->execute([':stock' => $after, ':product_id' => $item['product_id']]);
+                $movements->record($db, (int) $item['product_id'], 'sale', $after - $current, $after, null, "Vente $reference", $orderId);
             }
 
             $db->commit();

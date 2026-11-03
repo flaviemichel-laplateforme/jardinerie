@@ -31,6 +31,8 @@ class SecurityLog
     public const PAYMENT_MISMATCH = 'payment_mismatch';
     // Suppression d'un élément du classement (catégorie, sous-catégorie, nature ou pH du sol) : details.type, details.id, details.name
     public const CATEGORY_DELETED = 'category_deleted';
+    // Ajustement manuel du stock par un administrateur : details.product_id, details.type, details.quantity, details.stock_after
+    public const STOCK_ADJUSTED = 'stock_adjusted';
 
     private const MAX_USER_AGENT_LENGTH = 255;
     private const MAX_DETAILS_LENGTH = 1000;

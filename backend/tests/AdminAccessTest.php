@@ -45,6 +45,8 @@ class AdminAccessTest extends AdminApiTestCase
             'envoi d\'image'            => ['POST', '/admin/upload'],
             'ventes (KPI)'              => ['GET', '/admin/kpis/sales'],
             'alertes de stock'          => ['GET', '/admin/stock/alerts'],
+            'historique du stock'       => ['GET', '/admin/stock/movements'],
+            'ajustement du stock'       => ['POST', '/admin/products/1/stock'],
             'liste des commandes'       => ['GET', '/admin/orders'],
             'détail d\'une commande'    => ['GET', '/admin/orders/1'],
             'statut d\'une commande'    => ['PATCH', '/admin/orders/1/status'],

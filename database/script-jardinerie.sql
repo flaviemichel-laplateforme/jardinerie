@@ -270,13 +270,26 @@ CREATE TABLE IF NOT EXISTS `flavie-michel_jardinerie_db`.`stock_movements` (
   `quantity` INT NOT NULL,
   `movement_type` ENUM('restock', 'sale', 'inventory', 'loss') NOT NULL,
   `movement_date` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `stock_after` INT NULL DEFAULT NULL,
+  `user_id` INT NULL DEFAULT NULL,
+  `order_id` INT NULL DEFAULT NULL,
+  `note` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   INDEX (`product_id` ASC) VISIBLE,
+  INDEX `stock_movements_date_idx` (`movement_date` ASC) VISIBLE,
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
   CONSTRAINT `fk_stock_movements_products`
     FOREIGN KEY (`product_id`)
     REFERENCES `flavie-michel_jardinerie_db`.`products` (`id`)
-    ON DELETE CASCADE)
+    ON DELETE CASCADE,
+  CONSTRAINT `fk_stock_movements_users`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`users` (`id`)
+    ON DELETE SET NULL,
+  CONSTRAINT `fk_stock_movements_orders`
+    FOREIGN KEY (`order_id`)
+    REFERENCES `flavie-michel_jardinerie_db`.`orders` (`id`)
+    ON DELETE SET NULL)
 ENGINE = InnoDB;
 
 
